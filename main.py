@@ -1,44 +1,5 @@
-from factory import starting_hp, actor_factory, save_actors, load_actors, list_saves, delete_actor, assign
-
-def clear():
-    print("\033[H\033[J", end="")
-
-
-def ask_index(prompt, length):
-    while True:
-        choice = input(prompt)
-        if choice.isdigit() and 1 <= int(choice) <= length:
-            return int(choice) - 1
-        print('not an option')
-
-
-def draw_assign(actor, open_abilities):
-    clear()
-    print("rolls:", actor.unspent)
-    for i, a in enumerate(open_abilities, 1):
-        print(f"{i}. {a}: {actor.abilities[a]}")
-
-
-def assign_screen(actor):
-    start_pool = list(actor.unspent)
-    start_abilities = dict(actor.abilities)
-    while True:
-        open_abilities = list(actor.abilities)
-        while actor.unspent:
-            draw_assign(actor, open_abilities)
-            a = ask_index("stat: ", len(open_abilities))
-            r = ask_index("roll: ", len(actor.unspent))
-            assign(actor, open_abilities.pop(a), r)
-        clear()
-        for name, score in actor.abilities.items():
-            print(f"{name}: {score}")
-        if input("keep this? y/n: ").lower() == "y":
-            actor.max_hp = actor.current_hp = starting_hp(actor)
-            save_actors(actor)
-            return
-        
-        actor.unspent = list(start_pool)
-        actor.abilities = dict(start_abilities)
+from factory import actor_factory, save_actors, load_actors, list_saves, delete_actor
+from creation import assign_screen
 
 
 def pick_char():

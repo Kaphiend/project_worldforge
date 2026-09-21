@@ -1,0 +1,17 @@
+{
+  "name": "Grom",
+  "max_hp": 14,
+  "current_hp": 14,
+  "abilities": {
+    "strength": 16,
+    "dexterity": 13,
+    "constitution": 18,
+    "intellect": 9,
+    "wisdom": 9,
+    "charisma": 11
+  },
+  "unspent": [],
+  "race": "dwarf",
+  "char_class": "fighter",
+  "controller": null
+}

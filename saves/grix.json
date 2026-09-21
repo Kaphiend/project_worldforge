@@ -1,0 +1,17 @@
+{
+  "name": "Grix",
+  "max_hp": 12,
+  "current_hp": 12,
+  "abilities": {
+    "strength": 13,
+    "dexterity": 13,
+    "constitution": 14,
+    "intellect": 10,
+    "wisdom": 15,
+    "charisma": 9
+  },
+  "unspent": [],
+  "race": "human",
+  "char_class": "fighter",
+  "controller": null
+}

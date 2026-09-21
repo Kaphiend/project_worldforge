@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from dice import ability_points, roll_dx
+from classes import RACES, CLASSES
+from dice import ability_points
 from pathlib import Path
 import json
 
@@ -17,6 +18,8 @@ class Actor:
         'intellect': 8, 'wisdom': 8, 'charisma': 8,
                 })
     unspent: list = field(default_factory=ability_points)
+    race: str = ''
+    char_class: str = ''
     controller: object = None
 
 def actor_factory(name):
@@ -47,3 +50,12 @@ def modifier(score):
 
 def starting_hp(actor):
     return 8 + modifier(actor.abilities['constitution'])
+
+def apply_race_bonus(actor):
+    bonuses = RACES[actor.race]['bonuses']
+    for ability, amount in bonuses.items():
+        actor.abilities[ability] += amount
+
+def starting_hp(actor):
+    hit_die = CLASSES[actor.char_class]['hit_die']
+    return hit_die + modifier(actor.abilities['constitution'])
