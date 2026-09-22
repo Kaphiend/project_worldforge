@@ -1,0 +1,28 @@
+{
+  "name": "John",
+  "id": "348c6fda",
+  "max_hp": 7,
+  "current_hp": 7,
+  "abilities": {
+    "strength": 10,
+    "dexterity": 12,
+    "constitution": 12,
+    "intellect": 16,
+    "wisdom": 12,
+    "charisma": 12
+  },
+  "unspent": [],
+  "saves": [
+    "intellect",
+    "wisdom"
+  ],
+  "armor_prof": [],
+  "weapon_prof": [
+    "simple"
+  ],
+  "race": "elf",
+  "char_class": "wizard",
+  "controller": null,
+  "x": 400,
+  "y": 300
+}

@@ -1,0 +1,34 @@
+{
+  "name": "Grix",
+  "id": "5e928444",
+  "max_hp": 12,
+  "current_hp": 12,
+  "abilities": {
+    "strength": 17,
+    "dexterity": 15,
+    "constitution": 15,
+    "intellect": 11,
+    "wisdom": 13,
+    "charisma": 13
+  },
+  "unspent": [],
+  "saves": [
+    "strength",
+    "constitution"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "heavy",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial"
+  ],
+  "race": "human",
+  "char_class": "fighter",
+  "controller": null,
+  "x": 400,
+  "y": 300
+}

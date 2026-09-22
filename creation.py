@@ -1,5 +1,5 @@
 from classes import CLASSES, RACES
-from factory import assign, starting_hp, save_actors, apply_race_bonus, starting_hp
+from factory import apply_class_proficiencies, assign, starting_hp, save_actors, apply_race_bonus, starting_hp
 
 def clear():
     print("\033[H\033[J", end="")
@@ -32,6 +32,7 @@ def assign_screen(actor):
     actor.race = pick_from('race:', RACES)
     clear()
     actor.char_class = pick_from('class:', CLASSES)
+    apply_class_proficiencies(actor)
     start_pool = list(actor.unspent)
     start_abilities = dict(actor.abilities)
     while True:
