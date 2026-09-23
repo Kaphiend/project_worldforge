@@ -1,0 +1,73 @@
+{
+  "rising_pressure": {
+    "name": "Rising Pressure",
+    "classes": [
+      "barbarian"
+    ],
+    "action_cost": "bonus_action",
+    "effects": [
+      {
+        "kind": "next_weapon_hit_bonus",
+        "formula": "1d4",
+        "damage_type": "physical"
+      }
+    ],
+    "description": "Gather force for your next successful weapon hit.",
+    "prerequisite_class_level": 1,
+    "acquisition": "trainer_purchase"
+  },
+  "guarded_angle": {
+    "name": "Guarded Angle",
+    "classes": [
+      "fighter"
+    ],
+    "action_cost": "bonus_action",
+    "effects": [
+      {
+        "kind": "armor_bonus",
+        "amount": 2,
+        "duration_turns": 1
+      }
+    ],
+    "description": "Set your stance to blunt incoming attacks until your next turn.",
+    "prerequisite_class_level": 1,
+    "acquisition": "trainer_purchase"
+  },
+  "flowing_step": {
+    "name": "Flowing Step",
+    "classes": [
+      "monk"
+    ],
+    "action_cost": "bonus_action",
+    "effects": [
+      {
+        "kind": "movement_bonus",
+        "feet": 10,
+        "duration_turns": 1
+      }
+    ],
+    "description": "Move with a quick, balanced step.",
+    "prerequisite_class_level": 1,
+    "acquisition": "trainer_purchase"
+  },
+  "distracting_feint": {
+    "name": "Distracting Feint",
+    "classes": [
+      "rogue"
+    ],
+    "action_cost": "bonus_action",
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 5
+    },
+    "effects": [
+      {
+        "kind": "condition",
+        "condition_id": "off_balance"
+      }
+    ],
+    "description": "Draw a nearby opponent’s guard aside, opening a brief advantage.",
+    "prerequisite_class_level": 1,
+    "acquisition": "trainer_purchase"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "clearing_raider": {
+    "name": "Roadside Raider",
+    "avatar": "asset_pack/Orc.png",
+    "controller": "ai",
+    "max_hp": 18,
+    "current_hp": 18,
+    "level": 1,
+    "abilities": {"strength": 14, "dexterity": 12, "constitution": 12, "intellect": 9, "wisdom": 10, "charisma": 10},
+    "weapon_prof": ["simple", "martial"],
+    "armor_prof": [],
+    "saves": [],
+    "known_spells": [],
+    "known_abilities": [],
+    "conditions": [],
+    "active_effects": [],
+    "inventory": [],
+    "equipment": {
+      "chest": {"id": "raider-leather", "name": "Worn Leather", "slot": "chest", "category": "light", "base_ac": 11, "tags": [], "rarity": null, "rolled_attributes": {}},
+      "main_hand": {"id": "raider-sword", "name": "Road Sword", "slot": "main_hand", "template_id": "sword_1h", "tags": [], "rarity": null, "rolled_attributes": {}}
+    },
+    "active_weapon_set": "melee",
+    "x": 650,
+    "y": 280
+  }
+}

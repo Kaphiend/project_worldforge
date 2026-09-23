@@ -1,19 +1,48 @@
+"""Dice helpers shared by character creation and combat."""
 import random
+import re
+
+
+_DICE_EXPRESSION = re.compile(r"^(\d+)d(\d+)([+-]\d+)?$", re.IGNORECASE)
+
+
+def roll_dice(expression, *, critical=False):
+    """Roll notation such as ``d20``, ``2d6`` or ``1d8+2``.
+
+    Critical hits double the dice count while preserving any flat modifier.
+    Returns ``(total, individual_rolls)`` for clear combat-log output.
+    """
+    match = _DICE_EXPRESSION.fullmatch(str(expression).replace(" ", ""))
+    if not match:
+        raise ValueError(f"Invalid dice expression: {expression!r}")
+    count, sides = int(match.group(1)), int(match.group(2))
+    modifier = int(match.group(3) or 0)
+    if count < 1 or sides < 2:
+        raise ValueError(f"Invalid dice expression: {expression!r}")
+    if critical:
+        count *= 2
+    rolls = [random.randint(1, sides) for _ in range(count)]
+    return sum(rolls) + modifier, rolls
+
+
+def roll_d20(advantage=0):
+    """Roll a d20; advantage=1 keeps high, -1 keeps low, otherwise normal."""
+    rolls = [random.randint(1, 20) for _ in range(2 if advantage else 1)]
+    result = max(rolls) if advantage > 0 else min(rolls) if advantage < 0 else rolls[0]
+    return result, rolls
+
 
 def roll_dx(number, sides):
-    rolls = []
-    for roll in range(number):
-        roll = random.randint(1,sides)
-        rolls.append(roll)
-    return rolls
+    """Compatibility helper returning each die result."""
+    if number < 0 or sides < 1:
+        raise ValueError("Dice count must be nonnegative and sides must be positive")
+    return [random.randint(1, sides) for _ in range(number)]
 
 
 def ability_points():
-    ability_rolls = []
-    for score in range(0,6):
-        score = roll_dx(4,6)
-        score.sort()
-        top = score[1:]
-        final = max(8,sum(top))
-        ability_rolls.append(final)
-    return ability_rolls
+    """Generate six 4d6-drop-lowest ability scores, with a floor of 8."""
+    scores = []
+    for _ in range(6):
+        rolls = sorted(roll_dx(4, 6))
+        scores.append(max(8, sum(rolls[1:])))
+    return scores

@@ -1,0 +1,297 @@
+{
+  "dagger": {
+    "name": "Dagger",
+    "category": "weapon",
+    "weapon_class": "simple",
+    "weapon_family": "dagger",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d4",
+    "damage_type": "piercing",
+    "ranges": {
+      "melee": 5,
+      "thrown_normal": 20,
+      "thrown_long": 60
+    },
+    "tags": [
+      "finesse",
+      "light",
+      "thrown"
+    ]
+  },
+  "sword_1h": {
+    "name": "Sword",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "sword",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d8",
+    "damage_type": "slashing",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": []
+  },
+  "sword_2h": {
+    "name": "Sword (2H)",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "sword",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 2,
+    "damage_dice": "2d6",
+    "damage_type": "slashing",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": [
+      "2h",
+      "heavy"
+    ]
+  },
+  "axe_1h": {
+    "name": "Axe",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "axe",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d8",
+    "damage_type": "slashing",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": []
+  },
+  "axe_2h": {
+    "name": "Axe (2H)",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "axe",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 2,
+    "damage_dice": "1d12",
+    "damage_type": "slashing",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": [
+      "2h",
+      "heavy"
+    ]
+  },
+  "hammer_1h": {
+    "name": "Hammer",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "hammer",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d8",
+    "damage_type": "bludgeoning",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": []
+  },
+  "hammer_2h": {
+    "name": "Hammer (2H)",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "hammer",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 2,
+    "damage_dice": "2d6",
+    "damage_type": "bludgeoning",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": [
+      "2h",
+      "heavy"
+    ]
+  },
+  "staff": {
+    "name": "Staff",
+    "category": "weapon",
+    "weapon_class": "simple",
+    "weapon_family": "staff",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": "flexible",
+    "damage_dice": "1d6",
+    "damage_type": "bludgeoning",
+    "damage_profiles": {
+      "off_hand_empty": "1d8",
+      "off_hand_occupied": "1d6"
+    },
+    "ranges": {
+      "melee": 5
+    },
+    "tags": [
+      "versatile",
+      "focus-capable"
+    ]
+  },
+  "longbow": {
+    "name": "Longbow",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "bow",
+    "slot": "ranged",
+    "allowed_slots": [
+      "ranged"
+    ],
+    "hands_required": 2,
+    "damage_dice": "1d8",
+    "damage_type": "piercing",
+    "ranges": {
+      "normal": 150,
+      "long": 600
+    },
+    "tags": [
+      "2h",
+      "heavy",
+      "ammunition"
+    ],
+    "ammo_type": "arrow",
+    "ammo_policy": "unlimited_regular"
+  },
+  "crossbow": {
+    "name": "Crossbow",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "crossbow",
+    "slot": "ranged",
+    "allowed_slots": [
+      "ranged",
+      "ranged_offhand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d6",
+    "damage_type": "piercing",
+    "ranges": {
+      "normal": 30,
+      "long": 120
+    },
+    "tags": [
+      "light",
+      "loading",
+      "ammunition"
+    ],
+    "ammo_type": "bolt",
+    "ammo_policy": "unlimited_regular"
+  },
+  "shield": {
+    "name": "Shield",
+    "category": "shield",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "tags": [
+      "shield"
+    ],
+    "ac_bonus": 2
+  },
+  "spellbook": {
+    "name": "Spellbook",
+    "category": "focus",
+    "slot": "off_hand",
+    "allowed_slots": [
+      "off_hand"
+    ],
+    "tags": [
+      "focus"
+    ]
+  },
+  "unarmored": {
+    "name": "Unarmored",
+    "category": "unarmored",
+    "slot": "chest",
+    "allowed_slots": [
+      "chest"
+    ],
+    "base_ac": 10
+  },
+  "leather": {
+    "name": "Leather Armor",
+    "category": "light",
+    "slot": "chest",
+    "allowed_slots": [
+      "chest"
+    ],
+    "base_ac": 11,
+    "dexterity_bonus_cap": null
+  },
+  "chain_shirt": {
+    "name": "Chain Shirt",
+    "category": "medium",
+    "slot": "chest",
+    "allowed_slots": [
+      "chest"
+    ],
+    "base_ac": 13,
+    "dexterity_bonus_cap": 2
+  },
+  "scale_mail": {
+    "name": "Scale Mail",
+    "category": "medium",
+    "slot": "chest",
+    "allowed_slots": [
+      "chest"
+    ],
+    "base_ac": 14,
+    "dexterity_bonus_cap": 2
+  },
+  "chain_mail": {
+    "name": "Chain Mail",
+    "category": "heavy",
+    "slot": "chest",
+    "allowed_slots": [
+      "chest"
+    ],
+    "base_ac": 16,
+    "dexterity_bonus_cap": 0
+  },
+  "revival_scroll": {
+    "name": "Revival Scroll",
+    "category": "consumable",
+    "slot": "consumable",
+    "effect_id": "restorative_revival",
+    "consumable": true
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "human": {
+    "bonuses": {
+      "all": 1
+    },
+    "size": "medium",
+    "speed": 30,
+    "traits": [
+      "extra_language"
+    ]
+  },
+  "elf": {
+    "bonuses": {
+      "dexterity": 2
+    },
+    "size": "medium",
+    "speed": 30,
+    "traits": [
+      "low_light_sight",
+      "keen_senses",
+      "charm_resistance",
+      "light_rest",
+      "weapon_familiarity"
+    ],
+    "subraces": {
+      "dawn": {
+        "bonuses": {
+          "intellect": 1
+        },
+        "traits": [
+          "dawn_heritage"
+        ]
+      },
+      "grove": {
+        "bonuses": {
+          "wisdom": 1
+        },
+        "traits": [
+          "grove_heritage"
+        ]
+      },
+      "dusk": {
+        "bonuses": {
+          "charisma": 1
+        },
+        "traits": [
+          "dusk_heritage"
+        ]
+      }
+    }
+  },
+  "dwarf": {
+    "bonuses": {
+      "constitution": 2
+    },
+    "size": "medium",
+    "speed": 25,
+    "traits": [
+      "low_light_sight",
+      "poison_resistance",
+      "stonecraft",
+      "weapon_familiarity",
+      "tool_familiarity"
+    ],
+    "subraces": {
+      "hearth": {
+        "bonuses": {
+          "wisdom": 1
+        },
+        "traits": [
+          "hearth_heritage"
+        ]
+      },
+      "stone": {
+        "bonuses": {
+          "strength": 2
+        },
+        "traits": [
+          "stone_heritage"
+        ]
+      }
+    }
+  },
+  "halfling": {
+    "bonuses": {
+      "dexterity": 2
+    },
+    "size": "small",
+    "speed": 25,
+    "traits": [
+      "low_roll_reroll",
+      "fear_resistance",
+      "small_space_movement"
+    ],
+    "subraces": {
+      "swift": {
+        "bonuses": {
+          "charisma": 1
+        },
+        "traits": [
+          "swift_heritage"
+        ]
+      },
+      "steadfast": {
+        "bonuses": {
+          "constitution": 1
+        },
+        "traits": [
+          "steadfast_heritage"
+        ]
+      }
+    }
+  },
+  "half-breed": {
+    "bonuses": {},
+    "size": "parent-choice",
+    "speed": "parent-choice",
+    "half_breed": true,
+    "parent_count": 2,
+    "traits": [
+      "choose_two_parent_races"
+    ]
+  }
+}

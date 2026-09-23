@@ -1,0 +1,2663 @@
+{
+  "barbarian": {
+    "hit_die": 12,
+    "saves": [
+      "strength",
+      "constitution"
+    ],
+    "armor_prof": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "weapon_prof": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      "animal handling",
+      "athletics",
+      "intimidation",
+      "nature",
+      "perception",
+      "survival"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "scale_mail"
+      },
+      "main_hand": {
+        "template_id": "axe_2h"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "barbarian_01",
+          "name": "Hard March",
+          "summary": "Keep moving through fatigue, pain, and difficult ground.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "barbarian_02",
+          "name": "Rising Temper",
+          "summary": "Build force as danger closes around you.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "barbarian_03",
+          "name": "Bone Deep",
+          "summary": "Brace against blows that would stagger another fighter.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "barbarian_04",
+          "name": "Rending Follow Through",
+          "summary": "Carry a powerful strike into a nearby opening.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "barbarian_05",
+          "name": "Long Stride",
+          "summary": "Move swiftly while wearing heavy gear.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "barbarian_06",
+          "name": "Untamed Instinct",
+          "summary": "React quickly when a threat enters view.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "barbarian_07",
+          "name": "Predator Leap",
+          "summary": "Close a gap with a sudden burst of movement.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "barbarian_08",
+          "name": "Iron Lungs",
+          "summary": "Remain effective through exhaustion and harsh conditions.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "barbarian_09",
+          "name": "Crushing Impact",
+          "summary": "Trade precision for a forceful, destabilizing hit.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "barbarian_10",
+          "name": "Untamed Recovery",
+          "summary": "Recover from a severe wound while pressure remains high.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "barbarian_11",
+          "name": "Unbroken Advance",
+          "summary": "Keep your footing when an enemy tries to halt you.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "barbarian_12",
+          "name": "Warrior’s Frame",
+          "summary": "Increase the physical limits your training can reach.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "barbarian_13",
+          "name": "Driving Blows",
+          "summary": "Push through a foe’s defenses with deliberate force.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "barbarian_14",
+          "name": "Ruinous Presence",
+          "summary": "Make nearby enemies hesitate before engaging.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "barbarian_15",
+          "name": "Lasting Fury",
+          "summary": "Sustain your combat intensity through a prolonged fight.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "barbarian_16",
+          "name": "Titan’s Endurance",
+          "summary": "Withstand punishment that would overwhelm most people.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "barbarian_17",
+          "name": "Ruin Maker",
+          "summary": "Turn a single opening into a devastating sequence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "barbarian_18",
+          "name": "Unshakable Might",
+          "summary": "Use raw strength where others would need specialized tools.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "barbarian_19",
+          "name": "Apex Training",
+          "summary": "Choose a high-level general combat discipline to refine.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "barbarian_20",
+          "name": "Primal Vanguard",
+          "summary": "Reach the highest expression of your relentless battle craft.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    }
+  },
+  "bard": {
+    "hit_die": 8,
+    "saves": [
+      "dexterity",
+      "charisma"
+    ],
+    "armor_prof": [
+      "light"
+    ],
+    "weapon_prof": [
+      "simple"
+    ],
+    "skills": [
+      "any"
+    ],
+    "skill_choices": 3,
+    "starting_gear": {
+      "chest": {
+        "template_id": "leather"
+      },
+      "main_hand": {
+        "template_id": "staff"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "bard_01",
+          "name": "Resonant Practice",
+          "summary": "Shape sound and performance into focused magical effects.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "bard_02",
+          "name": "Bright Refrain",
+          "summary": "Encourage an ally with a brief phrase or musical cue.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "bard_03",
+          "name": "Borrowed Insight",
+          "summary": "Draw a useful fact from broad study and observation.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "bard_04",
+          "name": "Silver Tongue",
+          "summary": "Improve attempts to persuade, distract, or negotiate.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "bard_05",
+          "name": "Layered Cadence",
+          "summary": "Sustain a more complex magical performance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "bard_06",
+          "name": "Counter Melody",
+          "summary": "Disrupt a hostile effect with a timely counter-pattern.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "bard_07",
+          "name": "Many Voices",
+          "summary": "Adapt your performance to different audiences and situations.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "bard_08",
+          "name": "Measured Recovery",
+          "summary": "Regain a portion of magical focus after a quiet interval.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "bard_09",
+          "name": "Enthralling Theme",
+          "summary": "Hold attention while allies reposition or act.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "bard_10",
+          "name": "Echoing Refrain",
+          "summary": "Let a supportive performance reach additional allies.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "bard_11",
+          "name": "Unfailing Poise",
+          "summary": "Maintain composure when a performance is interrupted.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "bard_12",
+          "name": "Masterwork Study",
+          "summary": "Expand the breadth of techniques you may learn.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "bard_13",
+          "name": "Spellwoven Rhythm",
+          "summary": "Blend a spell with a performance without losing tempo.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "bard_14",
+          "name": "Resonant Guard",
+          "summary": "Use a practiced phrase to steady an ally under pressure.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "bard_15",
+          "name": "Living Composition",
+          "summary": "Adapt a learned performance as the scene changes.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "bard_16",
+          "name": "Sustained Harmony",
+          "summary": "Keep a beneficial effect active through disruption.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "bard_17",
+          "name": "Voice Beyond Walls",
+          "summary": "Carry a message or performance across a broad area.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "bard_18",
+          "name": "Perfect Pitch",
+          "summary": "Recognize subtle changes in sound, speech, and spellwork.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "bard_19",
+          "name": "Grand Refrain",
+          "summary": "Strengthen a signature performance for a decisive moment.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "bard_20",
+          "name": "Legendary Presence",
+          "summary": "Command a room through skill, timing, and practiced magic.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "charisma"
+  },
+  "cleric": {
+    "hit_die": 8,
+    "saves": [
+      "wisdom",
+      "charisma"
+    ],
+    "armor_prof": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "weapon_prof": [
+      "simple"
+    ],
+    "skills": [
+      "history",
+      "insight",
+      "medicine",
+      "persuasion",
+      "religion"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "chain_shirt"
+      },
+      "main_hand": {
+        "template_id": "staff"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "cleric_01",
+          "name": "Votive Practice",
+          "summary": "Learn restorative and protective spell techniques.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "cleric_02",
+          "name": "Steadying Word",
+          "summary": "Help an ally resist fear or confusion with a brief invocation.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "cleric_03",
+          "name": "Sanctuary Mark",
+          "summary": "Create a short-lived ward around a chosen creature.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "cleric_04",
+          "name": "Renewing Touch",
+          "summary": "Channel a healing roll through direct contact.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "cleric_05",
+          "name": "Guiding Sign",
+          "summary": "Make a target easier for allies to track and engage.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "cleric_06",
+          "name": "Circle of Shelter",
+          "summary": "Extend a protective effect to nearby companions.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "cleric_07",
+          "name": "Faithful Reserve",
+          "summary": "Recover some spell focus after a period of rest.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "cleric_08",
+          "name": "Rebuke the Unquiet",
+          "summary": "Turn away an unnatural threat with forceful conviction.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "cleric_09",
+          "name": "Restorative Reach",
+          "summary": "Deliver a healing effect across a short distance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "cleric_10",
+          "name": "Steadfast Ward",
+          "summary": "Reduce the impact of one incoming hostile effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "cleric_11",
+          "name": "Shared Resolve",
+          "summary": "Let allies draw confidence from your presence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "cleric_12",
+          "name": "Consecrated Ground",
+          "summary": "Mark a small area that supports and protects allies.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "cleric_13",
+          "name": "Greater Renewal",
+          "summary": "Improve the reach or potency of restorative spellwork.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "cleric_14",
+          "name": "Unbroken Vigil",
+          "summary": "Remain alert to danger while performing a quiet rite.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "cleric_15",
+          "name": "Sanctuary Network",
+          "summary": "Link several allies to a single protective invocation.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "cleric_16",
+          "name": "Reversal Sign",
+          "summary": "Turn a portion of hostile magical force aside.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "cleric_17",
+          "name": "Beacon of Aid",
+          "summary": "Make your healing and protective effects easier to direct.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "cleric_18",
+          "name": "Lasting Benediction",
+          "summary": "Extend a beneficial effect beyond its usual duration.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "cleric_19",
+          "name": "Beacon Unbound",
+          "summary": "Project a broad protective influence in a crisis.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "cleric_20",
+          "name": "Living Covenant",
+          "summary": "Reach the highest expression of your chosen sacred practice.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "wisdom"
+  },
+  "druid": {
+    "hit_die": 8,
+    "saves": [
+      "intellect",
+      "wisdom"
+    ],
+    "armor_prof": [
+      "light",
+      "shields"
+    ],
+    "weapon_prof": [
+      "simple"
+    ],
+    "skills": [
+      "arcana",
+      "animal handling",
+      "insight",
+      "medicine",
+      "nature",
+      "perception",
+      "religion",
+      "survival"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "leather"
+      },
+      "main_hand": {
+        "template_id": "staff"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "druid_01",
+          "name": "Green Listening",
+          "summary": "Read signs in weather, plants, and animal behavior.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "druid_02",
+          "name": "Barkskin Habit",
+          "summary": "Use natural materials and stance to blunt a blow.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "druid_03",
+          "name": "Borrowed Shape",
+          "summary": "Assume a simple animal form for movement or concealment.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "druid_04",
+          "name": "Rooted Rest",
+          "summary": "Recover magical focus more effectively in a living place.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "druid_05",
+          "name": "Wild Companion",
+          "summary": "Call a small natural ally to scout or carry a message.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "druid_06",
+          "name": "Thorned Ground",
+          "summary": "Make a patch of terrain difficult for approaching foes.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "druid_07",
+          "name": "Mossbound Renewal",
+          "summary": "Recover from injury while resting among living growth.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "druid_08",
+          "name": "Aspect Shift",
+          "summary": "Adopt a practiced form suited to travel or defense.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "druid_09",
+          "name": "Storm Listener",
+          "summary": "Sense an approaching weather change or elemental disturbance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "druid_10",
+          "name": "Canopy Passage",
+          "summary": "Move through natural obstacles with unusual ease.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "druid_11",
+          "name": "Seasonal Ward",
+          "summary": "Resist one environmental hazard through adaptation.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "druid_12",
+          "name": "Many Forms",
+          "summary": "Expand the range of shapes available to your practice.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "druid_13",
+          "name": "Verdant Grasp",
+          "summary": "Use nearby growth to hinder or redirect a creature.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "druid_14",
+          "name": "Deep Root",
+          "summary": "Hold position against force and disruptive movement.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "druid_15",
+          "name": "Living Shelter",
+          "summary": "Create temporary cover from surrounding natural material.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "druid_16",
+          "name": "Elemental Poise",
+          "summary": "Remain composed amid heat, cold, wind, or heavy rain.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "druid_17",
+          "name": "Elder Aspect",
+          "summary": "Take on a powerful natural form for a brief span.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "druid_18",
+          "name": "Wilderness Bond",
+          "summary": "Share awareness with a willing natural companion.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "druid_19",
+          "name": "World’s Pulse",
+          "summary": "Sense major disturbances across a broad natural area.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "druid_20",
+          "name": "Evergreen Mastery",
+          "summary": "Reach the highest expression of your bond with living systems.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "wisdom"
+  },
+  "fighter": {
+    "hit_die": 10,
+    "saves": [
+      "strength",
+      "constitution"
+    ],
+    "armor_prof": [
+      "light",
+      "medium",
+      "heavy",
+      "shields"
+    ],
+    "weapon_prof": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      "acrobatics",
+      "animal handling",
+      "athletics",
+      "history",
+      "insight",
+      "intimidation",
+      "perception",
+      "survival"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "chain_mail"
+      },
+      "main_hand": {
+        "template_id": "sword_1h"
+      },
+      "off_hand": {
+        "template_id": "shield"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "fighter_01",
+          "name": "Weapon Familiarity",
+          "summary": "Train with a broader set of weapon patterns.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "fighter_02",
+          "name": "Guarded Step",
+          "summary": "Shift position while keeping a defensive stance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "fighter_03",
+          "name": "Measured Strike",
+          "summary": "Choose accuracy or force when making a weapon attack.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "fighter_04",
+          "name": "Battle Read",
+          "summary": "Recognize a foe’s likely next move from posture and reach.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "fighter_05",
+          "name": "Second Windup",
+          "summary": "Recover from a missed strike and prepare a quick follow-up.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "fighter_06",
+          "name": "Shield Line",
+          "summary": "Protect an adjacent ally by holding a disciplined position.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "fighter_07",
+          "name": "Weapon Pairing",
+          "summary": "Coordinate attacks with a second compatible weapon.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "fighter_08",
+          "name": "Tactical Reposition",
+          "summary": "Move an ally or yourself a short distance through a feint.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "fighter_09",
+          "name": "Armor Habit",
+          "summary": "Reduce the movement penalty of protective equipment.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "fighter_10",
+          "name": "Opening Finder",
+          "summary": "Exploit a weakness revealed during an exchange.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "fighter_11",
+          "name": "Steady Aim",
+          "summary": "Improve a ranged attack after taking time to line it up.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "fighter_12",
+          "name": "Battlefield Call",
+          "summary": "Give an ally a clear cue that improves their next action.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "fighter_13",
+          "name": "Unyielding Guard",
+          "summary": "Maintain defense while moving through a threatened area.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "fighter_14",
+          "name": "Breaking Pattern",
+          "summary": "Adapt to a repeated enemy tactic during the same fight.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "fighter_15",
+          "name": "Quick Recovery",
+          "summary": "Restore a limited reserve of physical effort between encounters.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "fighter_16",
+          "name": "Master’s Reach",
+          "summary": "Attack effectively from a more controlled position.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "fighter_17",
+          "name": "Iron Formation",
+          "summary": "Support nearby allies who hold their ground with you.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "fighter_18",
+          "name": "Perfect Timing",
+          "summary": "Turn a narrow opening into a reliable weapon attack.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "fighter_19",
+          "name": "Veteran’s Choice",
+          "summary": "Refine one trained combat technique to its highest form.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "fighter_20",
+          "name": "Peerless Combatant",
+          "summary": "Reach the highest expression of disciplined martial training.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    }
+  },
+  "monk": {
+    "hit_die": 8,
+    "saves": [
+      "strength",
+      "dexterity"
+    ],
+    "armor_prof": [],
+    "weapon_prof": [
+      "simple",
+      "martial (light)"
+    ],
+    "skills": [
+      "acrobatics",
+      "athletics",
+      "history",
+      "insight",
+      "religion",
+      "stealth"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "unarmored"
+      },
+      "main_hand": {
+        "template_id": "dagger"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "monk_01",
+          "name": "Centered Breath",
+          "summary": "Build a reserve of focus through controlled breathing.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "monk_02",
+          "name": "Flowing Step",
+          "summary": "Move through a crowded space without losing balance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "monk_03",
+          "name": "Open Palm",
+          "summary": "Disrupt a target’s stance with an unarmed strike.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "monk_04",
+          "name": "Quiet Landing",
+          "summary": "Reduce harm from a fall through practiced movement.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "monk_05",
+          "name": "Focused Flurry",
+          "summary": "Spend focus to make a quick unarmed follow-up.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "monk_06",
+          "name": "Still Mind",
+          "summary": "Clear a minor fear or distraction through concentration.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "monk_07",
+          "name": "Wall Runner",
+          "summary": "Cross a short vertical or unstable surface while moving.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "monk_08",
+          "name": "Redirecting Hand",
+          "summary": "Turn a close attack aside with precise motion.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "monk_09",
+          "name": "Long Breath",
+          "summary": "Recover focus during a brief pause.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "monk_10",
+          "name": "Pressure Point",
+          "summary": "Temporarily hinder a target with a precise strike.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "monk_11",
+          "name": "Weightless Turn",
+          "summary": "Pass through an enemy’s reach without surrendering balance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "monk_12",
+          "name": "Inner Reserve",
+          "summary": "Increase the focus available to your practiced techniques.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "monk_13",
+          "name": "Quiet Body",
+          "summary": "Resist toxins and bodily disruption through conditioning.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "monk_14",
+          "name": "Falling Leaf",
+          "summary": "Reduce harm from a long fall and remain mobile.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "monk_15",
+          "name": "Many-Step Form",
+          "summary": "Move between several nearby positions in one flowing sequence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "monk_16",
+          "name": "Empty Guard",
+          "summary": "Deflect a ranged attack with a practiced motion.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "monk_17",
+          "name": "Still Center",
+          "summary": "Maintain concentration while under physical pressure.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "monk_18",
+          "name": "Far-Reaching Palm",
+          "summary": "Project a short burst of force beyond arm’s reach.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "monk_19",
+          "name": "Perfect Breath",
+          "summary": "Recover focus rapidly after a decisive effort.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "monk_20",
+          "name": "Unbroken Flow",
+          "summary": "Reach the highest expression of movement and focused discipline.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    }
+  },
+  "paladin": {
+    "hit_die": 10,
+    "saves": [
+      "wisdom",
+      "charisma"
+    ],
+    "armor_prof": [
+      "light",
+      "medium",
+      "heavy",
+      "shields"
+    ],
+    "weapon_prof": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      "athletics",
+      "insight",
+      "intimidation",
+      "medicine",
+      "persuasion",
+      "religion"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "chain_mail"
+      },
+      "main_hand": {
+        "template_id": "sword_1h"
+      },
+      "off_hand": {
+        "template_id": "shield"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "paladin_01",
+          "name": "Vowed Purpose",
+          "summary": "Choose a personal principle that guides your conduct.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "paladin_02",
+          "name": "Protective Bearing",
+          "summary": "Steady an ally nearby through a calm, resolute presence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "paladin_03",
+          "name": "Restoring Palm",
+          "summary": "Use a healing roll through direct contact.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "paladin_04",
+          "name": "Radiant Edge",
+          "summary": "Add a burst of chosen energy to a successful weapon strike.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "paladin_05",
+          "name": "Guarding Challenge",
+          "summary": "Draw an enemy’s attention away from a vulnerable ally.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "paladin_06",
+          "name": "Measured Aura",
+          "summary": "Help nearby allies resist a specific hostile influence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "paladin_07",
+          "name": "Vowbound Mount",
+          "summary": "Call a trained mount suited to travel and pursuit.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "paladin_08",
+          "name": "Cleansing Touch",
+          "summary": "End a minor harmful condition with a healing effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "paladin_09",
+          "name": "Resolute Aura",
+          "summary": "Extend your protective influence to a wider area.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "paladin_10",
+          "name": "Vow Technique",
+          "summary": "Unlock a special ability tied to your chosen principle.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "paladin_11",
+          "name": "Guided Strike",
+          "summary": "Improve an attack against a marked foe.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "paladin_12",
+          "name": "Shared Courage",
+          "summary": "Help allies recover from a failed attempt to resist fear.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "paladin_13",
+          "name": "Warding Circle",
+          "summary": "Protect nearby companions from a chosen form of harm.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "paladin_14",
+          "name": "Restoring Surge",
+          "summary": "Apply a stronger healing roll to a wounded ally.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "paladin_15",
+          "name": "Steadfast Vow",
+          "summary": "Remain effective when your guiding principle is tested.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "paladin_16",
+          "name": "Distant Aid",
+          "summary": "Deliver a protective effect across a short distance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "paladin_17",
+          "name": "Radiant Passage",
+          "summary": "Move through a threatened space without slowing.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "paladin_18",
+          "name": "Unbroken Aura",
+          "summary": "Maintain an area of protection through disruption.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "paladin_19",
+          "name": "Vow’s Fulfillment",
+          "summary": "Strengthen one ability tied to your chosen principle.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "paladin_20",
+          "name": "Exemplar of Resolve",
+          "summary": "Reach the highest expression of disciplined protection.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "charisma"
+  },
+  "ranger": {
+    "hit_die": 10,
+    "saves": [
+      "strength",
+      "dexterity"
+    ],
+    "armor_prof": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "weapon_prof": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      "animal handling",
+      "athletics",
+      "insight",
+      "investigation",
+      "nature",
+      "perception",
+      "stealth",
+      "survival"
+    ],
+    "skill_choices": 3,
+    "starting_gear": {
+      "chest": {
+        "template_id": "scale_mail"
+      },
+      "ranged": {
+        "template_id": "longbow"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "ranger_01",
+          "name": "Trail Reader",
+          "summary": "Track creatures through signs left on varied terrain.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "ranger_02",
+          "name": "Hunter’s Mark",
+          "summary": "Focus attention on a target to aid pursuit and attacks.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "ranger_03",
+          "name": "Fieldcraft",
+          "summary": "Prepare simple remedies and tools from local materials.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "ranger_04",
+          "name": "Ambush Sense",
+          "summary": "Notice likely threats before entering a dangerous area.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "ranger_05",
+          "name": "Twin Rhythm",
+          "summary": "Coordinate a weapon attack with an off-hand strike.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "ranger_06",
+          "name": "Companion Bond",
+          "summary": "Train a small animal companion to scout and assist.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "ranger_07",
+          "name": "Terrain Runner",
+          "summary": "Move through natural obstacles with less delay.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "ranger_08",
+          "name": "Quiet Shot",
+          "summary": "Reduce the sound and visibility of a ranged attack.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "ranger_09",
+          "name": "Adaptive Quarry",
+          "summary": "Change your focus quickly when a target escapes.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "ranger_10",
+          "name": "Trail Shelter",
+          "summary": "Create a temporary safe resting place in the wild.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "ranger_11",
+          "name": "Long Pursuit",
+          "summary": "Maintain a target’s trail across difficult ground.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "ranger_12",
+          "name": "Counter Hunter",
+          "summary": "Recognize and blunt another creature’s tracking tactics.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "ranger_13",
+          "name": "Shared Mark",
+          "summary": "Let allies benefit from your focus on a target.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "ranger_14",
+          "name": "Far Sight",
+          "summary": "Improve observation across long distances.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "ranger_15",
+          "name": "Skirmisher’s Route",
+          "summary": "Move through danger after making a successful attack.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "ranger_16",
+          "name": "Wild Remedy",
+          "summary": "Treat a natural toxin or environmental ailment.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "ranger_17",
+          "name": "Relentless Pursuit",
+          "summary": "Keep pace with a fleeing target through difficult terrain.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "ranger_18",
+          "name": "Companion’s Guard",
+          "summary": "Your companion helps shield an ally from an attack.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "ranger_19",
+          "name": "Perfect Quarry",
+          "summary": "Maintain focus on a chosen target through concealment.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "ranger_20",
+          "name": "Master of the Trail",
+          "summary": "Reach the highest expression of pursuit and fieldcraft.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "wisdom"
+  },
+  "rogue": {
+    "hit_die": 8,
+    "saves": [
+      "dexterity",
+      "intellect"
+    ],
+    "armor_prof": [
+      "light"
+    ],
+    "weapon_prof": [
+      "simple",
+      "martial (finesse or light)"
+    ],
+    "skills": [
+      "acrobatics",
+      "athletics",
+      "deception",
+      "insight",
+      "intimidation",
+      "investigation",
+      "perception",
+      "performance",
+      "persuasion",
+      "sleight of hand",
+      "stealth"
+    ],
+    "skill_choices": 4,
+    "starting_gear": {
+      "chest": {
+        "template_id": "leather"
+      },
+      "main_hand": {
+        "template_id": "dagger"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "rogue_01",
+          "name": "Quiet Entry",
+          "summary": "Move without drawing notice when using available cover.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "rogue_02",
+          "name": "Precise Opening",
+          "summary": "Deal greater damage when an ally distracts your target.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "rogue_03",
+          "name": "Quick Hands",
+          "summary": "Manipulate a small object without interrupting movement.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "rogue_04",
+          "name": "Escape Route",
+          "summary": "Slip away from a nearby threat after a close exchange.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "rogue_05",
+          "name": "False Tell",
+          "summary": "Create a feint that opens a target to an ally.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "rogue_06",
+          "name": "Light Footing",
+          "summary": "Cross a hazardous surface with practiced balance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "rogue_07",
+          "name": "Reliable Skill",
+          "summary": "Treat a practiced task as competent under pressure.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "rogue_08",
+          "name": "Shadow Blend",
+          "summary": "Use dim light and cover to break line of sight.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "rogue_09",
+          "name": "Trap Reader",
+          "summary": "Identify likely triggers and weak points in simple mechanisms.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "rogue_10",
+          "name": "Quick Recovery",
+          "summary": "Regain composure after narrowly avoiding a threat.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "rogue_11",
+          "name": "Disrupting Cut",
+          "summary": "A precise strike can hinder a target’s next movement.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "rogue_12",
+          "name": "Borrowed Identity",
+          "summary": "Adopt a convincing manner based on careful observation.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "rogue_13",
+          "name": "Slip the Net",
+          "summary": "Escape a restraint or confined space with practiced movement.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "rogue_14",
+          "name": "Unseen Route",
+          "summary": "Move between patches of cover without exposing your path.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "rogue_15",
+          "name": "Tactical Read",
+          "summary": "Predict the safest route through a contested area.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "rogue_16",
+          "name": "Deep Deception",
+          "summary": "Maintain a false identity through sustained scrutiny.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "rogue_17",
+          "name": "Opportunity Chain",
+          "summary": "Turn one successful opening into a second quick maneuver.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "rogue_18",
+          "name": "Vanishing Act",
+          "summary": "Disappear from immediate notice using a practiced diversion.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "rogue_19",
+          "name": "Perfect Setup",
+          "summary": "Create an opening that makes a precise strike highly reliable.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "rogue_20",
+          "name": "Master of Intrigue",
+          "summary": "Reach the highest expression of misdirection and precision.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    }
+  },
+  "sorcerer": {
+    "hit_die": 6,
+    "saves": [
+      "constitution",
+      "charisma"
+    ],
+    "armor_prof": [],
+    "weapon_prof": [
+      "simple"
+    ],
+    "skills": [
+      "arcana",
+      "deception",
+      "insight",
+      "intimidation",
+      "persuasion",
+      "religion"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "unarmored"
+      },
+      "main_hand": {
+        "template_id": "staff"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "sorcerer_01",
+          "name": "Innate Spark",
+          "summary": "Shape the first reliable expression of your inner magic.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "sorcerer_02",
+          "name": "Raw Reserve",
+          "summary": "Increase the magical focus available to your own spellwork.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "sorcerer_03",
+          "name": "Force Shaping",
+          "summary": "Alter a spell’s reach, target, or outward form.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "sorcerer_04",
+          "name": "Unstable Surge",
+          "summary": "Release a stronger effect at the risk of losing control.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "sorcerer_05",
+          "name": "Bloodline Echo",
+          "summary": "Reveal a personal magical quality passed through your lineage.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "sorcerer_06",
+          "name": "Spell Tether",
+          "summary": "Maintain a chosen spell through a brief disruption.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "sorcerer_07",
+          "name": "Quickened Casting",
+          "summary": "Reduce the time needed to release a familiar effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "sorcerer_08",
+          "name": "Arcane Shelter",
+          "summary": "Turn a portion of incoming spell force aside.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "sorcerer_09",
+          "name": "Twin Current",
+          "summary": "Direct one spell effect toward an additional target.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "sorcerer_10",
+          "name": "Deep Reservoir",
+          "summary": "Recover a portion of magical focus after a quiet interval.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "sorcerer_11",
+          "name": "Elemental Voice",
+          "summary": "Specialize your magic toward one chosen energy type.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "sorcerer_12",
+          "name": "Spell Reversal",
+          "summary": "Attempt to interrupt a nearby spell as it forms.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "sorcerer_13",
+          "name": "Unbound Shape",
+          "summary": "Reshape an ongoing effect within its original limits.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "sorcerer_14",
+          "name": "Hidden Current",
+          "summary": "Sense active magical forces nearby.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "sorcerer_15",
+          "name": "Overflowing Core",
+          "summary": "Increase the force or duration of a personal spell.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "sorcerer_16",
+          "name": "Spell Echo",
+          "summary": "Repeat a modest part of a recently cast effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "sorcerer_17",
+          "name": "Living Conduit",
+          "summary": "Share a portion of your magical reserve with an ally.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "sorcerer_18",
+          "name": "Storm Within",
+          "summary": "Maintain control while releasing several effects in sequence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "sorcerer_19",
+          "name": "Primal Expression",
+          "summary": "Choose a signature spell technique to refine.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "sorcerer_20",
+          "name": "Master of the Inner Flame",
+          "summary": "Reach the highest expression of innate spellcraft.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "charisma"
+  },
+  "warlock": {
+    "hit_die": 8,
+    "saves": [
+      "wisdom",
+      "charisma"
+    ],
+    "armor_prof": [
+      "light"
+    ],
+    "weapon_prof": [
+      "simple"
+    ],
+    "skills": [
+      "arcana",
+      "deception",
+      "history",
+      "intimidation",
+      "investigation",
+      "nature",
+      "religion"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "leather"
+      },
+      "main_hand": {
+        "template_id": "sword_1h"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "warlock_01",
+          "name": "Bargain Mark",
+          "summary": "Establish the personal sign of your otherworldly bargain.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "warlock_02",
+          "name": "Borrowed Gift",
+          "summary": "Learn one unusual technique granted by your distant source.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "warlock_03",
+          "name": "Dark Reserve",
+          "summary": "Increase the magical focus available through your bargain.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "warlock_04",
+          "name": "Grasping Shade",
+          "summary": "Hinder a target with a brief surge of borrowed force.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "warlock_05",
+          "name": "Pact Weapon",
+          "summary": "Bind a chosen weapon to your own magical practice.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "warlock_06",
+          "name": "Far Whisper",
+          "summary": "Send a short message to a known creature at a distance.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "warlock_07",
+          "name": "Borrowed Sight",
+          "summary": "See through darkness or concealment for a brief span.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "warlock_08",
+          "name": "Bargain Ward",
+          "summary": "Turn aside a portion of a hostile magical effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "warlock_09",
+          "name": "Distant Hand",
+          "summary": "Manipulate an unattended object from across a room.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "warlock_10",
+          "name": "Renewed Bargain",
+          "summary": "Recover spell focus through a renewed pact ritual.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "warlock_11",
+          "name": "Withering Sign",
+          "summary": "Mark a foe so your attacks press their defenses.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "warlock_12",
+          "name": "Hidden Passage",
+          "summary": "Step through one patch of shadow into another nearby.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "warlock_13",
+          "name": "Gifted Resilience",
+          "summary": "Endure a chosen environmental or magical hazard.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "warlock_14",
+          "name": "Source’s Counsel",
+          "summary": "Ask your distant source for a narrow piece of insight.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "warlock_15",
+          "name": "Bargain Chain",
+          "summary": "Link a target to a persistent, weakening effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "warlock_16",
+          "name": "Unseen Servant",
+          "summary": "Call a temporary helper for a simple task.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "warlock_17",
+          "name": "Stolen Moment",
+          "summary": "Briefly resist a condition that would interrupt your action.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "warlock_18",
+          "name": "Deep Pact",
+          "summary": "Choose one learned bargain technique to strengthen.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "warlock_19",
+          "name": "Source Unveiled",
+          "summary": "Reveal a more powerful aspect of your distant source.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "warlock_20",
+          "name": "Master of the Bargain",
+          "summary": "Reach the highest expression of pact-bound magic.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "charisma"
+  },
+  "wizard": {
+    "hit_die": 6,
+    "saves": [
+      "intellect",
+      "wisdom"
+    ],
+    "armor_prof": [],
+    "weapon_prof": [
+      "simple"
+    ],
+    "skills": [
+      "arcana",
+      "history",
+      "insight",
+      "investigation",
+      "medicine",
+      "religion"
+    ],
+    "skill_choices": 2,
+    "starting_gear": {
+      "chest": {
+        "template_id": "unarmored"
+      },
+      "main_hand": {
+        "template_id": "staff"
+      }
+    },
+    "subclasses": [],
+    "progression": {
+      "1": [
+        {
+          "id": "wizard_01",
+          "name": "Working Formula",
+          "summary": "Record a reliable spell pattern in a personal grimoire.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        }
+      ],
+      "2": [
+        {
+          "id": "wizard_02",
+          "name": "Prepared Method",
+          "summary": "Choose a limited set of studied effects before a rest.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        }
+      ],
+      "3": [
+        {
+          "id": "wizard_03",
+          "name": "Arcane Analysis",
+          "summary": "Identify the structure and likely purpose of a spell.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 3
+        }
+      ],
+      "4": [
+        {
+          "id": "wizard_04",
+          "name": "Efficient Casting",
+          "summary": "Reduce the focus cost of one well-practiced effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 4
+        }
+      ],
+      "5": [
+        {
+          "id": "wizard_05",
+          "name": "Protective Formula",
+          "summary": "Prepare a ward that blunts a hostile spell.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 5
+        }
+      ],
+      "6": [
+        {
+          "id": "wizard_06",
+          "name": "Expanded Grimoire",
+          "summary": "Record additional formulae for later study.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 6
+        }
+      ],
+      "7": [
+        {
+          "id": "wizard_07",
+          "name": "Counter Pattern",
+          "summary": "Attempt to disrupt a spell as it is being formed.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 7
+        }
+      ],
+      "8": [
+        {
+          "id": "wizard_08",
+          "name": "Ritual Method",
+          "summary": "Perform a studied effect slowly without spending normal focus.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 8
+        }
+      ],
+      "9": [
+        {
+          "id": "wizard_09",
+          "name": "Spell Geometry",
+          "summary": "Alter the placement or shape of a prepared effect.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 9
+        }
+      ],
+      "10": [
+        {
+          "id": "wizard_10",
+          "name": "Arcane Recovery",
+          "summary": "Regain spell focus after studying during a quiet interval.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 10
+        }
+      ],
+      "11": [
+        {
+          "id": "wizard_11",
+          "name": "Stored Formula",
+          "summary": "Prepare a spell for release at a chosen later moment.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 11
+        }
+      ],
+      "12": [
+        {
+          "id": "wizard_12",
+          "name": "Layered Ward",
+          "summary": "Maintain more than one protective formula at a time.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 12
+        }
+      ],
+      "13": [
+        {
+          "id": "wizard_13",
+          "name": "Formula Insight",
+          "summary": "Learn a new technique by examining magical evidence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 13
+        }
+      ],
+      "14": [
+        {
+          "id": "wizard_14",
+          "name": "Spell Reflection",
+          "summary": "Redirect a portion of a hostile spell’s force.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 14
+        }
+      ],
+      "15": [
+        {
+          "id": "wizard_15",
+          "name": "Rapid Notation",
+          "summary": "Prepare a studied formula with minimal delay.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 15
+        }
+      ],
+      "16": [
+        {
+          "id": "wizard_16",
+          "name": "Living Grimoire",
+          "summary": "Recall a recorded effect without consulting your book.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 16
+        }
+      ],
+      "17": [
+        {
+          "id": "wizard_17",
+          "name": "Distant Formula",
+          "summary": "Extend the reach of a carefully prepared spell.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 17
+        }
+      ],
+      "18": [
+        {
+          "id": "wizard_18",
+          "name": "Spell Network",
+          "summary": "Link two prepared effects to support one another.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 18
+        }
+      ],
+      "19": [
+        {
+          "id": "wizard_19",
+          "name": "Perfected Formula",
+          "summary": "Choose one spell technique to refine substantially.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 19
+        }
+      ],
+      "20": [
+        {
+          "id": "wizard_20",
+          "name": "Master of Arcane Study",
+          "summary": "Reach the highest expression of deliberate spellcraft.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 20
+        }
+      ]
+    },
+    "subclass_hook": true,
+    "progression_policy": {
+      "unlock": "sequential_within_class",
+      "purchase": "spend_xp_earned_at_character_level",
+      "auto_grant": false
+    },
+    "spellcasting_ability": "intellect"
+  }
+}

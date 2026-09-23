@@ -1,0 +1,26 @@
+{
+  "burning": {
+    "name": "Burning",
+    "description": "The target is alight and takes recurring fire damage.",
+    "duration": {"turns": 2, "tick": "start_of_affected_turn"},
+    "reapplication": "refresh_duration",
+    "primitives": [{"kind": "damage_over_time", "formula": "1d4", "damage_type": "fire", "timing": "start_of_affected_turn"}],
+    "removal": ["duration_expired", "extinguished"]
+  },
+  "bound_in_briar": {
+    "name": "Bound in Briar",
+    "description": "Thorny growth holds the target in place.",
+    "duration": {"turns": 1, "tick": "start_of_affected_turn"},
+    "reapplication": "refresh_duration",
+    "primitives": [{"kind": "movement_set", "feet": 0}],
+    "removal": ["duration_expired", "escaped"]
+  },
+  "off_balance": {
+    "name": "Off Balance",
+    "description": "The target’s next attack is less controlled.",
+    "duration": {"turns": 1, "tick": "start_of_affected_turn"},
+    "reapplication": "refresh_duration",
+    "primitives": [{"kind": "attack_disadvantage", "uses": 1}],
+    "removal": ["duration_expired", "used"]
+  }
+}

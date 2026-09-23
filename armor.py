@@ -19,8 +19,8 @@ class MediumArmor(Armor):
     def __init__(self, name, base_ac):
         super().__init__(name, base_ac, 'medium')
 
-    def calc_a(self, dex_mod):
-            return self.base_ac + min(dex_mod,2)
+    def calc_ac(self, dex_mod):
+        return self.base_ac + min(dex_mod, 2)
 
     
 class HeavyArmor(Armor):
@@ -33,4 +33,3 @@ class HeavyArmor(Armor):
 class Unarmored(Armor):
     def __init__(self):
         super().__init__('unarmored', 10, 'unarmored')
-
