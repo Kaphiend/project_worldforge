@@ -292,7 +292,9 @@
     "category": "consumable",
     "slot": "consumable",
     "effect_id": "restorative_revival",
-    "consumable": true
+    "consumable": true,
+    "stackable": true,
+    "max_stack": 20
   },
   "leather_cap": {
     "name": "Leather Cap",
@@ -365,6 +367,8 @@
     "category": "consumable",
     "slot": "consumable",
     "effect_id": "healing_potion_effect",
-    "consumable": true
+    "consumable": true,
+    "stackable": true,
+    "max_stack": 20
   }
 }

@@ -111,6 +111,107 @@
       }
     }
   },
+  "gnome": {
+    "bonuses": {
+      "intellect": 2
+    },
+    "size": "small",
+    "speed": 25,
+    "traits": [
+      "low_light_sight",
+      "gnomish_cunning"
+    ],
+    "subraces": {
+      "forest": {
+        "bonuses": {
+          "dexterity": 1
+        },
+        "traits": [
+          "speak_with_small_beasts"
+        ]
+      },
+      "rock": {
+        "bonuses": {
+          "constitution": 1
+        },
+        "traits": [
+          "tinker_crafting"
+        ]
+      }
+    }
+  },
+  "orc": {
+    "bonuses": {
+      "strength": 2
+    },
+    "size": "medium",
+    "speed": 30,
+    "traits": [
+      "low_light_sight",
+      "relentless_endurance",
+      "aggressive"
+    ]
+  },
+  "dragonborn": {
+    "bonuses": {
+      "strength": 2,
+      "charisma": 1
+    },
+    "size": "medium",
+    "speed": 30,
+    "traits": [
+      "breath_weapon",
+      "draconic_resistance"
+    ],
+    "subraces": {
+      "red": {
+        "bonuses": {},
+        "traits": ["breath_fire"]
+      },
+      "blue": {
+        "bonuses": {},
+        "traits": ["breath_lightning"]
+      },
+      "green": {
+        "bonuses": {},
+        "traits": ["breath_poison"]
+      },
+      "black": {
+        "bonuses": {},
+        "traits": ["breath_acid"]
+      },
+      "white": {
+        "bonuses": {},
+        "traits": ["breath_cold"]
+      }
+    }
+  },
+  "tiefling": {
+    "bonuses": {
+      "charisma": 2,
+      "intellect": 1
+    },
+    "size": "medium",
+    "speed": 30,
+    "traits": [
+      "low_light_sight",
+      "hellish_resistance"
+    ],
+    "subraces": {
+      "infernal": {
+        "bonuses": {},
+        "traits": ["infernal_legacy"]
+      },
+      "abyssal": {
+        "bonuses": {},
+        "traits": ["abyssal_legacy"]
+      },
+      "chthonic": {
+        "bonuses": {},
+        "traits": ["chthonic_legacy"]
+      }
+    }
+  },
   "half-breed": {
     "bonuses": {},
     "size": "parent-choice",

@@ -1,4 +1,11 @@
+"""Load the project's fixed-cell character sheets into animation frame lists.
+
+Current cells are 100 by 100 pixels. Update both row maps below when art uses
+a different row order; keeping the returned keys (idle/walk/attack1/attack2/
+ranged/hurt/dead) stable lets gameplay use new art without gameplay edits.
+"""
 import pygame
+from runtime_paths import asset_path
 
 CELL_SIZE = 100
 
@@ -25,7 +32,7 @@ SIX_ROW_ANIMATIONS = {
 
 
 def load_spritesheet(path):
-    sheet = pygame.image.load(path).convert_alpha()
+    sheet = pygame.image.load(str(asset_path(path))).convert_alpha()
     columns = sheet.get_width() // CELL_SIZE
     rows = sheet.get_height() // CELL_SIZE
     frames = {}

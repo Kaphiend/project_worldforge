@@ -30,8 +30,9 @@ def _encode_message(message):
     return (json.dumps(message) + "\n").encode()
 
 
-def _player_state(x, y, anim, facing, actor_data=None):
-    return {"x": x, "y": y, "anim": anim, "facing": facing, "actor": actor_data}
+def _player_state(x, y, anim, facing, actor_data=None, speech=None):
+    return {"x": x, "y": y, "anim": anim, "facing": facing,
+            "actor": actor_data, "speech": speech}
 
 
 class HostSession:
@@ -143,9 +144,10 @@ class HostSession:
             with self.lock:
                 return [dict(state) for state in self.states.values() if state.get("actor")]
 
-        def send_state(x, y, anim, facing, actor_data=None):
+        def send_state(x, y, anim, facing, actor_data=None, speech=None):
             with self.lock:
-                self.host_state.update(_player_state(x, y, anim, facing, actor_data))
+                self.host_state.update(_player_state(x, y, anim, facing,
+                                                     actor_data, speech))
 
         return get_other_players, send_state
 
@@ -179,7 +181,11 @@ class HostSession:
                 for entry in public_state.get("actors", {}).values():
                     if entry.get("team") == "enemies":
                         enemy_ids.add(entry["id"])
-                        entry["data"] = {"name": entry.get("data", {}).get("name", "Enemy")}
+                        enemy_data = entry.get("data", {})
+                        entry["data"] = {
+                            "name": enemy_data.get("name", "Enemy"),
+                            "avatar": enemy_data.get("avatar"),
+                        }
                 public_state["order"] = [
                     ({"id": entry["id"]} if entry.get("id") in enemy_ids else entry)
                     for entry in public_state.get("order", [])
@@ -248,9 +254,10 @@ def client_callbacks(session):
         return [dict(state) for player_id, state in players.items()
                 if player_id != own_id and state.get("actor")]
 
-    def send_state(x, y, anim, facing, actor_data=None):
+    def send_state(x, y, anim, facing, actor_data=None, speech=None):
         try:
-            conn.sendall(_encode_message(_player_state(x, y, anim, facing, actor_data)))
+            conn.sendall(_encode_message(_player_state(x, y, anim, facing,
+                                                       actor_data, speech)))
         except OSError:
             pass
 

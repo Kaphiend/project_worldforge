@@ -152,23 +152,43 @@ def _distance_disadvantage(definition, distance, ranged, adjacent_distance=None)
 
 
 def attack(actor, target, distance_feet, *, melee_distance_feet=None,
-           adjacent_distance_feet=None, line_of_sight=True):
-    """Resolve one basic attack and return a serializable combat-log event."""
-    weapon, definition, dual_wield = selected_weapon(actor)
+           adjacent_distance_feet=None, line_of_sight=True,
+           attack_mode="primary"):
+    """Resolve a primary weapon attack or a separately selected thrown attack.
+
+    ``primary`` always uses the selected weapon set and never auto-throws a
+    thrown-tagged hand weapon. ``throw`` explicitly uses the main-hand weapon
+    and is only legal for a template tagged ``thrown``.
+    """
+    equipment = _equipment(actor)
+    thrown_attack = attack_mode == "throw"
+    if thrown_attack:
+        weapon = equipment.get("main_hand")
+        definition = _definition(weapon)
+        dual_wield = False
+        if not _is_weapon(weapon) or "thrown" not in definition.get("tags", []):
+            return {"kind": "attack", "success": False,
+                    "message": "Your main-hand weapon cannot be thrown."}
+    elif attack_mode == "ranged":
+        weapon = equipment.get("ranged")
+        definition = _definition(weapon)
+        dual_wield = False
+        if not _is_weapon(weapon):
+            return {"kind": "attack", "success": False,
+                    "message": "No ranged weapon is equipped."}
+    else:
+        weapon, definition, dual_wield = selected_weapon(actor)
     if weapon is None:
         return {"kind": "attack", "success": False, "message": "No attack weapon is equipped."}
-    ranged = _value(actor, "active_weapon_set", "melee") == "ranged" and weapon == _equipment(actor).get("ranged")
+    ranged = (thrown_attack or attack_mode == "ranged" or
+              (_value(actor, "active_weapon_set", "melee") == "ranged"
+               and weapon == equipment.get("ranged")))
     ranges = definition.get("ranges", {})
     reach = ranges.get("melee", 5)
-    melee_distance = distance_feet if melee_distance_feet is None else melee_distance_feet
-    thrown_attack = (
-        not ranged and "thrown" in definition.get("tags", [])
-        and melee_distance > reach
-    )
     if thrown_attack:
-        ranged = True
         ranges = {"normal": ranges.get("thrown_normal", 0),
                   "long": ranges.get("thrown_long", 0)}
+    melee_distance = distance_feet if melee_distance_feet is None else melee_distance_feet
     if ranged:
         if not line_of_sight:
             return {"kind": "attack", "success": False, "message": "No clear line of sight."}
@@ -196,6 +216,7 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
     event = {
         "kind": "attack", "success": True, "attacker": _value(actor, "name", "Actor"),
         "target": _value(target, "name", "Target"), "weapon": definition.get("name", "Weapon"),
+        "ranged": ranged, "thrown": thrown_attack,
         "rolls": dice, "natural": natural, "total": total, "target_ac": target_ac,
         "ability": ability, "ability_modifier": ability_mod,
         "proficiency_bonus": proficiency, "disadvantage": disadvantage,

@@ -1,18 +1,29 @@
 """Application entry point and session coordinator."""
 import atexit
 
+from classes import SCENARIOS
 from creation_screen import run_creation
-from game import run_game
+from game import DEFAULT_SCENARIO, run_game
 from menu import connect_session, select_mode
 from networking import MAX_PLAYERS, client_callbacks
 from storage import unlock_actor
 
 
 def _spawn_position(mode, session):
+    # player_spawns in scenarios.json is the co-op spawn ring: 8 points for
+    # the 8-player party cap (host + 7 joiners). Host always takes spawns[0];
+    # a joiner's "playerN" id (N starts at 1, see networking.py) maps
+    # straight to spawns[N]. Falls back to the old grid math if a scenario
+    # doesn't define spawns, so nothing breaks on empty/short spawn lists.
+    spawns = SCENARIOS.get(DEFAULT_SCENARIO, {}).get("player_spawns") or []
     if mode == "host":
+        if spawns:
+            return tuple(spawns[0])
         return 70, 120
     if mode == "join":
         player_number = int(session["player_id"].removeprefix("player"))
+        if spawns:
+            return tuple(spawns[player_number % len(spawns)])
         player_index = player_number % MAX_PLAYERS
         return 70 + (player_index % 4) * 180, 120 + (player_index // 4) * 230
     return 200, 300
@@ -82,6 +93,14 @@ def main():
             actor, get_other_players, send_state, multiplayer=mode != "single",
             combat_transport=combat_transport, party_status=party_status,
             invite_address=invite_address)
+        # atexit.register(unlock_actor, ...) above is only a safety net for
+        # a crash or a window-close quit -- it doesn't fire on "return to
+        # menu", since the process keeps running through the `while True`
+        # loop. Without this explicit call, this actor's .lock file is
+        # never removed, so list_actors() in creation_screen.py hides it
+        # for the rest of this run every time a player backs out to menu
+        # instead of quitting.
+        unlock_actor(actor.id)
         _close_session(session, mode)
         if game_result != "menu":
             break

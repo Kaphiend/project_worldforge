@@ -1,10 +1,11 @@
 """Character save files and session locks."""
 import json
-from pathlib import Path
+import sys
+from runtime_paths import resource_path, user_data_path
 
 
-SAVE_DIR = Path("saves")
-SAVE_DIR.mkdir(exist_ok=True)
+SAVE_DIR = (user_data_path("saves") if getattr(sys, "frozen", False)
+            else resource_path("saves"))
 
 
 def save_actor(actor):
@@ -24,6 +25,28 @@ def load_actor(actor_id):
         data.setdefault('downed', data['dead'])
         data.pop('dead', None)
     data.setdefault('classes', [])
+    if not isinstance(data.get('spell_hotbars'), list):
+        data['spell_hotbars'] = []
+    bars = data['spell_hotbars']
+    while len(bars) < 4:
+        bars.append([None] * 10)
+    for bar_index in range(4):
+        if not isinstance(bars[bar_index], list):
+            bars[bar_index] = [None] * 10
+        bars[bar_index] = (bars[bar_index] + [None] * 10)[:10]
+    if not any(any(bar) for bar in bars):
+        bars[0][0] = 'action:weapon_attack'
+    elif not any(item in {'action:weapon_attack', 'action:ranged_weapon_attack'}
+                 for bar in bars for item in bar if isinstance(item, str)):
+        first_empty = next(((bar, slot) for bar in bars
+                            for slot, item in enumerate(bar) if item is None), None)
+        if first_empty:
+            bar, slot = first_empty
+            bars[bar][slot] = 'action:weapon_attack'
+    if not isinstance(data.get('quick_items'), dict):
+        data['quick_items'] = {}
+    data['quick_items'].setdefault('q', None)
+    data['quick_items'].setdefault('e', None)
     data.setdefault('skills', [])
     data.setdefault('xp_total', 0)
     data.setdefault('xp_earned_by_level', {})
@@ -40,7 +63,22 @@ def load_actor(actor_id):
             spell_id for spell_id, spell in SPELLS.items()
             if class_names.intersection(spell.get('classes', []))
             and spell.get('prerequisite_class_level', 1) <= level
+            and (not spell.get('acquisition')
+                 or spell.get('acquisition') == 'starting_cantrip')
         ]
+    if not isinstance(data.get('known_spells'), list):
+        data['known_spells'] = []
+    class_names = {entry.get('name') for entry in data.get('classes', [])}
+    if not class_names and data.get('char_class'):
+        class_names.add(data['char_class'])
+    for spell_id, spell in SPELLS.items():
+        if spell.get('cantrip') and class_names.intersection(spell.get('classes', [])):
+            if spell_id not in data['known_spells']:
+                data['known_spells'].append(spell_id)
+    if not isinstance(data.get('prepared_spells'), list):
+        data['prepared_spells'] = list(data['known_spells'])
+    data['prepared_spells'] = [spell_id for spell_id in data['prepared_spells']
+                               if spell_id in data['known_spells']]
     if 'known_abilities' not in data:
         class_names = {entry.get('name') for entry in data.get('classes', [])}
         if not class_names and data.get('char_class'):

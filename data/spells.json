@@ -1,4 +1,32 @@
 {
+  "arcane_spark": {
+    "name": "Arcane Spark",
+    "classes": ["bard", "cleric", "druid", "paladin", "ranger", "sorcerer", "warlock", "wizard"],
+    "tier": 0,
+    "cantrip": true,
+    "spell_point_cost": 0,
+    "casting_time": "action",
+    "targeting": {"mode": "one_target", "range_feet": 60, "requires_line_of_sight": true},
+    "resolution": {"kind": "spell_attack"},
+    "effects": {"hit": [{"kind": "damage", "formula": "1d8", "damage_type": "force"}], "miss": []},
+    "description": "A forceful bolt of raw magic strikes a distant foe.",
+    "prerequisite_class_level": 1,
+    "acquisition": "starting_cantrip"
+  },
+  "frost_needle": {
+    "name": "Frost Needle",
+    "classes": ["bard", "cleric", "druid", "paladin", "ranger", "sorcerer", "warlock", "wizard"],
+    "tier": 0,
+    "cantrip": true,
+    "spell_point_cost": 0,
+    "casting_time": "action",
+    "targeting": {"mode": "one_target", "range_feet": 60, "requires_line_of_sight": true},
+    "resolution": {"kind": "spell_attack"},
+    "effects": {"hit": [{"kind": "damage", "formula": "1d6", "damage_type": "cold"}], "miss": []},
+    "description": "A narrow shard of ice flies toward a creature you can see.",
+    "prerequisite_class_level": 1,
+    "acquisition": "starting_cantrip"
+  },
   "restorative_revival": {
     "name": "Restorative Revival",
     "classes": [

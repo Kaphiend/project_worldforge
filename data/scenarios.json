@@ -1,1 +1,13 @@
-{}
+{
+  "first_contact": {
+    "name": "First Contact",
+    "description": "A roadside raider blocks the party's path. Defeat them to clear the road.",
+    "arena": "roadside_clearing",
+    "player_spawns": [[160, 250], [210, 340], [280, 250], [330, 340], [420, 250], [450, 340], [520, 250], [570, 340]],
+    "enemies": [
+      {"npc": "clearing_raider", "x": 650, "y": 280}
+    ],
+    "objective": "Defeat the roadside raider.",
+    "victory": "The road is clear. Your first encounter is complete."
+  }
+}

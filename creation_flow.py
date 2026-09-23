@@ -1,5 +1,5 @@
 """Character creation state and rules, independent of the Pygame screen."""
-from classes import ABILITIES, RACES, CLASSES, SPELLS
+from classes import ABILITIES, RACES, CLASSES, SPELLS, skill_options
 from factory import (
     actor_factory,
     apply_class_proficiencies,
@@ -9,6 +9,7 @@ from factory import (
     random_fully_geared_actor,
 )
 from storage import lock_actor, load_actor, save_actor
+from progression import initialize_resources
 
 
 class CharacterCreationFlow:
@@ -101,7 +102,10 @@ class CharacterCreationFlow:
     def select_skill(self, skill):
         if not self.actor:
             return
-        options = CLASSES[self.actor.char_class].get('skills', [])
+        # skill_options() expands classes.json's ["any"] sentinel (bard) to
+        # the full skill list -- using the raw CLASSES[...]['skills'] list
+        # here caps options at 1 entry and skill_choices can never be met.
+        options = skill_options(self.actor.char_class)
         limit = int(CLASSES[self.actor.char_class].get('skill_choices', 0))
         if skill in self.actor.skills:
             self.actor.skills.remove(skill)
@@ -133,12 +137,16 @@ class CharacterCreationFlow:
             spell_id for spell_id, spell in SPELLS.items()
             if class_name in spell.get('classes', [])
             and spell.get('prerequisite_class_level', 1) <= self.actor.level
+            and (not spell.get('acquisition')
+                 or spell.get('acquisition') == 'starting_cantrip')
         ]
         self.actor.known_abilities = [
             ability_id for ability_id, ability in ABILITIES.items()
             if class_name in ability.get('classes', [])
             and ability.get('prerequisite_class_level', 1) <= self.actor.level
         ]
+        self.actor.prepared_spells = list(self.actor.known_spells)
+        initialize_resources(vars(self.actor), refill=True)
         self.stage = 'avatar'
 
     def choose_avatar(self, avatar):
@@ -151,11 +159,17 @@ class CharacterCreationFlow:
         self.stage = "done"
         return True
 
-    def create_random_fully_geared(self, avatars=None):
-        self.actor = random_fully_geared_actor(avatars=avatars)
+    def create_random_fully_geared(self, avatars=None, class_name=None, name=None):
+        if class_name not in CLASSES:
+            return False
+        if not name or not name.strip():
+            return False
+        self.actor = random_fully_geared_actor(name=name.strip(), avatars=avatars,
+                                               class_name=class_name)
         save_actor(self.actor)
         lock_actor(self.actor.id)
         self.stage = 'done'
+        return True
 
     def load_existing(self, actor_id):
         self.actor = load_actor(actor_id)

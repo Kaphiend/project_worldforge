@@ -1,6 +1,15 @@
+"""Actor and item construction.
+
+Modders normally change JSON templates, not these constructors. Add a field
+here only when actors must save, sync, or calculate with new persistent data;
+then update the matching loader/UI/rule and migration notes. Equipment slot
+legality and the randomized fully geared demo actor are also defined here.
+"""
 from dataclasses import dataclass, field
-from classes import ABILITIES, EQUIPMENT_ITEMS, RACES, CLASSES, SPELLS
+from copy import deepcopy
+from classes import ABILITIES, EQUIPMENT_ITEMS, RACES, CLASSES, SPELLS, NPCS
 from dice import ability_points
+from progression import initialize_resources
 import random
 import uuid
 
@@ -20,11 +29,22 @@ class Actor:
     xp_total: int = 0
     xp_earned_by_level: dict = field(default_factory=dict)
     xp_spent_by_level: dict = field(default_factory=dict)
+    xp_rest_spent_by_level: dict = field(default_factory=dict)
     downed: bool = False
     conditions: list = field(default_factory=list)
     active_effects: list = field(default_factory=list)
     known_spells: list = field(default_factory=list)
+    prepared_spells: list = field(default_factory=list)
+    # Weapon attacks are ready in slot 1; other spell/ability slots start empty.
+    spell_hotbars: list = field(default_factory=lambda: [
+        ["action:weapon_attack"] + [None] * 9, [None] * 10,
+        [None] * 10, [None] * 10])
+    quick_items: dict = field(default_factory=lambda: {"q": None, "e": None})
     known_abilities: list = field(default_factory=list)
+    spell_points: int = None
+    class_resources: dict = field(default_factory=dict)
+    gold: int = 50
+    outdoor_rest_streak: int = 0
     avatar: str = 'asset_pack/Soldier.png'
     abilities: dict = field(default_factory= lambda:
                  {
@@ -56,6 +76,7 @@ class Actor:
             self.level = sum(max(0, int(entry.get('level', 0))) for entry in self.classes)
         elif self.char_class:
             self.classes = [{'name': self.char_class, 'level': max(1, self.level)}]
+        initialize_resources(vars(self))
         if not self.controller:
             self.controller = 'player'
 
@@ -68,6 +89,25 @@ def npc_factory(name, **actor_data):
     """Create an NPC with the same data model as a player character."""
     actor_data.setdefault('controller', 'ai')
     return Actor(name, **actor_data)
+
+
+def create_npc_instance(template_id, x, y):
+    """Create a positioned, independently equipped instance from an NPC table entry."""
+    if template_id not in NPCS:
+        raise KeyError(f"Unknown NPC template: {template_id}")
+    instance = deepcopy(NPCS[template_id])
+    instance.update(id=f"{template_id}-{uuid.uuid4().hex[:8]}", x=x, y=y,
+                    downed=False)
+    instance['current_hp'] = int(instance.get('max_hp', 10))
+    instance.setdefault('conditions', [])
+    instance.setdefault('active_effects', [])
+    instance.setdefault('abilities', {})
+    instance.setdefault('equipment', {})
+    instance.setdefault('inventory', [])
+    for item in instance['equipment'].values():
+        if item:
+            item['id'] = uuid.uuid4().hex[:12]
+    return instance
 
 def assign(actor, ability, roll_index):
     actor.abilities[ability] = actor.unspent.pop(roll_index)
@@ -130,12 +170,12 @@ def apply_starting_gear(actor):
     actor.starting_gear_applied = True
 
 
-def random_fully_geared_actor(name=None, avatars=None):
-    """Build a randomized level-three test actor with every visible gear slot filled."""
+def random_fully_geared_actor(name=None, avatars=None, class_name=None):
+    """Build a geared level-three demo actor, with an optional chosen class."""
     race_options = [key for key, data in RACES.items()
                     if data.get('selectable', True)]
     race = random.choice(race_options)
-    class_name = random.choice(list(CLASSES))
+    class_name = class_name if class_name in CLASSES else random.choice(list(CLASSES))
     if not name:
         name = f"Demo {class_name.title()} {uuid.uuid4().hex[:4]}"
     actor = actor_factory(name, controller='player')
@@ -147,6 +187,7 @@ def random_fully_geared_actor(name=None, avatars=None):
     elif RACES[race].get('subraces'):
         actor.subrace = random.choice(list(RACES[race]['subraces']))
     actor.char_class = class_name
+    actor.gold = 500
     actor.level = 3
     actor.classes = [{'name': class_name, 'level': actor.level}]
     actor.abilities = dict(zip(actor.abilities, ability_points()))
@@ -204,40 +245,72 @@ def random_fully_geared_actor(name=None, avatars=None):
 
     class_spell_ids = [spell_id for spell_id, spell in SPELLS.items()
                        if class_name in spell.get('classes', [])
-                       and spell.get('prerequisite_class_level', 1) <= actor.level]
+                       and spell.get('prerequisite_class_level', 1) <= actor.level
+                       and (not spell.get('acquisition')
+                            or spell.get('acquisition') == 'starting_cantrip')]
     actor.known_spells = class_spell_ids
+    actor.prepared_spells = list(class_spell_ids)
     actor.known_abilities = [ability_id for ability_id, ability in ABILITIES.items()
                              if class_name in ability.get('classes', [])
                              and ability.get('prerequisite_class_level', 1) <= actor.level]
+    initialize_resources(vars(actor), refill=True)
     if avatars:
         actor.avatar = random.choice(list(avatars))
     return actor
 
 
-def add_equipment_item(actor, name=None, slot=None, details=None, template_id=None):
-    """Add a uniquely identified item instance, optionally from the catalog."""
+def add_equipment_item(actor, name=None, slot=None, details=None, template_id=None,
+                       quantity=None):
+    """Add an item instance, merging into catalog-defined stacks where possible."""
     if template_id:
         template = EQUIPMENT_ITEMS[template_id]
         name = name or template['name']
         slot = slot or template['slot']
         tags = list(template.get('tags', []))
+        stackable = bool(template.get('stackable', False))
+        max_stack = max(1, int(template.get('max_stack', 99)))
     else:
         tags = []
-    item = {
-        'id': uuid.uuid4().hex[:12],
-        'name': name,
-        'slot': slot,
-        'tags': tags,
-        'rarity': None,
-        'rolled_attributes': {},
-    }
-    if details:
-        item.update({key: value for key, value in details.items() if key != 'name'})
-    if template_id:
-        item['template_id'] = template_id
+        stackable = bool((details or {}).get('stackable', False))
+        max_stack = max(1, int((details or {}).get('max_stack', 99)))
     inventory = actor.setdefault('inventory', []) if isinstance(actor, dict) else actor.inventory
-    inventory.append(item)
-    return item
+    requested = max(1, int(quantity if quantity is not None
+                            else (details or {}).get('quantity', 1)))
+    first = None
+    if stackable and template_id:
+        for existing in inventory:
+            if existing.get('template_id') != template_id:
+                continue
+            current = max(1, int(existing.get('quantity', 1)))
+            added = min(requested, max(0, max_stack - current))
+            if added:
+                existing['quantity'] = current + added
+                requested -= added
+                first = first or existing
+            if not requested:
+                return first
+
+    while requested:
+        stack_quantity = min(requested, max_stack) if stackable else 1
+        item = {
+            'id': uuid.uuid4().hex[:12],
+            'name': name,
+            'slot': slot,
+            'tags': tags,
+            'rarity': None,
+            'rolled_attributes': {},
+        }
+        if stackable:
+            item['quantity'] = stack_quantity
+        if details:
+            item.update({key: value for key, value in details.items()
+                         if key not in {'name', 'quantity', 'stackable', 'max_stack'}})
+        if template_id:
+            item['template_id'] = template_id
+        inventory.append(item)
+        first = first or item
+        requested -= stack_quantity
+    return first
 
 
 def item_definition(item):

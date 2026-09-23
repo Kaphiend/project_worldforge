@@ -442,7 +442,30 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "charisma"
+    "spellcasting_ability": "charisma",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   },
   "cleric": {
     "hit_die": 8,
@@ -667,7 +690,30 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "wisdom"
+    "spellcasting_ability": "wisdom",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   },
   "druid": {
     "hit_die": 8,
@@ -894,7 +940,30 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "wisdom"
+    "spellcasting_ability": "wisdom",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   },
   "fighter": {
     "hit_die": 10,
@@ -1579,7 +1648,30 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "charisma"
+    "spellcasting_ability": "charisma",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   },
   "ranger": {
     "hit_die": 10,
@@ -1808,7 +1900,30 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "wisdom"
+    "spellcasting_ability": "wisdom",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   },
   "rogue": {
     "hit_die": 8,
@@ -2259,7 +2374,30 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "charisma"
+    "spellcasting_ability": "charisma",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   },
   "warlock": {
     "hit_die": 8,
@@ -2484,7 +2622,30 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "charisma"
+    "spellcasting_ability": "charisma",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   },
   "wizard": {
     "hit_die": 6,
@@ -2706,6 +2867,29 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "spellcasting_ability": "intellect"
+    "spellcasting_ability": "intellect",
+    "spell_points_by_level": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
   }
 }
