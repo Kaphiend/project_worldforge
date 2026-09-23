@@ -9,13 +9,14 @@ import pygame
 
 from combat import attack as resolve_attack
 from combat import (distance_feet, edge_distance_feet, initiative_for,
-                    selected_weapon, speed_feet)
+                    proficiency_bonus, selected_weapon, speed_feet)
 from classes import ABILITIES, SPELLS, ARENAS, NPCS, SCENARIOS
 from controllers import controller_for
 from conditions import condition_names, has_condition, tick_conditions
 from sprite_sheet import load_spritesheet
 from spell_effects import apply_ability_effects, resolve_spell
 from storage import save_actor
+from factory import equip_item, unequip_item
 
 
 def _print_character_sheet(actor_data):
@@ -302,6 +303,42 @@ def _target_clickbox(x, y):
                        TARGET_CLICK_WIDTH, TARGET_CLICK_HEIGHT)
 
 
+def _perception_score(actor_data):
+    explicit = actor_data.get("perception_score")
+    if isinstance(explicit, (int, float)):
+        return int(explicit)
+    wisdom = actor_data.get("abilities", {}).get("wisdom", 10)
+    score = 10 + (int(wisdom) - 10) // 2
+    if "perception" in {skill.casefold() for skill in actor_data.get("skills", [])}:
+        score += proficiency_bonus(actor_data)
+    return score
+
+
+def _perceived_title(observer_data, perception_data):
+    score = _perception_score(observer_data)
+    known = [level for level in perception_data.get("levels", [])
+             if score >= int(level.get("dc", 10))]
+    if not known:
+        return None
+    return max(known, key=lambda level: int(level.get("dc", 10))).get("title")
+
+
+def _line_of_sight(actor_a, actor_b, arena):
+    def center(actor):
+        hitbox = actor.get("hitbox") if isinstance(actor, dict) else None
+        if hitbox:
+            x = actor.get("x", 0) + hitbox.get("offset_x", 0)
+            y = actor.get("y", 0) + hitbox.get("offset_y", 0)
+            width, height = hitbox.get("width", ACTOR_SIZE), hitbox.get("height", ACTOR_SIZE)
+        else:
+            x, y = actor.get("x", 0), actor.get("y", 0)
+            width, height = actor.get("width", ACTOR_SIZE), actor.get("height", ACTOR_SIZE)
+        return round(x + width / 2), round(y + height / 2)
+    first, second = center(actor_a), center(actor_b)
+    return not any(obstacle.clipline(first, second)
+                   for obstacle in _arena_obstacles(arena))
+
+
 def _movement_allowance(actor_data):
     bonus = sum(int(effect.get("feet", 0))
                 for effect in actor_data.get("active_effects", [])
@@ -442,10 +479,9 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
             remote_id = remote.get("id", remote["actor"].get("id", "remote"))
             actors[remote_id] = _combat_snapshot(remote_id, remote["actor"])
 
-    player_spawns = scenario.get("player_spawns", [])
-    for index, (player_key, entry) in enumerate(actors.items()):
-        if player_spawns:
-            entry["x"], entry["y"] = player_spawns[min(index, len(player_spawns) - 1)]
+    # Combat can be opened by a real-time attack. Preserve the exploration
+    # positions so range and line of sight resolve where the attack was made;
+    # resetting actors to scenario spawns here invalidates that opening attack.
     for index, spawn in enumerate(scenario.get("enemies", [])):
         definition = NPCS.get(spawn.get("npc"))
         if definition is None:
@@ -467,6 +503,7 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
             if equipped:
                 equipped["id"] = uuid.uuid4().hex[:12]
         entry = _combat_snapshot(npc_id, npc, "enemies")
+        entry["perception_info"] = deepcopy(definition.get("perception", {}))
         entry["width"] = entry["height"] = ACTOR_SIZE
         actors[npc_id] = entry
     order = _initiative_order({
@@ -520,8 +557,10 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
     if mode == 'self':
         targets = [caster]
     hp_before = _capture_hp(combat)
+    line_of_sight = (True if mode == 'self' or not target_entry else
+                     _line_of_sight(actor_entry, target_entry, combat.get('arena')))
     result = resolve_spell(spell_id, caster, targets,
-                           target_position=point, line_of_sight=True)
+                           target_position=point, line_of_sight=line_of_sight)
     if not result.get('success'):
         _log(combat, result.get('message', 'Spell failed.'))
         return False
@@ -734,10 +773,11 @@ def _do_attack(combat, actor_id, target_id):
     distance = distance_feet(actor_entry, target_entry, PIXELS_PER_FOOT, ACTOR_SIZE)
     edge_distance = edge_distance_feet(
         actor_entry, target_entry, PIXELS_PER_FOOT, ACTOR_SIZE)
+    line_of_sight = _line_of_sight(actor_entry, target_entry, combat.get("arena"))
     event = resolve_attack(
         actor_entry["data"], target_entry["data"], distance,
         melee_distance_feet=edge_distance, adjacent_distance_feet=edge_distance,
-        line_of_sight=True)
+        line_of_sight=line_of_sight)
     if not event.get("success"):
         _log(combat, event.get("message", "Attack unavailable."))
         return False
@@ -793,6 +833,82 @@ def _do_attack(combat, actor_id, target_id):
     return True
 
 
+def _do_item(combat, actor_id, item_id, target_id=None):
+    entry = combat.get("actors", {}).get(actor_id)
+    if not entry or entry.get("downed"):
+        return False
+    budget = combat.get("budgets", {}).get(actor_id, {})
+    if not budget.get("action"):
+        _log(combat, "Action already used this turn.")
+        return False
+    item = next((item for item in entry["data"].get("inventory", [])
+                 if item.get("id") == item_id), None)
+    if not item:
+        _log(combat, "That item is not in your inventory.")
+        return False
+    definition = item_definition(item)
+    effect_id = definition.get("effect_id")
+    if not effect_id or effect_id not in SPELLS:
+        _log(combat, "That item has no usable effect.")
+        return False
+    target_entry = combat.get("actors", {}).get(target_id) if target_id else entry
+    if not target_entry:
+        _log(combat, "Select a target first.")
+        return False
+    los = _line_of_sight(entry, target_entry, combat.get("arena"))
+    result = resolve_spell(effect_id, entry["data"], [target_entry["data"]],
+                           line_of_sight=los, from_consumable=True)
+    if not result.get("success"):
+        _log(combat, result.get("message", "Item could not be used."))
+        return False
+    entry["data"]["inventory"].remove(item)
+    budget["action"] = False
+    for outcome in result.get("results", []):
+        healing = sum(effect.get("amount", 0) for effect in outcome.get("effects", [])
+                      if effect.get("kind") == "healing")
+        _log(combat, f"{entry['data'].get('name', actor_id)} uses {definition.get('name', item.get('name'))} on {outcome['target']} ({healing} HP restored).")
+    for current in combat["actors"].values():
+        current["downed"] = bool(current["data"].get("downed", False)
+                                  or current["data"].get("current_hp", 1) <= 0)
+    _remove_downed_from_order(combat)
+    _restore_revived_order(combat)
+    return True
+
+
+def _use_item_outside_combat(owner, item_id, target_id, local_player_id, remote_players):
+    inventory = owner.get("inventory", []) if isinstance(owner, dict) else owner.inventory
+    item = next((item for item in inventory if item.get("id") == item_id), None)
+    if not item:
+        return False
+    definition = item_definition(item)
+    effect_id = definition.get("effect_id")
+    if not effect_id or effect_id not in SPELLS:
+        return False
+    owner_id = owner.get("id") if isinstance(owner, dict) else owner.id
+    target = owner if target_id is None or target_id in (owner_id, local_player_id) else None
+    if target is None:
+        target = next((remote.get("actor") for remote in remote_players
+                       if _player_id(remote) == target_id and remote.get("actor")), None)
+    if target is None:
+        return False
+    caster_data = vars(owner) if not isinstance(owner, dict) else owner
+    target_data = vars(target) if not isinstance(target, dict) else target
+    arena = ARENAS.get(SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {})
+    result = resolve_spell(effect_id, caster_data, [target_data],
+                           line_of_sight=_line_of_sight(caster_data, target_data, arena),
+                           from_consumable=True)
+    if not result.get("success"):
+        return False
+    inventory.remove(item)
+    if not isinstance(owner, dict):
+        owner.current_hp = caster_data.get("current_hp", owner.current_hp)
+        owner.downed = caster_data.get("downed", owner.downed)
+    if not isinstance(target, dict):
+        target.current_hp = target_data.get("current_hp", target.current_hp)
+        target.downed = target_data.get("downed", target.downed)
+    return True
+
+
 def _apply_action(combat, actor_id, action):
     action_type = action.get("type")
     if action_type == "attack":
@@ -801,6 +917,16 @@ def _apply_action(combat, actor_id, action):
         _do_spell(combat, actor_id, action.get('spell'), action.get('target'))
     elif action_type == 'use_ability':
         _do_ability(combat, actor_id, action.get('ability'), action.get('target'))
+    elif action_type == "use_item":
+        _do_item(combat, actor_id, action.get("item"), action.get("target"))
+    elif action_type == "equip_item":
+        entry = combat["actors"].get(actor_id)
+        if entry:
+            equip_item(entry["data"], action.get("item"), action.get("slot"))
+    elif action_type == "unequip_item":
+        entry = combat["actors"].get(actor_id)
+        if entry:
+            unequip_item(entry["data"], action.get("slot"))
     elif action_type == "end_turn" and actor_id == _active_actor_id(combat):
         _advance_turn(combat)
     elif action_type == "move" and actor_id == _active_actor_id(combat):
@@ -846,6 +972,40 @@ def _apply_action(combat, actor_id, action):
 
 def _handle_action_request(actor, local_player_id, actor_id, action, remote_players, combat):
     if not combat or not combat.get("active"):
+        if action.get("type") in {"equip_item", "unequip_item", "use_item"}:
+            owner = actor if actor_id == local_player_id else next(
+                (remote.get("actor") for remote in remote_players
+                 if _player_id(remote) == actor_id and remote.get("actor")), None)
+            if owner is None:
+                return combat
+            if action["type"] == "equip_item":
+                equip_item(owner, action.get("item"), action.get("slot"))
+            elif action["type"] == "unequip_item":
+                unequip_item(owner, action.get("slot"))
+            else:
+                target_id = action.get("target")
+                if target_id == actor_id:
+                    target_id = owner.get("id") if isinstance(owner, dict) else owner.id
+                _use_item_outside_combat(owner, action.get("item"), target_id,
+                                          local_player_id, remote_players)
+            if combat:
+                changed = {"inventory", "equipment", "current_hp", "downed"}
+                source = vars(owner) if not isinstance(owner, dict) else owner
+                owner_entry = combat.get("actors", {}).get(actor_id)
+                if owner_entry:
+                    for key in changed:
+                        if key in source:
+                            owner_entry["data"][key] = deepcopy(source[key])
+                selected_id = action.get("target")
+                target_remote = next((remote.get("actor") for remote in remote_players
+                                      if _player_id(remote) == selected_id and remote.get("actor")), None)
+                target_entry = combat.get("actors", {}).get(selected_id)
+                if target_remote and target_entry:
+                    for key in changed:
+                        if key in target_remote:
+                            target_entry["data"][key] = deepcopy(target_remote[key])
+                    target_entry["downed"] = bool(target_entry["data"].get("downed", False))
+            return combat
         if action.get("type") not in {"attack", "cast_spell", "use_ability"}:
             return combat
         combat = _new_combat(actor, local_player_id, remote_players)
@@ -859,7 +1019,9 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
             _do_ability(combat, actor_id, action.get('ability'), action.get('target'))
         )
         if not resolved:
-            return None
+            # Preserve the explanation without applying encounter spawn
+            # positions to actors or leaving a failed encounter snapshot live.
+            return {"_action_error": combat.get("log", ["Action failed."])[-1]}
         combat["budgets"][actor_id]["skip_next"] = True
         if combat.get("active"):
             current_id = _active_actor_id(combat)
@@ -867,8 +1029,17 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
             if combat["budgets"][current_id].get("skip_next"):
                 _advance_turn(combat)
         return combat
-    if actor_id == _active_actor_id(combat):
+    if action.get("type") in {"equip_item", "unequip_item"}:
+        entry = combat.get("actors", {}).get(actor_id)
+        if entry:
+            if action["type"] == "equip_item":
+                equip_item(entry["data"], action.get("item"), action.get("slot"))
+            else:
+                unequip_item(entry["data"], action.get("slot"))
+    elif actor_id == _active_actor_id(combat):
         _apply_action(combat, actor_id, action)
+    elif action.get("type") in {"attack", "cast_spell", "use_ability", "use_item", "move"}:
+        _log(combat, "It is not your turn.")
     return combat
 
 
@@ -909,10 +1080,13 @@ def _sync_local_actor(actor, combat, actor_id):
     actor.downed = bool(entry["downed"])
     actor.conditions = deepcopy(entry["data"].get("conditions", []))
     actor.active_effects = deepcopy(entry["data"].get("active_effects", []))
+    actor.inventory = deepcopy(entry["data"].get("inventory", actor.inventory))
+    actor.equipment = deepcopy(entry["data"].get("equipment", actor.equipment))
+    actor.active_weapon_set = entry["data"].get("active_weapon_set", actor.active_weapon_set)
     actor.x, actor.y = entry["x"], entry["y"]
 
 
-def _draw_combat_ui(screen, font, combat, actor_id):
+def _draw_combat_ui(screen, font, combat, actor_id, observer_data):
     if not combat:
         return
     panel = pygame.Surface((800, 112), pygame.SRCALPHA)
@@ -930,6 +1104,10 @@ def _draw_combat_ui(screen, font, combat, actor_id):
         for entry in combat["order"]:
             actor_entry = combat["actors"][entry["id"]]
             actor_name = actor_entry["data"].get("name", entry["id"])
+            if actor_entry.get("team") == "enemies":
+                actor_name = (_perceived_title(
+                    observer_data, actor_entry.get("perception_info") or
+                    actor_entry["data"].get("perception", {})) or "Unknown")
             statuses = ", ".join(condition_names(actor_entry["data"]))
             if statuses:
                 actor_name += f" [{statuses}]"
@@ -993,13 +1171,22 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     save_notice_until = 0
     invite_notice = ''
     invite_notice_until = 0
+    action_notice = ""
+    action_notice_until = 0
     exit_to_menu = False
+    from inventory_ui import InventoryScreen
+    inventory_ui = InventoryScreen()
 
     def submit(action):
-        nonlocal combat
+        nonlocal combat, action_notice, action_notice_until
         if is_host:
-            combat = _handle_action_request(
+            updated = _handle_action_request(
                 actor, player_id, player_id, action, remote_players, combat)
+            if updated and "_action_error" in updated:
+                action_notice = updated["_action_error"]
+                action_notice_until = pygame.time.get_ticks() + 2400
+                return
+            combat = updated
             _sync_local_actor(actor, combat, player_id)
         else:
             combat_transport["submit"](action)
@@ -1012,9 +1199,14 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 _remove_disconnected_players(combat, remote_players, player_id)
                 _add_joined_players(combat, remote_players)
             for request in combat_transport["poll"]():
-                combat = _handle_action_request(
+                updated = _handle_action_request(
                     actor, player_id, request["player_id"], request["action"],
                     remote_players, combat)
+                if updated and "_action_error" in updated:
+                    action_notice = updated["_action_error"]
+                    action_notice_until = pygame.time.get_ticks() + 2400
+                else:
+                    combat = updated
             if combat:
                 _process_turn_start(combat)
                 _run_ai_turns(combat)
@@ -1036,6 +1228,29 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                exit_to_menu = False
+                running = False
+            elif inventory_ui.visible:
+                inventory_data = (combat.get("actors", {}).get(player_id, {}).get("data", {})
+                                  if combat else vars(actor))
+                inventory_action = inventory_ui.handle_event(event, inventory_data)
+                if inventory_action:
+                    if inventory_action.get("type") == "use_item":
+                        inventory_action["target"] = selected_target
+                    if not is_host and not (combat and combat.get("active")):
+                        if inventory_action["type"] == "equip_item":
+                            equip_item(actor, inventory_action.get("item"),
+                                       inventory_action.get("slot"))
+                        elif inventory_action["type"] == "unequip_item":
+                            unequip_item(actor, inventory_action.get("slot"))
+                        elif inventory_action["type"] == "use_item":
+                            _use_item_outside_combat(
+                                actor, inventory_action.get("item"),
+                                inventory_action.get("target"), player_id, remote_players)
+                    submit(inventory_action)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_i:
+                inventory_ui.toggle()
+            elif event.type == pygame.QUIT:
                 exit_to_menu = False
                 running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_m:
@@ -1191,9 +1406,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             screen, actor, sprite, remote_players, remote_animations,
             remote_positions, dt, sprite_frames, frame_duration, current_arena,
             camera)
-        controls = ("WASD move | Click target | 1 attack | 2-9 spells | Q/E abilities | Enter end turn | F5 save"
+        controls = ("WASD move | I inventory | Click target | 1 attack | 2-9 spells | Q/E abilities | Enter end turn | F5 save"
                     if (actor.known_spells or actor.known_abilities)
-                    else "WASD move | Click target | 1 attack | Enter end turn | F5 save")
+                    else "WASD move | I inventory | Click target | 1 attack | Enter end turn | F5 save")
         screen.blit(font.render(controls, True, (230, 230, 230)), (12, 12))
         if multiplayer:
             count = party_status() if party_status else 1 + len(remote_players)
@@ -1256,8 +1471,12 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             enemy_image = pygame.transform.scale(enemy_image, rect.size)
             screen.blit(enemy_image, rect.topleft)
             pygame.draw.rect(screen, (225, 210, 180), rect, 2)
-            screen.blit(font.render(enemy["data"].get("name", "Enemy"), True,
-                                    (245, 245, 245)), (rect.x - 10, rect.y - 20))
+            title = _perceived_title(
+                vars(actor), enemy.get("perception_info") or
+                enemy.get("data", {}).get("perception", {}))
+            if title:
+                screen.blit(font.render(title, True, (245, 245, 245)),
+                            (rect.x - 10, rect.y - 20))
         projectile = (combat or {}).get("projectile_event")
         if projectile:
             if projectile_runtime["id"] != projectile.get("id"):
@@ -1291,7 +1510,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 target_center = (int(remote.get("x", 0) + 50), int(remote.get("y", 0) + 50)) if remote else None
             if target_center:
                 pygame.draw.circle(screen, (255, 230, 100), target_center, 27, 2)
-        _draw_combat_ui(screen, font, combat, player_id)
+        _draw_combat_ui(screen, font, combat, player_id, vars(actor))
         if combat and combat.get("result"):
             result = combat["result"]
             banner = pygame.Surface((560, 100), pygame.SRCALPHA)
@@ -1307,6 +1526,11 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
         if pygame.time.get_ticks() < invite_notice_until:
             notice = font.render(invite_notice, True, (220, 240, 190))
             screen.blit(notice, (12, 140))
+        if pygame.time.get_ticks() < action_notice_until:
+            screen.blit(font.render(action_notice[:90], True, (255, 215, 150)), (12, 164))
+        inventory_data = (combat.get("actors", {}).get(player_id, {}).get("data", {})
+                          if combat else vars(actor))
+        inventory_ui.draw(screen, inventory_data, font)
         pygame.display.flip()
 
     _sync_local_actor(actor, combat, player_id)

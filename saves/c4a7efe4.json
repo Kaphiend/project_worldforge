@@ -1,11 +1,11 @@
 {
-  "name": "John",
-  "id": "59a7bd90",
+  "name": "Grix",
+  "id": "c4a7efe4",
   "max_hp": 9,
-  "current_hp": 9,
+  "current_hp": 7,
   "classes": [
     {
-      "name": "paladin",
+      "name": "rogue",
       "level": 1
     }
   ],
@@ -16,54 +16,51 @@
   "downed": false,
   "conditions": [],
   "active_effects": [],
-  "known_spells": [
-    "vowlight_touch",
-    "vowflare"
+  "known_spells": [],
+  "known_abilities": [
+    "distracting_feint"
   ],
-  "known_abilities": [],
   "avatar": "asset_pack/Soldier.png",
   "abilities": {
-    "strength": 10,
+    "strength": 9,
     "dexterity": 14,
-    "constitution": 8,
+    "constitution": 13,
     "intellect": 11,
-    "wisdom": 8,
-    "charisma": 9
+    "wisdom": 12,
+    "charisma": 11
   },
   "unspent": [],
   "saves": [
-    "wisdom",
-    "charisma"
+    "dexterity",
+    "intellect"
   ],
   "armor_prof": [
-    "light",
-    "medium",
-    "heavy",
-    "shields"
+    "light"
   ],
   "weapon_prof": [
     "simple",
-    "martial"
+    "martial (finesse or light)"
   ],
-  "race": "dwarf",
-  "subrace": "hearth",
+  "race": "elf",
+  "subrace": "dusk",
+  "subclass": "",
   "parent_races": [],
-  "char_class": "paladin",
+  "char_class": "rogue",
   "skills": [],
   "controller": "player",
-  "x": 648,
-  "y": 162,
+  "x": 367.692978932888,
+  "y": 143.78951843200778,
   "inventory": [],
   "equipment": {
     "head": null,
     "chest": {
-      "id": "0cb61f32967f",
-      "name": "Chain Mail",
+      "id": "6679299d354d",
+      "name": "Leather Armor",
       "slot": "chest",
       "tags": [],
       "rarity": null,
       "rolled_attributes": {},
-      "template_id": "chain_mail"
+      "template_id": "leather"
     },
     "hands": null,
     "feet": null,
@@ -73,25 +70,19 @@
     "ring2": null,
     "amulet": null,
     "main_hand": {
-      "id": "62c31f75abea",
-      "name": "Sword",
-      "slot": "hand",
-      "tags": [],
-      "rarity": null,
-      "rolled_attributes": {},
-      "template_id": "sword_1h"
-    },
-    "off_hand": {
-      "id": "e2fa8679d210",
-      "name": "Shield",
+      "id": "0e256985459d",
+      "name": "Dagger",
       "slot": "hand",
       "tags": [
-        "shield"
+        "finesse",
+        "light",
+        "thrown"
       ],
       "rarity": null,
       "rolled_attributes": {},
-      "template_id": "shield"
+      "template_id": "dagger"
     },
+    "off_hand": null,
     "ranged": null
   },
   "active_weapon_set": "melee",

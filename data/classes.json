@@ -31,7 +31,11 @@
         "template_id": "axe_2h"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "barbarian_emberblood",
+      "barbarian_stonewake",
+      "barbarian_wild_prowler"
+    ],
     "progression": {
       "1": [
         {
@@ -245,7 +249,11 @@
         "template_id": "staff"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "bard_storykeeper",
+      "bard_chorusblade",
+      "bard_echo_weaver"
+    ],
     "progression": {
       "1": [
         {
@@ -466,7 +474,11 @@
         "template_id": "staff"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "cleric_hearthwarden",
+      "cleric_dawnkeeper",
+      "cleric_graveguide"
+    ],
     "progression": {
       "1": [
         {
@@ -689,7 +701,11 @@
         "template_id": "staff"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "druid_greenward",
+      "druid_beastbound",
+      "druid_weathercaller"
+    ],
     "progression": {
       "1": [
         {
@@ -918,7 +934,11 @@
         "template_id": "shield"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "fighter_vanguard",
+      "fighter_weapon_scholar",
+      "fighter_ironwall"
+    ],
     "progression": {
       "1": [
         {
@@ -1136,7 +1156,11 @@
         "template_id": "dagger"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "monk_stillwater",
+      "monk_windstep",
+      "monk_iron_pulse"
+    ],
     "progression": {
       "1": [
         {
@@ -1362,7 +1386,11 @@
         "template_id": "shield"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "paladin_beacon",
+      "paladin_oathward",
+      "paladin_truthseeker"
+    ],
     "progression": {
       "1": [
         {
@@ -1587,7 +1615,11 @@
         "template_id": "longbow"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "ranger_trailwarden",
+      "ranger_beast_companion",
+      "ranger_farshot"
+    ],
     "progression": {
       "1": [
         {
@@ -1813,7 +1845,11 @@
         "template_id": "dagger"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "rogue_shadowrunner",
+      "rogue_trickhand",
+      "rogue_duelist"
+    ],
     "progression": {
       "1": [
         {
@@ -2030,7 +2066,11 @@
         "template_id": "staff"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "sorcerer_bloodspark",
+      "sorcerer_tempest_heart",
+      "sorcerer_altered_form"
+    ],
     "progression": {
       "1": [
         {
@@ -2251,7 +2291,11 @@
         "template_id": "sword_1h"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "warlock_hollow_star",
+      "warlock_thorn_pact",
+      "warlock_whispering_deep"
+    ],
     "progression": {
       "1": [
         {
@@ -2469,7 +2513,11 @@
         "template_id": "staff"
       }
     },
-    "subclasses": [],
+    "subclasses": [
+      "wizard_runecrafter",
+      "wizard_ward_scholar",
+      "wizard_battle_arcanist"
+    ],
     "progression": {
       "1": [
         {

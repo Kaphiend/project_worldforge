@@ -1,60 +1,47 @@
 # Game data
 
-`classes.json`, `races.json`, `equipment.json`, `spells.json`,
-`abilities.json`, `conditions.json`, `npcs.json`, `arenas.json`, and
-`scenarios.json` contain the built-in data.
-The game loads these JSON files at startup.
+The game loads JSON tables from `data/` at startup. Mods can add or replace
+entries by placing matching files under `data/mods/<mod-name>/`; folders load
+alphabetically and later definitions replace matching IDs.
 
-Mods can add or replace definitions by placing matching JSON files in
-`data/mods/<mod-name>/`. Mod folders load alphabetically, and later definitions
-replace entries with the same key. A mod can include only the tables it changes.
-The included `demo_slice` mod is a complete example: it defines the First Contact
-scenario, its roadside arena, and an AI raider. Edit those JSON files to change
-the demo encounter or copy the pattern to create another scenario.
+## Characters
 
-Class records describe twelve broad character archetypes, their baseline
-proficiencies, skills, and starting equipment. Every class has an original
-level-by-level feature track. These are trainer purchase options, not automatic
-grants; each class track unlocks sequentially and spends XP earned at the current
-character level. Feature summaries define the concepts; their combat effects
-will be implemented by the Worldforge rules resolver. Subclasses remain an empty
-extension point.
+`classes.json` defines twelve archetypes, proficiencies, selectable skills,
+starting gear, and original level progression. `subclasses.json` defines
+three original paths per class, with feature names and short summaries at
+levels 3, 6, 10, and 14. Subclass choice and trained skills are selected during
+character creation. These progression entries are descriptive data; class and
+subclass feature effects are not yet implemented.
 
-`spells.json` stores original spell entries and their resolution modes. Each
-healing entry carries its own formula. `abilities.json` uses the same effect
-vocabulary for non-spell class abilities. `conditions.json` combines supported
-effect primitives with display names and durations. Burning deals 1d4 fire
-damage at the start of the affected actor's turn for two turns; reapplication
-refreshes its duration. A consumable can point to a spell's effect data.
+`races.json` contains ancestry and trait reference data, including a
+Two-Parent Half-Breed choice. Ability bonuses are not automatically applied.
 
-Spell attacks use the caster's class spellcasting modifier plus proficiency;
-spell save DC is 8 plus those values. New level-one characters receive their
-class's current core spells and abilities as known options. Click a target, then
-use 1 for the equipped weapon, 2-9 for spells, Q/E for abilities, and Enter to
-end a turn. Spell-point costs remain unwired while the resource scheme is
-undecided. Each local or co-op connection controls one character. The existing
-Each local or co-op connection controls one character. `scenarios.json` points
-to an arena and lists NPC spawn records (`npc`, `x`, `y`), player spawn
-coordinates, an objective, and a victory message. `arenas.json` describes the
-play bounds, ground/edge colors, decorations, and solid obstacle rectangles.
-The camera follows the local actor, stopping at map edges; both exploration and
-combat movement stay inside the bounds and collide with solid obstacles.
-`npcs.json` uses
-actor fields such as `max_hp`, `abilities`, `equipment`, and `controller`;
-equipment may reference an `equipment.json` `template_id`. The demo includes
-eight player spawn positions to match the co-op cap. Victory offers the host a
-rematch and lets everyone return to the session menu with M.
+## Combat and items
 
-Co-op supports up to eight connected players including the host. Invitations
-use a direct TCP address on port 5555; Internet hosts must forward that port
-and share their public IP or hostname. There is no relay service in this build.
+`equipment.json` contains item templates, slot rules, damage dice, range, and
+armor properties. Actor inventory entries are uniquely identified instances.
+Rarity and rolled attributes remain empty placeholders; loot generation is not
+implemented. Consumable templates can reference an effect in `spells.json`.
+The demo includes healing potions and a revival scroll; each effect has its own
+healing formula.
 
-`equipment.json` stores item templates: category, valid slots, hand requirements,
-tags, damage dice, ranges, ammunition, and armor properties. Actor inventory
-entries are unique instances. Rarity and rolled attributes are empty placeholders
-for future loot generation.
+`spells.json` and `abilities.json` store original game effects. Spell attacks
+use the caster's class spellcasting modifier plus proficiency; spell save DC is
+8 plus those values. Burning deals 1d4 fire damage at the start of the affected
+actor's turn for two turns; reapplication refreshes its duration. Spell-point
+costs are not implemented.
 
-`races.json` currently contains the four design-document examples plus the
-two-parent Half-Breed option. Trait identifiers are generic data labels; the game
-does not interpret their effects yet. Ability bonuses remain reference data and
-are not automatically applied.
+NPC `perception.levels` is a list of `{dc, title}` records. A player's passive
+perception is 10 plus Wisdom modifier and proficiency bonus when trained in
+Perception. Nameplates show the highest title whose DC is met. This information
+is automatic and ignores distance and line of sight. Arena obstacle rectangles
+block attack and spell line of sight when a resolution requires it.
+
+## Demo world and co-op
+
+`scenarios.json` points to an arena and lists NPC spawns, player spawn
+coordinates, objective, and victory text. `arenas.json` describes map bounds,
+decorations, and solid obstacle rectangles. Exploration and combat movement
+stay within bounds and collide with obstacles. Co-op supports up to eight
+connected players including the host; invitations use direct TCP port 5555.
+Internet hosts must forward that port and share their public address.

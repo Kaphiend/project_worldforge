@@ -6,6 +6,7 @@ from factory import (
     apply_starting_gear,
     assign,
     starting_hp,
+    random_fully_geared_actor,
 )
 from storage import lock_actor, load_actor, save_actor
 
@@ -83,7 +84,34 @@ class CharacterCreationFlow:
     def confirm_class(self):
         if self.actor and self.actor.char_class:
             apply_class_proficiencies(self.actor)
-            self.stage = "abilities"
+            if CLASSES[self.actor.char_class].get('subclasses'):
+                self.stage = 'subclass'
+            else:
+                self.stage = 'skills' if CLASSES[self.actor.char_class].get('skill_choices', 0) else 'abilities'
+
+    def select_subclass(self, subclass_id):
+        if (self.actor and subclass_id in
+                CLASSES.get(self.actor.char_class, {}).get('subclasses', [])):
+            self.actor.subclass = subclass_id
+
+    def confirm_subclass(self):
+        if self.actor and self.actor.subclass:
+            self.stage = 'skills' if CLASSES[self.actor.char_class].get('skill_choices', 0) else 'abilities'
+
+    def select_skill(self, skill):
+        if not self.actor:
+            return
+        options = CLASSES[self.actor.char_class].get('skills', [])
+        limit = int(CLASSES[self.actor.char_class].get('skill_choices', 0))
+        if skill in self.actor.skills:
+            self.actor.skills.remove(skill)
+        elif skill in options and len(self.actor.skills) < limit:
+            self.actor.skills.append(skill)
+
+    def confirm_skills(self):
+        if self.actor and len(self.actor.skills) == int(
+                CLASSES[self.actor.char_class].get('skill_choices', 0)):
+            self.stage = 'abilities'
 
     def assign_roll(self, roll_index):
         if self.stage != "abilities" or self.current_ability_index >= len(self.ability_order):
@@ -122,6 +150,12 @@ class CharacterCreationFlow:
         lock_actor(self.actor.id)
         self.stage = "done"
         return True
+
+    def create_random_fully_geared(self, avatars=None):
+        self.actor = random_fully_geared_actor(avatars=avatars)
+        save_actor(self.actor)
+        lock_actor(self.actor.id)
+        self.stage = 'done'
 
     def load_existing(self, actor_id):
         self.actor = load_actor(actor_id)

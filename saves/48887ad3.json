@@ -1,0 +1,102 @@
+{
+  "name": "Grom",
+  "id": "48887ad3",
+  "max_hp": 12,
+  "current_hp": 12,
+  "classes": [
+    {
+      "name": "fighter",
+      "level": 1
+    }
+  ],
+  "level": 1,
+  "xp_total": 0,
+  "xp_earned_by_level": {},
+  "xp_spent_by_level": {},
+  "downed": false,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "known_abilities": [
+    "guarded_angle"
+  ],
+  "avatar": "asset_pack/Soldier.png",
+  "abilities": {
+    "strength": 14,
+    "dexterity": 9,
+    "constitution": 14,
+    "intellect": 9,
+    "wisdom": 10,
+    "charisma": 13
+  },
+  "unspent": [],
+  "saves": [
+    "strength",
+    "constitution"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "heavy",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial"
+  ],
+  "race": "halfling",
+  "subrace": "swift",
+  "subclass": "fighter_vanguard",
+  "parent_races": [],
+  "char_class": "fighter",
+  "skills": [
+    "intimidation",
+    "perception"
+  ],
+  "controller": "player",
+  "x": 628.0,
+  "y": 231.0,
+  "inventory": [],
+  "equipment": {
+    "head": null,
+    "chest": {
+      "id": "f82c5bc1adc0",
+      "name": "Chain Mail",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "chain_mail"
+    },
+    "hands": null,
+    "feet": null,
+    "belt": null,
+    "cape": null,
+    "ring1": null,
+    "ring2": null,
+    "amulet": null,
+    "main_hand": {
+      "id": "fd3c2decaa0e",
+      "name": "Sword",
+      "slot": "hand",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "sword_1h"
+    },
+    "off_hand": {
+      "id": "19a3599ef689",
+      "name": "Shield",
+      "slot": "hand",
+      "tags": [
+        "shield"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "shield"
+    },
+    "ranged": null
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

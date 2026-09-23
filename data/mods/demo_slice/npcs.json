@@ -3,6 +3,12 @@
     "name": "Roadside Raider",
     "avatar": "asset_pack/Orc.png",
     "controller": "ai",
+    "perception": {
+      "levels": [
+        {"dc": 10, "title": "Orc"},
+        {"dc": 13, "title": "Orc Raider"}
+      ]
+    },
     "max_hp": 18,
     "current_hp": 18,
     "level": 1,

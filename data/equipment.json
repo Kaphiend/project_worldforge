@@ -293,5 +293,78 @@
     "slot": "consumable",
     "effect_id": "restorative_revival",
     "consumable": true
+  },
+  "leather_cap": {
+    "name": "Leather Cap",
+    "category": "armor_piece",
+    "slot": "head",
+    "allowed_slots": [
+      "head"
+    ]
+  },
+  "travel_gloves": {
+    "name": "Travel Gloves",
+    "category": "armor_piece",
+    "slot": "hands",
+    "allowed_slots": [
+      "hands"
+    ]
+  },
+  "trail_boots": {
+    "name": "Trail Boots",
+    "category": "armor_piece",
+    "slot": "feet",
+    "allowed_slots": [
+      "feet"
+    ]
+  },
+  "utility_belt": {
+    "name": "Utility Belt",
+    "category": "armor_piece",
+    "slot": "belt",
+    "allowed_slots": [
+      "belt"
+    ]
+  },
+  "wool_cape": {
+    "name": "Wool Cape",
+    "category": "armor_piece",
+    "slot": "cape",
+    "allowed_slots": [
+      "cape"
+    ]
+  },
+  "ring_guard": {
+    "name": "Ring of Guarding",
+    "category": "accessory",
+    "slot": "ring",
+    "allowed_slots": [
+      "ring1",
+      "ring2"
+    ]
+  },
+  "ring_focus": {
+    "name": "Ring of Focus",
+    "category": "accessory",
+    "slot": "ring",
+    "allowed_slots": [
+      "ring1",
+      "ring2"
+    ]
+  },
+  "brass_amulet": {
+    "name": "Brass Amulet",
+    "category": "accessory",
+    "slot": "amulet",
+    "allowed_slots": [
+      "amulet"
+    ]
+  },
+  "healing_potion": {
+    "name": "Healing Potion",
+    "category": "consumable",
+    "slot": "consumable",
+    "effect_id": "healing_potion_effect",
+    "consumable": true
   }
 }

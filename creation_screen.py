@@ -1,5 +1,5 @@
 import pygame
-from classes import RACES, CLASSES
+from classes import RACES, CLASSES, SUBCLASSES
 from creation_flow import CharacterCreationFlow
 from storage import delete_actor, list_actors, unlock_actor
 
@@ -17,6 +17,7 @@ def run_creation(available_avatars=None):
     confirm_rect = pygame.Rect(300, 500, 200, 50)
     name_box = pygame.Rect(250, 250, 300, 50)
     new_char_rect = pygame.Rect(250, 500, 300, 50)
+    random_char_rect = pygame.Rect(250, 430, 300, 50)
     start_rect = pygame.Rect(300, 500, 200, 50)
     avatar_options = [
         (pygame.Rect(150, 200, 220, 180), 'asset_pack/Orc.png', 'Orc'),
@@ -95,6 +96,9 @@ def run_creation(available_avatars=None):
                             saves = list_actors()
                     if new_char_rect.collidepoint(event.pos):
                         flow.stage = 'name'
+                    elif random_char_rect.collidepoint(event.pos):
+                        flow.create_random_fully_geared(
+                            [option[1] for option in avatar_buttons])
 
                 elif flow.stage == 'name':
                     if name_text.strip() and confirm_rect.collidepoint(event.pos):
@@ -136,6 +140,23 @@ def run_creation(available_avatars=None):
                     if flow.actor.char_class and confirm_rect.collidepoint(event.pos):
                         flow.confirm_class()
 
+                elif flow.stage == 'subclass':
+                    subclass_ids = CLASSES[flow.actor.char_class].get('subclasses', [])
+                    for index, subclass_id in enumerate(subclass_ids):
+                        rect = pygame.Rect(100, 100 + index * 115, 600, 95)
+                        if rect.collidepoint(event.pos):
+                            flow.select_subclass(subclass_id)
+                    if flow.actor.subclass and confirm_rect.collidepoint(event.pos):
+                        flow.confirm_subclass()
+
+                elif flow.stage == 'skills':
+                    for rect, skill in make_buttons(CLASSES[flow.actor.char_class].get('skills', [])):
+                        if rect.collidepoint(event.pos):
+                            flow.select_skill(skill)
+                    if (len(flow.actor.skills) == CLASSES[flow.actor.char_class].get('skill_choices', 0)
+                            and confirm_rect.collidepoint(event.pos)):
+                        flow.confirm_skills()
+
                 elif flow.stage == 'abilities':
                     for rect, roll_index, roll in roll_buttons():
                         if rect.collidepoint(event.pos):
@@ -163,6 +184,9 @@ def run_creation(available_avatars=None):
             pygame.draw.rect(screen, (100, 100, 180), new_char_rect)
             new_text = font.render("New Character", True, (255, 255, 255))
             screen.blit(new_text, (new_char_rect.x + 40, new_char_rect.y + 10))
+            pygame.draw.rect(screen, (90, 120, 90), random_char_rect)
+            random_text = font.render("Random Fully Geared", True, (255, 255, 255))
+            screen.blit(random_text, (random_char_rect.x + 35, random_char_rect.y + 10))
 
         elif flow.stage == 'name':
             prompt = font.render("enter a name:", True, (255, 255, 255))
@@ -228,6 +252,40 @@ def run_creation(available_avatars=None):
                 text = font.render("Confirm", True, (255, 255, 255))
                 screen.blit(text, (confirm_rect.x + 40, confirm_rect.y + 10))
 
+        elif flow.stage == 'subclass':
+            prompt = font.render(f"choose a {flow.actor.char_class.title()} path:",
+                                 True, (255, 255, 255))
+            screen.blit(prompt, (250, 35))
+            for index, subclass_id in enumerate(
+                    CLASSES[flow.actor.char_class].get('subclasses', [])):
+                subclass = SUBCLASSES[subclass_id]
+                rect = pygame.Rect(100, 100 + index * 115, 600, 95)
+                color = (90, 140, 90) if subclass_id == flow.actor.subclass else (60, 60, 60)
+                pygame.draw.rect(screen, color, rect)
+                screen.blit(font.render(subclass['name'], True, (255, 255, 255)),
+                            (rect.x + 14, rect.y + 10))
+                screen.blit(pygame.font.SysFont(None, 23).render(
+                    subclass['description'], True, (220, 220, 220)),
+                    (rect.x + 14, rect.y + 46))
+            if flow.actor.subclass:
+                pygame.draw.rect(screen, (100, 100, 180), confirm_rect)
+                screen.blit(font.render("Confirm", True, (255, 255, 255)),
+                            (confirm_rect.x + 40, confirm_rect.y + 10))
+
+        elif flow.stage == 'skills':
+            needed = CLASSES[flow.actor.char_class].get('skill_choices', 0)
+            screen.blit(font.render(f"Choose {needed} trained skills ({len(flow.actor.skills)}/{needed})",
+                                    True, (255, 255, 255)), (180, 45))
+            for rect, skill in make_buttons(CLASSES[flow.actor.char_class].get('skills', [])):
+                selected = skill in flow.actor.skills
+                pygame.draw.rect(screen, (90, 140, 90) if selected else (60, 60, 60), rect)
+                screen.blit(font.render(skill.title(), True, (255, 255, 255)),
+                            (rect.x + 10, rect.y + 10))
+            if len(flow.actor.skills) == needed:
+                pygame.draw.rect(screen, (100, 100, 180), confirm_rect)
+                screen.blit(font.render("Confirm", True, (255, 255, 255)),
+                            (confirm_rect.x + 40, confirm_rect.y + 10))
+
         elif flow.stage == 'abilities':
             if flow.current_ability_index < len(flow.ability_order):
                 ability = flow.ability_order[flow.current_ability_index]
@@ -248,6 +306,9 @@ def run_creation(available_avatars=None):
                 ancestry += " (" + " / ".join(race.title() for race in actor.parent_races) + ")"
             header = font.render(f"{ancestry} {actor.char_class.title()} - saved", True, (255, 255, 255))
             screen.blit(header, (200, y))
+            if actor.subclass:
+                subclass_name = SUBCLASSES.get(actor.subclass, {}).get('name', actor.subclass)
+                screen.blit(font.render(subclass_name, True, (210, 210, 210)), (200, y + 35))
             for ability, score in actor.abilities.items():
                 y += 40
                 line = font.render(f"{ability}: {score}", True, (255, 255, 255))

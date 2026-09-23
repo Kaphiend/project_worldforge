@@ -1,0 +1,866 @@
+{
+  "barbarian_emberblood": {
+    "id": "barbarian_emberblood",
+    "class": "barbarian",
+    "name": "Emberblood",
+    "description": "Channel fierce inner heat.",
+    "features": {
+      "3": {
+        "name": "Kindled Drive",
+        "summary": "Begin the Emberblood discipline with a defining technique shaped by channel fierce inner heat."
+      },
+      "6": {
+        "name": "Cinder Guard",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Flare Step",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Living Furnace",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "barbarian_stonewake": {
+    "id": "barbarian_stonewake",
+    "class": "barbarian",
+    "name": "Stonewake",
+    "description": "Turn endurance into unyielding force.",
+    "features": {
+      "3": {
+        "name": "Granite Stance",
+        "summary": "Begin the Stonewake discipline with a defining technique shaped by turn endurance into unyielding force."
+      },
+      "6": {
+        "name": "Deep Roots",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Faultbreaker",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Mountain Heart",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "barbarian_wild_prowler": {
+    "id": "barbarian_wild_prowler",
+    "class": "barbarian",
+    "name": "Wild Prowler",
+    "description": "Hunt by instinct and relentless motion.",
+    "features": {
+      "3": {
+        "name": "Predator’s Opening",
+        "summary": "Begin the Wild Prowler discipline with a defining technique shaped by hunt by instinct and relentless motion."
+      },
+      "6": {
+        "name": "Brush Runner",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Pack Signal",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Apex Pursuit",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "bard_storykeeper": {
+    "id": "bard_storykeeper",
+    "class": "bard",
+    "name": "Storykeeper",
+    "description": "Shape memory and morale through spoken tales.",
+    "features": {
+      "3": {
+        "name": "Gathered Tale",
+        "summary": "Begin the Storykeeper discipline with a defining technique shaped by shape memory and morale through spoken tales."
+      },
+      "6": {
+        "name": "Shared Courage",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Turning Point",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Living Legend",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "bard_chorusblade": {
+    "id": "bard_chorusblade",
+    "class": "bard",
+    "name": "Chorusblade",
+    "description": "Blend measured rhythm with close combat.",
+    "features": {
+      "3": {
+        "name": "Beat of Steel",
+        "summary": "Begin the Chorusblade discipline with a defining technique shaped by blend measured rhythm with close combat."
+      },
+      "6": {
+        "name": "Counter-Rhythm",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Rallying Measure",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Final Refrain",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "bard_echo_weaver": {
+    "id": "bard_echo_weaver",
+    "class": "bard",
+    "name": "Echo Weaver",
+    "description": "Repeat and reshape sounds into subtle magic.",
+    "features": {
+      "3": {
+        "name": "First Echo",
+        "summary": "Begin the Echo Weaver discipline with a defining technique shaped by repeat and reshape sounds into subtle magic."
+      },
+      "6": {
+        "name": "Layered Voice",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Distant Refrain",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Perfect Resonance",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "cleric_hearthwarden": {
+    "id": "cleric_hearthwarden",
+    "class": "cleric",
+    "name": "Hearthwarden",
+    "description": "Protect companions through steadfast care.",
+    "features": {
+      "3": {
+        "name": "Sheltering Sign",
+        "summary": "Begin the Hearthwarden discipline with a defining technique shaped by protect companions through steadfast care."
+      },
+      "6": {
+        "name": "Steady Hands",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Circle of Safety",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Lasting Shelter",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "cleric_dawnkeeper": {
+    "id": "cleric_dawnkeeper",
+    "class": "cleric",
+    "name": "Dawnkeeper",
+    "description": "Carry renewal into places touched by shadow.",
+    "features": {
+      "3": {
+        "name": "First Light",
+        "summary": "Begin the Dawnkeeper discipline with a defining technique shaped by carry renewal into places touched by shadow."
+      },
+      "6": {
+        "name": "Brightened Resolve",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Daybreak Ward",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Unsetting Dawn",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "cleric_graveguide": {
+    "id": "cleric_graveguide",
+    "class": "cleric",
+    "name": "Graveguide",
+    "description": "Ease the passage between life and death.",
+    "features": {
+      "3": {
+        "name": "Quiet Passage",
+        "summary": "Begin the Graveguide discipline with a defining technique shaped by ease the passage between life and death."
+      },
+      "6": {
+        "name": "Keeper’s Counsel",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Gentle Return",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Threshold Watch",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "druid_greenward": {
+    "id": "druid_greenward",
+    "class": "druid",
+    "name": "Greenward",
+    "description": "Guard places where life grows wild.",
+    "features": {
+      "3": {
+        "name": "Rooted Practice",
+        "summary": "Begin the Greenward discipline with a defining technique shaped by guard places where life grows wild."
+      },
+      "6": {
+        "name": "Thicket Path",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Seasoned Growth",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Heart of the Grove",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "druid_beastbound": {
+    "id": "druid_beastbound",
+    "class": "druid",
+    "name": "Beastbound",
+    "description": "Share instincts and movement with animal allies.",
+    "features": {
+      "3": {
+        "name": "Wild Companion",
+        "summary": "Begin the Beastbound discipline with a defining technique shaped by share instincts and movement with animal allies."
+      },
+      "6": {
+        "name": "Shared Senses",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Coordinated Hunt",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Bond Without Words",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "druid_weathercaller": {
+    "id": "druid_weathercaller",
+    "class": "druid",
+    "name": "Weathercaller",
+    "description": "Read and shape the changing sky.",
+    "features": {
+      "3": {
+        "name": "Wind Reader",
+        "summary": "Begin the Weathercaller discipline with a defining technique shaped by read and shape the changing sky."
+      },
+      "6": {
+        "name": "Rain Thread",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Storm Turning",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Open Sky",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "fighter_vanguard": {
+    "id": "fighter_vanguard",
+    "class": "fighter",
+    "name": "Vanguard",
+    "description": "Lead from the point where pressure is greatest.",
+    "features": {
+      "3": {
+        "name": "Opening Advance",
+        "summary": "Begin the Vanguard discipline with a defining technique shaped by lead from the point where pressure is greatest."
+      },
+      "6": {
+        "name": "Hold the Line",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Driving Formation",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Unbroken Front",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "fighter_weapon_scholar": {
+    "id": "fighter_weapon_scholar",
+    "class": "fighter",
+    "name": "Weapon Scholar",
+    "description": "Study weapons as tools with distinct answers.",
+    "features": {
+      "3": {
+        "name": "Measured Form",
+        "summary": "Begin the Weapon Scholar discipline with a defining technique shaped by study weapons as tools with distinct answers."
+      },
+      "6": {
+        "name": "Changing Grip",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Read the Guard",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Master of Forms",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "fighter_ironwall": {
+    "id": "fighter_ironwall",
+    "class": "fighter",
+    "name": "Ironwall",
+    "description": "Turn defense into space for allies.",
+    "features": {
+      "3": {
+        "name": "Set Defense",
+        "summary": "Begin the Ironwall discipline with a defining technique shaped by turn defense into space for allies."
+      },
+      "6": {
+        "name": "Covering Step",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Bastion Response",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Unmoving Guard",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "monk_stillwater": {
+    "id": "monk_stillwater",
+    "class": "monk",
+    "name": "Stillwater",
+    "description": "Use calm attention to redirect force.",
+    "features": {
+      "3": {
+        "name": "Quiet Center",
+        "summary": "Begin the Stillwater discipline with a defining technique shaped by use calm attention to redirect force."
+      },
+      "6": {
+        "name": "Flowing Deflection",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Untroubled Step",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Stillwater Form",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "monk_windstep": {
+    "id": "monk_windstep",
+    "class": "monk",
+    "name": "Windstep",
+    "description": "Build speed through precise movement.",
+    "features": {
+      "3": {
+        "name": "Light Footing",
+        "summary": "Begin the Windstep discipline with a defining technique shaped by build speed through precise movement."
+      },
+      "6": {
+        "name": "Crossing Step",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Wall Runner",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Farstride",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "monk_iron_pulse": {
+    "id": "monk_iron_pulse",
+    "class": "monk",
+    "name": "Iron Pulse",
+    "description": "Focus body and breath into decisive impact.",
+    "features": {
+      "3": {
+        "name": "Focused Strike",
+        "summary": "Begin the Iron Pulse discipline with a defining technique shaped by focus body and breath into decisive impact."
+      },
+      "6": {
+        "name": "Resonant Guard",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Driving Pulse",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Unbroken Rhythm",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "paladin_beacon": {
+    "id": "paladin_beacon",
+    "class": "paladin",
+    "name": "Beacon",
+    "description": "Inspire allies through visible resolve.",
+    "features": {
+      "3": {
+        "name": "Signal of Hope",
+        "summary": "Begin the Beacon discipline with a defining technique shaped by inspire allies through visible resolve."
+      },
+      "6": {
+        "name": "Steady Radiance",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Shared Resolve",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Guiding Presence",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "paladin_oathward": {
+    "id": "paladin_oathward",
+    "class": "paladin",
+    "name": "Oathward",
+    "description": "Stand between danger and those under your care.",
+    "features": {
+      "3": {
+        "name": "Protective Vow",
+        "summary": "Begin the Oathward discipline with a defining technique shaped by stand between danger and those under your care."
+      },
+      "6": {
+        "name": "Interposed Guard",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Sanctuary Step",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Lasting Ward",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "paladin_truthseeker": {
+    "id": "paladin_truthseeker",
+    "class": "paladin",
+    "name": "Truthseeker",
+    "description": "Pursue hidden causes and expose deception.",
+    "features": {
+      "3": {
+        "name": "Clear Intent",
+        "summary": "Begin the Truthseeker discipline with a defining technique shaped by pursue hidden causes and expose deception."
+      },
+      "6": {
+        "name": "Unmasking Word",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Pursuit Without Rest",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Revealed Path",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "ranger_trailwarden": {
+    "id": "ranger_trailwarden",
+    "class": "ranger",
+    "name": "Trailwarden",
+    "description": "Keep companions safe across dangerous ground.",
+    "features": {
+      "3": {
+        "name": "Trail Sense",
+        "summary": "Begin the Trailwarden discipline with a defining technique shaped by keep companions safe across dangerous ground."
+      },
+      "6": {
+        "name": "Sheltered Camp",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Safe Passage",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Warden’s Route",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "ranger_beast_companion": {
+    "id": "ranger_beast_companion",
+    "class": "ranger",
+    "name": "Beast Companion",
+    "description": "Build a practiced bond with one animal ally.",
+    "features": {
+      "3": {
+        "name": "Companion’s Signal",
+        "summary": "Begin the Beast Companion discipline with a defining technique shaped by build a practiced bond with one animal ally."
+      },
+      "6": {
+        "name": "Shared Pursuit",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Guarding Pair",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Trusted Partner",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "ranger_farshot": {
+    "id": "ranger_farshot",
+    "class": "ranger",
+    "name": "Farshot",
+    "description": "Make careful distance and patience count.",
+    "features": {
+      "3": {
+        "name": "Set Aim",
+        "summary": "Begin the Farshot discipline with a defining technique shaped by make careful distance and patience count."
+      },
+      "6": {
+        "name": "Measured Release",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Patient Hunter",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Far Horizon",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "rogue_shadowrunner": {
+    "id": "rogue_shadowrunner",
+    "class": "rogue",
+    "name": "Shadowrunner",
+    "description": "Move unseen through breaks in attention.",
+    "features": {
+      "3": {
+        "name": "Soft Step",
+        "summary": "Begin the Shadowrunner discipline with a defining technique shaped by move unseen through breaks in attention."
+      },
+      "6": {
+        "name": "Borrowed Cover",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Fade from Focus",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Unseen Crossing",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "rogue_trickhand": {
+    "id": "rogue_trickhand",
+    "class": "rogue",
+    "name": "Trickhand",
+    "description": "Use tools and misdirection to open choices.",
+    "features": {
+      "3": {
+        "name": "Quick Fingers",
+        "summary": "Begin the Trickhand discipline with a defining technique shaped by use tools and misdirection to open choices."
+      },
+      "6": {
+        "name": "False Opening",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Hidden Tool",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Perfect Misdirection",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "rogue_duelist": {
+    "id": "rogue_duelist",
+    "class": "rogue",
+    "name": "Duelist",
+    "description": "Win close exchanges through timing and poise.",
+    "features": {
+      "3": {
+        "name": "Reading Stance",
+        "summary": "Begin the Duelist discipline with a defining technique shaped by win close exchanges through timing and poise."
+      },
+      "6": {
+        "name": "Measured Riposte",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Close Control",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Unanswerable Feint",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "sorcerer_bloodspark": {
+    "id": "sorcerer_bloodspark",
+    "class": "sorcerer",
+    "name": "Bloodspark",
+    "description": "Shape innate power into sudden bursts.",
+    "features": {
+      "3": {
+        "name": "First Surge",
+        "summary": "Begin the Bloodspark discipline with a defining technique shaped by shape innate power into sudden bursts."
+      },
+      "6": {
+        "name": "Held Charge",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Split Current",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Bright Conduit",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "sorcerer_tempest_heart": {
+    "id": "sorcerer_tempest_heart",
+    "class": "sorcerer",
+    "name": "Tempest Heart",
+    "description": "Steer force through air and pressure.",
+    "features": {
+      "3": {
+        "name": "Pressure Shift",
+        "summary": "Begin the Tempest Heart discipline with a defining technique shaped by steer force through air and pressure."
+      },
+      "6": {
+        "name": "Wind Buffer",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Rolling Squall",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Eye of the Storm",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "sorcerer_altered_form": {
+    "id": "sorcerer_altered_form",
+    "class": "sorcerer",
+    "name": "Altered Form",
+    "description": "Let magic reshape movement and resilience.",
+    "features": {
+      "3": {
+        "name": "Flexible Frame",
+        "summary": "Begin the Altered Form discipline with a defining technique shaped by let magic reshape movement and resilience."
+      },
+      "6": {
+        "name": "Adaptive Skin",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Unusual Reach",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Living Change",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "warlock_hollow_star": {
+    "id": "warlock_hollow_star",
+    "class": "warlock",
+    "name": "Hollow Star",
+    "description": "Draw power from a distant, silent source.",
+    "features": {
+      "3": {
+        "name": "Far Signal",
+        "summary": "Begin the Hollow Star discipline with a defining technique shaped by draw power from a distant, silent source."
+      },
+      "6": {
+        "name": "Starless Mantle",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Falling Light",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Quiet Orbit",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "warlock_thorn_pact": {
+    "id": "warlock_thorn_pact",
+    "class": "warlock",
+    "name": "Thorn Pact",
+    "description": "Trade patience for grasping, binding force.",
+    "features": {
+      "3": {
+        "name": "Briar Mark",
+        "summary": "Begin the Thorn Pact discipline with a defining technique shaped by trade patience for grasping, binding force."
+      },
+      "6": {
+        "name": "Thorned Reach",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Grasping Field",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Evergreen Claim",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "warlock_whispering_deep": {
+    "id": "warlock_whispering_deep",
+    "class": "warlock",
+    "name": "Whispering Deep",
+    "description": "Listen for truths carried beneath the surface.",
+    "features": {
+      "3": {
+        "name": "Low Murmur",
+        "summary": "Begin the Whispering Deep discipline with a defining technique shaped by listen for truths carried beneath the surface."
+      },
+      "6": {
+        "name": "Borrowed Secret",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Deep Current",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Voice Below",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "wizard_runecrafter": {
+    "id": "wizard_runecrafter",
+    "class": "wizard",
+    "name": "Runecrafter",
+    "description": "Prepare durable patterns that guide spellwork.",
+    "features": {
+      "3": {
+        "name": "First Inscription",
+        "summary": "Begin the Runecrafter discipline with a defining technique shaped by prepare durable patterns that guide spellwork."
+      },
+      "6": {
+        "name": "Linked Marks",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Prepared Circuit",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Master Pattern",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "wizard_ward_scholar": {
+    "id": "wizard_ward_scholar",
+    "class": "wizard",
+    "name": "Ward Scholar",
+    "description": "Study barriers as a precise craft.",
+    "features": {
+      "3": {
+        "name": "Measured Ward",
+        "summary": "Begin the Ward Scholar discipline with a defining technique shaped by study barriers as a precise craft."
+      },
+      "6": {
+        "name": "Layered Defense",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Redirected Force",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Perfect Boundary",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  },
+  "wizard_battle_arcanist": {
+    "id": "wizard_battle_arcanist",
+    "class": "wizard",
+    "name": "Battle Arcanist",
+    "description": "Apply careful spellcraft under pressure.",
+    "features": {
+      "3": {
+        "name": "Quick Formula",
+        "summary": "Begin the Battle Arcanist discipline with a defining technique shaped by apply careful spellcraft under pressure."
+      },
+      "6": {
+        "name": "Countermeasure",
+        "summary": "Deepen the discipline with a practiced response that supports its central approach."
+      },
+      "10": {
+        "name": "Focused Sequence",
+        "summary": "Apply the discipline with greater flexibility when circumstances change."
+      },
+      "14": {
+        "name": "Arcane Tempo",
+        "summary": "Reach the mature expression of this discipline and extend its signature practice."
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from classes import EQUIPMENT_ITEMS, RACES, CLASSES
+from classes import ABILITIES, EQUIPMENT_ITEMS, RACES, CLASSES, SPELLS
 from dice import ability_points
+import random
 import uuid
 
 EQUIPMENT_SLOTS = (
@@ -36,6 +37,7 @@ class Actor:
     weapon_prof: list = field(default_factory=list)
     race: str = ''
     subrace: str = ''
+    subclass: str = ''
     parent_races: list = field(default_factory=list)
     char_class: str = ''
     skills: list = field(default_factory=list)
@@ -128,6 +130,90 @@ def apply_starting_gear(actor):
     actor.starting_gear_applied = True
 
 
+def random_fully_geared_actor(name=None, avatars=None):
+    """Build a randomized level-three test actor with every visible gear slot filled."""
+    race_options = [key for key, data in RACES.items()
+                    if data.get('selectable', True)]
+    race = random.choice(race_options)
+    class_name = random.choice(list(CLASSES))
+    if not name:
+        name = f"Demo {class_name.title()} {uuid.uuid4().hex[:4]}"
+    actor = actor_factory(name, controller='player')
+    actor.race = race
+    if RACES[race].get('half_breed'):
+        parents = [key for key, data in RACES.items()
+                   if not data.get('half_breed') and data.get('selectable', True)]
+        actor.parent_races = random.choices(parents, k=2)
+    elif RACES[race].get('subraces'):
+        actor.subrace = random.choice(list(RACES[race]['subraces']))
+    actor.char_class = class_name
+    actor.level = 3
+    actor.classes = [{'name': class_name, 'level': actor.level}]
+    actor.abilities = dict(zip(actor.abilities, ability_points()))
+    actor.skills = random.sample(
+        CLASSES[class_name].get('skills', []),
+        min(CLASSES[class_name].get('skill_choices', 0),
+            len(CLASSES[class_name].get('skills', []))))
+    subclass_ids = CLASSES[class_name].get('subclasses', [])
+    if subclass_ids:
+        actor.subclass = random.choice(subclass_ids)
+    apply_class_proficiencies(actor)
+    hit_die = CLASSES[class_name]['hit_die']
+    con_mod = modifier(actor.abilities.get('constitution', 10))
+    actor.max_hp = max(3, hit_die + con_mod + sum(
+        max(1, random.randint(1, hit_die) + con_mod) for _ in range(actor.level - 1)))
+    actor.current_hp = actor.max_hp
+    actor.inventory = []
+    actor.equipment = {slot: None for slot in EQUIPMENT_SLOTS}
+    actor.starting_gear_applied = True
+
+    fixed_slots = {
+        'head': 'leather_cap', 'hands': 'travel_gloves', 'feet': 'trail_boots',
+        'belt': 'utility_belt', 'cape': 'wool_cape', 'ring1': 'ring_guard',
+        'ring2': 'ring_focus', 'amulet': 'brass_amulet',
+    }
+    for slot, template_id in fixed_slots.items():
+        item = add_equipment_item(actor, template_id=template_id)
+        equip_item(actor, item['id'], slot)
+
+    chest_templates = ['leather', 'chain_shirt', 'scale_mail', 'chain_mail']
+    armor_proficiencies = set(actor.armor_prof)
+    legal_chest = [template_id for template_id in chest_templates
+                   if EQUIPMENT_ITEMS[template_id]['category'] in armor_proficiencies]
+    chest_template = random.choice(legal_chest or ['leather'])
+    item = add_equipment_item(actor, template_id=chest_template)
+    equip_item(actor, item['id'], 'chest')
+
+    main_template = random.choice(['dagger', 'sword_1h', 'axe_1h', 'hammer_1h', 'staff'])
+    item = add_equipment_item(actor, template_id=main_template)
+    equip_item(actor, item['id'], 'main_hand')
+    offhand_template = random.choice(['shield', 'dagger', 'sword_1h', 'axe_1h', 'hammer_1h'])
+    item = add_equipment_item(actor, template_id=offhand_template)
+    equip_item(actor, item['id'], 'off_hand')
+
+    ranged_template = random.choice(['longbow', 'crossbow'])
+    item = add_equipment_item(actor, template_id=ranged_template)
+    equip_item(actor, item['id'], 'ranged')
+    if ranged_template == 'crossbow':
+        item = add_equipment_item(actor, template_id='crossbow')
+        equip_item(actor, item['id'], 'ranged_offhand')
+
+    for _ in range(3):
+        add_equipment_item(actor, template_id='healing_potion')
+    add_equipment_item(actor, template_id='revival_scroll')
+
+    class_spell_ids = [spell_id for spell_id, spell in SPELLS.items()
+                       if class_name in spell.get('classes', [])
+                       and spell.get('prerequisite_class_level', 1) <= actor.level]
+    actor.known_spells = class_spell_ids
+    actor.known_abilities = [ability_id for ability_id, ability in ABILITIES.items()
+                             if class_name in ability.get('classes', [])
+                             and ability.get('prerequisite_class_level', 1) <= actor.level]
+    if avatars:
+        actor.avatar = random.choice(list(avatars))
+    return actor
+
+
 def add_equipment_item(actor, name=None, slot=None, details=None, template_id=None):
     """Add a uniquely identified item instance, optionally from the catalog."""
     if template_id:
@@ -149,7 +235,8 @@ def add_equipment_item(actor, name=None, slot=None, details=None, template_id=No
         item.update({key: value for key, value in details.items() if key != 'name'})
     if template_id:
         item['template_id'] = template_id
-    actor.inventory.append(item)
+    inventory = actor.setdefault('inventory', []) if isinstance(actor, dict) else actor.inventory
+    inventory.append(item)
     return item
 
 
@@ -161,7 +248,10 @@ def item_definition(item):
 
 def equip_item(actor, item_id, slot):
     """Move an inventory item into a compatible equipment slot."""
-    item = next((entry for entry in actor.inventory if entry['id'] == item_id), None)
+    inventory = actor.setdefault('inventory', []) if isinstance(actor, dict) else actor.inventory
+    equipment = (actor.setdefault('equipment', {name: None for name in EQUIPMENT_SLOTS})
+                 if isinstance(actor, dict) else actor.equipment)
+    item = next((entry for entry in inventory if entry['id'] == item_id), None)
     if item is None:
         return False
     definition = item_definition(item)
@@ -181,40 +271,43 @@ def equip_item(actor, item_id, slot):
     if slot == 'ranged_offhand' and 'ranged_offhand' not in equipment_slots(actor):
         return False
     if slot == 'ranged_offhand':
-        ranged_item = actor.equipment.get('ranged')
+        ranged_item = equipment.get('ranged')
         if not ranged_item or is_two_handed(item_definition(ranged_item)):
             return False
-    if slot in actor.equipment and actor.equipment[slot] is not None:
+    if slot in equipment and equipment[slot] is not None:
         return False
-    if any(equipped and equipped.get('id') == item_id for equipped in actor.equipment.values()):
+    if any(equipped and equipped.get('id') == item_id for equipped in equipment.values()):
         return False
     two_handed = slot in ('main_hand', 'off_hand') and is_two_handed(definition)
-    if two_handed and any(actor.equipment.get(hand) for hand in ('main_hand', 'off_hand')):
+    if two_handed and any(equipment.get(hand) for hand in ('main_hand', 'off_hand')):
         return False
-    actor.equipment[slot] = item
+    equipment[slot] = item
     if two_handed:
-        actor.equipment['off_hand' if slot == 'main_hand' else 'main_hand'] = item
-    actor.inventory.remove(item)
+        equipment['off_hand' if slot == 'main_hand' else 'main_hand'] = item
+    inventory.remove(item)
     return True
 
 
 def unequip_item(actor, slot):
     """Clear an equipment slot; the item remains among the actor's carried items."""
-    item = actor.equipment.get(slot)
+    inventory = actor.setdefault('inventory', []) if isinstance(actor, dict) else actor.inventory
+    equipment = actor.setdefault('equipment', {name: None for name in EQUIPMENT_SLOTS}) if isinstance(actor, dict) else actor.equipment
+    item = equipment.get(slot)
     if not item:
         return False
     item_id = item['id']
-    for equipped_slot, equipped_item in list(actor.equipment.items()):
+    for equipped_slot, equipped_item in list(equipment.items()):
         if equipped_item and equipped_item.get('id') == item_id:
-            actor.equipment[equipped_slot] = None
-    actor.inventory.append(item)
+            equipment[equipped_slot] = None
+    inventory.append(item)
     return True
 
 
 def equipment_slots(actor):
     """Return visible slots, including a second ranged slot when eligible."""
     slots = list(EQUIPMENT_SLOTS)
-    ranged_item = actor.equipment.get('ranged')
+    equipment = actor.get('equipment', {}) if isinstance(actor, dict) else actor.equipment
+    ranged_item = equipment.get('ranged')
     if ranged_item and not is_two_handed(item_definition(ranged_item)):
         slots.append('ranged_offhand')
     return slots

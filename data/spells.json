@@ -478,5 +478,28 @@
     "description": "A clear, angular ward briefly turns aside incoming attacks.",
     "prerequisite_class_level": 1,
     "acquisition": "trainer_purchase"
+  },
+  "healing_potion_effect": {
+    "name": "Healing Potion",
+    "classes": [],
+    "tier": 0,
+    "casting_time": "action",
+    "targeting": {
+      "mode": "self",
+      "range_feet": 0,
+      "requires_line_of_sight": false
+    },
+    "resolution": {
+      "kind": "healing"
+    },
+    "effects": [
+      {
+        "kind": "healing",
+        "formula": "2d4+2",
+        "can_revive": false
+      }
+    ],
+    "description": "Restores a small amount of health. Cannot revive a downed actor.",
+    "consumable_only": true
   }
 }

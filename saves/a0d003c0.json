@@ -1,0 +1,226 @@
+{
+  "name": "Demo Rogue b6cd",
+  "id": "a0d003c0",
+  "max_hp": 16,
+  "current_hp": 16,
+  "classes": [
+    {
+      "name": "rogue",
+      "level": 3
+    }
+  ],
+  "level": 3,
+  "xp_total": 0,
+  "xp_earned_by_level": {},
+  "xp_spent_by_level": {},
+  "downed": false,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "known_abilities": [
+    "distracting_feint"
+  ],
+  "avatar": "asset_pack/Soldier.png",
+  "abilities": {
+    "strength": 14,
+    "dexterity": 8,
+    "constitution": 13,
+    "intellect": 8,
+    "wisdom": 14,
+    "charisma": 8
+  },
+  "unspent": [
+    9,
+    14,
+    14,
+    17,
+    11,
+    10
+  ],
+  "saves": [
+    "dexterity",
+    "intellect"
+  ],
+  "armor_prof": [
+    "light"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial (finesse or light)"
+  ],
+  "race": "half-breed",
+  "subrace": "",
+  "subclass": "rogue_shadowrunner",
+  "parent_races": [
+    "dwarf",
+    "human"
+  ],
+  "char_class": "rogue",
+  "skills": [
+    "sleight of hand",
+    "performance",
+    "intimidation",
+    "acrobatics"
+  ],
+  "controller": "player",
+  "x": 690.0,
+  "y": 285.0,
+  "inventory": [
+    {
+      "id": "34c66bce6a93",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "b9f5ba798651",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "34b78c062d5a",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "6abe7d48da77",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "revival_scroll"
+    }
+  ],
+  "equipment": {
+    "head": {
+      "id": "7c9818b48ad8",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "5ccef6bb1f52",
+      "name": "Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather"
+    },
+    "hands": {
+      "id": "caf8ec36b119",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "98d6c25b926a",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "817f595ad7bb",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "5b6e4ae44619",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "6413b800b0f2",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "aceeef9622c6",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "a1dc108d34a2",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "1c28c9589ed0",
+      "name": "Dagger",
+      "slot": "hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "dagger"
+    },
+    "off_hand": {
+      "id": "020f1eb04fa4",
+      "name": "Hammer",
+      "slot": "hand",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "hammer_1h"
+    },
+    "ranged": {
+      "id": "3c104aa74e11",
+      "name": "Longbow",
+      "slot": "ranged",
+      "tags": [
+        "2h",
+        "heavy",
+        "ammunition"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "longbow"
+    }
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}
