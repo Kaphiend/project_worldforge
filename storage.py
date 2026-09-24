@@ -51,6 +51,10 @@ def load_actor(actor_id):
     data.setdefault('xp_total', 0)
     data.setdefault('xp_earned_by_level', {})
     data.setdefault('xp_spent_by_level', {})
+    data.setdefault('class_spell_purchases', {})
+    data.setdefault('class_ability_purchases', {})
+    data.setdefault('xp_rest_spent_by_level', {})
+    data.setdefault('withdrawn', False)
     data.setdefault('downed', data.get('current_hp', 1) <= 0)
     data.setdefault('conditions', [])
     data.setdefault('active_effects', [])
@@ -87,13 +91,38 @@ def load_actor(actor_id):
         data['known_abilities'] = [
             ability_id for ability_id, ability in ABILITIES.items()
             if class_names.intersection(ability.get('classes', []))
+            and ability.get('acquisition') != 'trainer_purchase'
             and ability.get('prerequisite_class_level', 1) <= level
         ]
+    # Legacy saves already owned every option their former level granted.
+    # Preserve those options and migrate their class ownership once.
+    if not data['class_spell_purchases']:
+        for spell_id in data.get('known_spells', []):
+            spell = SPELLS.get(spell_id, {})
+            if spell.get('acquisition') == 'trainer_purchase' and not spell.get('cantrip'):
+                for class_id in class_names.intersection(spell.get('classes', [])):
+                    data['class_spell_purchases'].setdefault(class_id, []).append(spell_id)
+    if not data['class_ability_purchases']:
+        for ability_id in data.get('known_abilities', []):
+            ability = ABILITIES.get(ability_id, {})
+            if ability.get('acquisition') == 'trainer_purchase':
+                for class_id in class_names.intersection(ability.get('classes', [])):
+                    data['class_ability_purchases'].setdefault(class_id, []).append(ability_id)
     data.setdefault('avatar', 'asset_pack/Soldier.png')
+    # Earlier quick-start saves were level 3 but carried no XP balance.
+    if (int(data.get('xp_total', 0) or 0) == 0
+            and not data.get('xp_earned_by_level')
+            and int(data.get('level', 1) or 1) > 1):
+        from progression import XP_THRESHOLDS
+        legacy_level = min(int(data['level']), len(XP_THRESHOLDS))
+        data['xp_total'] = XP_THRESHOLDS[legacy_level - 1]
+        data['xp_earned_by_level'] = {str(legacy_level): data['xp_total']}
     if not data.get('controller') or not isinstance(data.get('controller'), str):
         data['controller'] = 'player'
     elif data['controller'] == 'dm':
         data['controller'] = 'player'
+    from progression import sync_progression_levels
+    sync_progression_levels(data)
     actor = Actor(**data)
 
     for slot in EQUIPMENT_SLOTS:

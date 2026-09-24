@@ -25,9 +25,10 @@ Worldforge is a moddable, data-driven, top-down co-op RPG. Players should be abl
 - `[x]` Select a target and trigger the primary attack with `1`, force a ranged-weapon attack with `R`, or explicitly throw a throwable main-hand item with `T`. Ranged attacks can have disadvantage by range; melee attacks outside reach cannot hit. Clear line of sight is required.
 - `[x]` Cast the implemented spells and abilities, use supported consumables, and display supported conditions such as burning.
 - `[x]` Perception automatically reveals an NPC's title based on its information DCs; this check does not require line of sight.
-- `[x]` Track player health and enemy defeat state. A dead/downed actor has no death-save flow; another player can restore them using the revive spell or a revival scroll. Revive healing is rolled as `2d4`.
+- `[x]` Track downed players. They may wait for another player to revive them or release their spirit to the inn for a 10% unspent-XP loss. Being revived costs 2% XP. Revive healing is rolled as `2d4`.
 - `[~]` Inventory and equipment support item instances, equipment slots, weapon sets, and dual wielding. Inventory capacity, item acquisition, and a finished inventory UX remain future work.
-- `[~]` Hovering carried and equipped items shows their available data. Pool counts are visible in play; outdoor rest on `Z` checks distance and XP, while inn rest on `X` costs 10 gold at the gray-box bed. Both replenish spell and class pools. Camp-stage travel is not connected yet.
+- `[~]` Hovering carried and equipped items shows their available data. Pool counts are visible in play; outdoor rest on `Z` checks distance and XP, while inn rest on `F` at the gray-box bed costs 10 gold. Both replenish spell and class pools. Camp-stage travel is not connected yet.
+- `[x]` Hovering race, subrace, class, and subclass choices in character creation shows a short content summary.
 - `[~]` A small original demo encounter and gray-box environment are present. Art, animation transitions, and variety are intentionally limited.
 - `[~]` NPC behavior is a simple test behavior. More capable AI is explicitly deferred.
 
@@ -80,6 +81,31 @@ levels are not.
 
 ## Roadmap checklist
 
+### Trainer, purchases, and level eligibility
+
+- A single trainer stands beside the inn. Press `F` nearby to open a trainer
+  screen modeled on the spellbook, with one tab for each class.
+- Each class tab lists that class's spells and abilities, organized by level.
+  XP-derived character level is the maximum purchase tier in every class;
+  each class tracks its own purchased-spell progression toward that ceiling.
+  A level 5 character with Wizard spells through level 4 can buy Wizard level 5
+  spells. If they own Cleric spells only through level 2, they can buy Cleric
+  level 3 spells. Buying a level-N spell requires at least one level-(N-1)
+  spell from the same class. XP loss can lower the shared purchase ceiling,
+  but does not remove owned spells or abilities; purchases above the new
+  ceiling stay locked until eligibility is regained.
+- XP is spent to buy spells and abilities. XP spending can lower level
+  eligibility, as can outdoor resting and death. Releasing the spirit after
+  death costs 10% XP; being revived by another player costs 2% XP.
+- Feat levels need a visible placeholder in progression until feat choices and
+  effects are designed. Do not silently grant or sell a feat in this phase.
+- Each spell and ability has a data-authored `xp_purchase_cost`; currently the
+  tier-N default demo entries cost N × 10 XP. Abilities can advance a tier for
+  classes with no trainer-purchase spells at the prior tier.
+- `[x]` Trainer screen, purchase validation, ownership ledgers, XP deleveling,
+  inn release, and revival penalties are implemented. Feat choices remain a
+  visible placeholder.
+
 ### 1. Make the demo slice easy to understand and extend
 
 - `[x]` Add a short in-game controls panel covering movement, target selection, attack, throw, spell/ability controls, inventory, and turn advance (toggle with F1).
@@ -101,7 +127,7 @@ levels are not.
 - `[?]` Decide whether rests can be interrupted by encounters and what happens to each participant when a co-op party is not ready at the same time.
 - `[~]` Rest replenishes the shared spell pool and configured class resource pools. Health, conditions, and consumables are not recovered; define those effects separately before adding them.
 - `[x]` Outdoor rest requires more than 100 feet of distance from every enemy. It costs a percentage of unspent XP, starting at 1% and increasing with consecutive outdoor rests to a 5% cap; apply a 1 XP minimum when unspent XP is below 100. With zero unspent XP, outdoor rest is unavailable and the character must reach an inn. An inn rest costs a flat 10 gold and resets the outdoor rate to 1%.
-- `[?]` Decide how rest interacts with dead/downed actors. Current rule: death is reversed by another player's revive spell or scroll, not by death saves.
+- `[x]` Downed players may wait for revival or return to the inn by releasing their spirit for a 10% unspent-XP penalty.
 - `[x]` Rest cost and pool replenishment rules are implemented in `resting.py` and connected to outdoor and inn actions. Camp-stage travel, a ready flow, health recovery, and condition recovery remain unimplemented.
 - `[ ]` Add UI for starting a rest, party readiness, interruptions, and the resulting recovery summary.
 - `[ ]` Persist and synchronize rest state safely in co-op so clients cannot recover twice from one rest.
@@ -110,13 +136,13 @@ levels are not.
 
 - `[~]` Actor storage tracks total XP and earned/spent-by-level ledgers. Combat awards update total and earned XP; outdoor rests separately track XP costs.
 - `[x]` A defeated encounter awards 10 XP once to every player participant. Other XP sources remain undecided.
-- `[~]` Level thresholds are available from `progression.py`, following the fifth-edition XP curve. Applying a new level and connecting this to trainer-XP purchase metadata remain open.
+- `[x]` XP thresholds, current unspent-XP eligibility, per-item trainer prices, and ownership ledgers are implemented in `progression.py` and the trainer action flow.
 - `[?]` Define level-up choices: hit point growth, abilities/features, subclass features, spell/ability acquisition, class-specific spell-point progression curves, and other multiclass rules. Multiclass spell-pool capacity sums each class's curve at that class level.
-- `[~]` Multiclass direction: each class has an independent level up to 20; total class levels are not capped at 20. At a trainer, spend the incremental gap from the shared fifth-edition XP threshold curve for that class's next level (300 XP for level 2, 600 for level 3, and so on). This allows learning every class to level 20 in principle while keeping each class advancement increasingly expensive. `progression.trainer_xp_cost` defines the cost curve; trainer discovery, unlock/purchase UI, and XP ledger integration remain to be built.
-- `[ ]` Implement one authoritative XP award path with duplicate-award protection and save/network synchronization.
-- `[ ]` Implement level-up eligibility and a player-facing level-up flow.
+- `[x]` One map trainer has tabs for all classes. Spell/ability ownership is per character and retained after deleveling; current XP eligibility and the class purchase chain control access.
+- `[x]` Implement one authoritative XP award path with duplicate-award protection.
+- `[x]` Implement XP-based level eligibility, spell/ability purchases, and a player-facing trainer flow.
 - `[ ]` Connect class and subclass progression data to actual unlocks/effects; current progression entries are mostly descriptive records.
-- `[ ]` Add a trainer/progression interface if trainer-XP purchasing remains the chosen model.
+- `[x]` Add the single trainer interaction and class-tab purchase interface. Feat-level placeholders remain pending feat design.
 - `[ ]` Show character level and progression history on the character sheet.
 
 ### 4. Combat and abilities

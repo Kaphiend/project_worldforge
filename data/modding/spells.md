@@ -16,7 +16,13 @@ known spells at creation; consumables can refer to the same record through
   normal spell action and targeting flow. Records with `cantrip: true` and
   `acquisition: "starting_cantrip"` are granted at character creation to
   matching classes and migrated onto older saves. The spellbook can prepare
-  known spells; a trainer-based unlock flow is not implemented. The demo's
+  known spells. Spell records marked `acquisition: "trainer_purchase"` are
+  sold by the map trainer. Set `xp_purchase_cost` on each record to its
+  one-time XP price; this is separate from `spell_point_cost`, which is paid
+  for each cast. Tier access uses `prerequisite_class_level` and the
+  character's sequential purchase chain for that class. A character must own
+  at least one purchase spell at each prior tier, and current unspent XP sets
+  the shared tier ceiling. The demo's
   Arcane Spark and Frost Needle are starter attack cantrips. Consumable items
   that invoke a spell do not spend the character's pool. Component requirements
   are not wired. Existing `tier`

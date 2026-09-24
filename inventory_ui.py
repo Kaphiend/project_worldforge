@@ -1,8 +1,10 @@
 """Gray-box inventory and equipment modal for the local actor."""
 import pygame
 
-from factory import equipment_slots, item_definition
+from factory import equipment_slots, item_definition, modifier
 from classes import SPELLS
+from combat import armor_class, proficiency_bonus, speed_feet
+from progression import unspent_xp
 
 
 class InventoryScreen:
@@ -148,8 +150,9 @@ class InventoryScreen:
     def draw(self, screen, actor_data, font, tooltips_enabled=True):
         if not self.visible:
             return
+        self.rect.size = (min(1080, screen.get_width() - 32),
+                          min(620, screen.get_height() - 32))
         self.rect.center = (screen.get_width() // 2, screen.get_height() // 2)
-        offset_x, offset_y = self.rect.x - 70, self.rect.y - 54
         veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         veil.fill((0, 0, 0, 175))
         screen.blit(veil, (0, 0))
@@ -161,14 +164,94 @@ class InventoryScreen:
                                  (245, 220, 150))
         screen.blit(gold_label, (self.rect.right - gold_label.get_width() - 18,
                                  self.rect.y + 12))
-        screen.blit(font.render("Equipment", True, (220, 230, 245)),
-                    (92 + offset_x, 98 + offset_y))
+
+        # Keep the sheet, equipment, and carried items together in one modal.
+        content_top = self.rect.y + 52
+        sheet_x = self.rect.x + 18
+        sheet_width = 242
+        equipment_x = sheet_x + sheet_width + 16
+        equipment_width = 304
+        items_x = equipment_x + equipment_width + 18
+        items_width = self.rect.right - items_x - 18
+        divider_color = (100, 105, 115)
+        pygame.draw.line(screen, divider_color, (equipment_x - 9, content_top),
+                         (equipment_x - 9, self.rect.bottom - 18), 1)
+        pygame.draw.line(screen, divider_color, (items_x - 9, content_top),
+                         (items_x - 9, self.rect.bottom - 18), 1)
+
+        sheet_title = font.render("Character", True, (220, 230, 245))
+        screen.blit(sheet_title, (sheet_x, content_top - 2))
+        name = str(actor_data.get("name", "Adventurer"))
+        class_id = str(actor_data.get("char_class", ""))
+        class_label = class_id.title() if class_id else "Untrained"
+        class_levels = actor_data.get("classes", []) or []
+        if class_levels:
+            class_label = " / ".join(
+                f"{entry.get('name', '').title()} {entry.get('level', 1)}"
+                for entry in class_levels if entry.get("name")) or class_label
+        race_id = str(actor_data.get("race", ""))
+        ancestry = race_id.replace("-", " ").title() if race_id else "Unknown ancestry"
+        if actor_data.get("subrace"):
+            ancestry += " · " + str(actor_data["subrace"]).replace("_", " ").title()
+        elif actor_data.get("parent_races"):
+            ancestry += " · " + " / ".join(
+                str(value).replace("-", " ").title()
+                for value in actor_data["parent_races"] if value)
+        small_font = pygame.font.Font(None, 18)
+        label_font = pygame.font.Font(None, 16)
+        screen.blit(font.render(self._fit_text(name, font, sheet_width), True,
+                                (255, 225, 155)), (sheet_x, content_top + 28))
+        screen.blit(small_font.render(self._fit_text(class_label, small_font, sheet_width),
+                                      True, (235, 238, 242)),
+                    (sheet_x, content_top + 54))
+        screen.blit(small_font.render(self._fit_text(ancestry, small_font, sheet_width),
+                                      True, (190, 202, 218)),
+                    (sheet_x, content_top + 75))
+
+        summary_y = content_top + 108
+        summary = [
+            (f"HP  {actor_data.get('current_hp', 0)} / {actor_data.get('max_hp', 0)}",
+             f"AC  {armor_class(actor_data)}"),
+            (f"Level  {actor_data.get('level', 1)}",
+             f"Speed  {speed_feet(actor_data)} ft"),
+            (f"Proficiency  +{proficiency_bonus(actor_data)}",
+             f"Unspent XP  {unspent_xp(actor_data)}"),
+        ]
+        for row, values in enumerate(summary):
+            card = pygame.Rect(sheet_x, summary_y + row * 38, sheet_width, 32)
+            pygame.draw.rect(screen, (52, 57, 66), card, border_radius=4)
+            screen.blit(small_font.render(values[0], True, (245, 245, 238)),
+                        (card.x + 8, card.y + 4))
+            second = small_font.render(values[1], True, (205, 215, 228))
+            screen.blit(second, (card.right - second.get_width() - 8, card.y + 4))
+
+        abilities = actor_data.get("abilities", {}) or {}
+        ability_names = (("strength", "STR"), ("dexterity", "DEX"),
+                         ("constitution", "CON"), ("intellect", "INT"),
+                         ("wisdom", "WIS"), ("charisma", "CHA"))
+        ability_y = summary_y + 126
+        for index, (key, short_name) in enumerate(ability_names):
+            col, row = index % 2, index // 2
+            card = pygame.Rect(sheet_x + col * 122, ability_y + row * 49, 116, 42)
+            pygame.draw.rect(screen, (47, 52, 61), card, border_radius=4)
+            pygame.draw.rect(screen, (92, 101, 116), card, 1, border_radius=4)
+            score = int(abilities.get(key, 10) or 10)
+            value = label_font.render(f"{short_name}  {score}", True,
+                                       (242, 242, 235))
+            mod = modifier(score)
+            mod_label = f"{mod:+d}"
+            mod_surface = label_font.render(mod_label, True, (255, 220, 145))
+            screen.blit(value, (card.x + 7, card.y + 6))
+            screen.blit(mod_surface, (card.x + 7, card.y + 23))
+
+        equipment_title = font.render("Equipment", True, (220, 230, 245))
+        screen.blit(equipment_title, (equipment_x, content_top - 2))
         equipment = actor_data.get("equipment", {})
         self._slot_rects = {}
         for index, slot in enumerate(equipment_slots(actor_data)):
             col, row = index % 2, index // 2
-            rect = pygame.Rect(92 + offset_x + col * 178,
-                               122 + offset_y + row * 47, 164, 38)
+            rect = pygame.Rect(equipment_x + col * 151,
+                               content_top + 28 + row * 47, 143, 38)
             self._slot_rects[slot] = rect
             pygame.draw.rect(screen, (70, 74, 82), rect, border_radius=4)
             item = equipment.get(slot)
@@ -176,17 +259,17 @@ class InventoryScreen:
             screen.blit(font.render(self._fit_text(label, font, rect.width - 14),
                                     True, (245, 245, 245)),
                         (rect.x + 7, rect.y + 10))
-        pygame.draw.line(screen, (100, 105, 115), (445 + offset_x, 106 + offset_y),
-                         (445 + offset_x, 516 + offset_y), 1)
+
         screen.blit(font.render(f"Carried items ({len(actor_data.get('inventory', []))})", True,
-                                (220, 230, 245)), (462 + offset_x, 98 + offset_y))
+                                (220, 230, 245)), (items_x, content_top - 2))
         self._item_rects = {}
         items = actor_data.get("inventory", [])
-        visible_count = 13
+        visible_count = max(1, min(15, (self.rect.height - 206) // 26))
         self.scroll = min(self.scroll, max(0, len(items) - visible_count))
         for index, item in enumerate(items[self.scroll:self.scroll + visible_count]):
             row = index
-            rect = pygame.Rect(462 + offset_x, 122 + offset_y + row * 26, 242, 23)
+            rect = pygame.Rect(items_x, content_top + 28 + row * 26,
+                               items_width, 23)
             self._item_rects[item.get("id")] = rect
             selected = item.get("id") == self.selected_id
             pygame.draw.rect(screen, (83, 103, 125) if selected else (57, 60, 67), rect)
@@ -196,7 +279,8 @@ class InventoryScreen:
             screen.blit(font.render(self._fit_text(label, font, rect.width - 10),
                                     True, (245, 245, 245)),
                         (rect.x + 5, rect.y + 3))
-        self._use_rect.topleft = (462 + offset_x, 492 + offset_y)
+        controls_y = self.rect.bottom - 60
+        self._use_rect.topleft = (items_x, controls_y)
         self._use_rect.width = 94
         pygame.draw.rect(screen, (77, 110, 80), self._use_rect, border_radius=4)
         button_font = pygame.font.Font(None, 17)
@@ -209,7 +293,7 @@ class InventoryScreen:
             quick_items = actor_data["quick_items"] = {"q": None, "e": None}
         self._quick_rects = {}
         for index, key in enumerate(("q", "e")):
-            rect = pygame.Rect(562 + offset_x + index * 72, 492 + offset_y, 66, 34)
+            rect = pygame.Rect(items_x + 102 + index * 76, controls_y, 72, 34)
             self._quick_rects[key] = rect
             pygame.draw.rect(screen, (67, 83, 100), rect, border_radius=4)
             pygame.draw.rect(screen, (165, 175, 190), rect, 1, border_radius=4)
@@ -222,7 +306,7 @@ class InventoryScreen:
         hint_font = pygame.font.Font(None, 14)
         screen.blit(hint_font.render("Click Q/E to bind; right-click to clear.",
                                      True, (190, 195, 205)),
-                    (462 + offset_x, 466 + offset_y))
+                    (items_x, controls_y - 18))
         mouse = pygame.mouse.get_pos()
         hovered = next((next((item for item in items if item.get("id") == item_id), None)
                         for item_id, rect in self._item_rects.items()

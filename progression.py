@@ -6,7 +6,10 @@ class level N. Multiclass spell capacity sums each class's contribution at its
 own class level.
 """
 
+import math
+
 from classes import CLASSES
+from classes import ABILITIES, SPELLS
 
 
 # Cumulative character XP thresholds from the fifth-edition advancement table.
@@ -20,15 +23,14 @@ MAX_LEVEL = len(XP_THRESHOLDS)
 
 
 def class_levels(actor_data):
-    """Return class-ID to level mapping, with legacy single-class fallback."""
-    result = {}
-    for entry in actor_data.get("classes", []) or []:
-        name = entry.get("name")
-        if name:
-            result[name] = result.get(name, 0) + max(0, int(entry.get("level", 0)))
-    if not result and actor_data.get("char_class"):
-        result[actor_data["char_class"]] = max(1, int(actor_data.get("level", 1)))
-    return result
+    """Return each learned class's current unlocked tier for resource curves."""
+    names = {entry.get("name") for entry in actor_data.get("classes", []) or []
+             if entry.get("name")}
+    if actor_data.get("char_class"):
+        names.add(actor_data["char_class"])
+    names.update(actor_data.get("class_spell_purchases", {}).keys())
+    names.update(actor_data.get("class_ability_purchases", {}).keys())
+    return {name: class_unlocked_level(actor_data, name) for name in names}
 
 
 def character_level_for_xp(xp_total):
@@ -41,6 +43,106 @@ def character_level_for_xp(xp_total):
         else:
             break
     return level
+
+
+def unspent_xp(actor_data):
+    """Return the current XP wallet after purchases, rests, and penalties."""
+    earned = sum(max(0, int(value or 0))
+                 for value in actor_data.get("xp_earned_by_level", {}).values())
+    spent = sum(max(0, int(value or 0))
+                for value in actor_data.get("xp_spent_by_level", {}).values())
+    rest_spent = sum(max(0, int(value or 0))
+                     for value in actor_data.get("xp_rest_spent_by_level", {}).values())
+    # Old and quick-start saves may have a wallet without a complete earned
+    # ledger. In that case xp_total is authoritative and already net of costs.
+    if earned == 0:
+        return max(0, int(actor_data.get("xp_total", 0) or 0))
+    return max(0, earned - spent - rest_spent)
+
+
+def qualified_level(actor_data):
+    """Return the character-wide purchase ceiling from current unspent XP."""
+    return character_level_for_xp(unspent_xp(actor_data))
+
+
+def class_unlocked_level(actor_data, class_id):
+    """Return a class's sequential tier frontier, capped by character level.
+
+    Spell classes advance after at least one spell at the prior tier is owned.
+    Classes with no purchase spells at that tier use a purchased class ability
+    as the progression key, so martial classes can advance too.
+    """
+    ceiling = qualified_level(actor_data)
+    frontier = 1
+    spell_purchases = actor_data.get("class_spell_purchases", {}).get(class_id, [])
+    ability_purchases = actor_data.get("class_ability_purchases", {}).get(class_id, [])
+    for prior_tier in range(1, ceiling):
+        tier_spells = [spell_id for spell_id, spell in SPELLS.items()
+                       if class_id in spell.get("classes", [])
+                       and spell.get("acquisition") == "trainer_purchase"
+                       and not spell.get("cantrip")
+                       and int(spell.get("prerequisite_class_level", 1)) == prior_tier]
+        if tier_spells:
+            advanced = any(spell_id in spell_purchases for spell_id in tier_spells)
+        else:
+            tier_abilities = [ability_id for ability_id, ability in ABILITIES.items()
+                              if class_id in ability.get("classes", [])
+                              and ability.get("acquisition") == "trainer_purchase"
+                              and int(ability.get("prerequisite_class_level", 1)) == prior_tier]
+            advanced = any(ability_id in ability_purchases
+                           for ability_id in tier_abilities)
+        if not advanced:
+            break
+        frontier = prior_tier + 1
+    return min(ceiling, frontier)
+
+
+def purchase_cost(definition):
+    """Read a content item's XP purchase price; absent prices are unavailable."""
+    try:
+        return max(0, int(definition["xp_purchase_cost"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def spend_xp(actor_data, amount):
+    """Spend XP once from the wallet and append it to the purchase ledger."""
+    amount = max(0, int(amount))
+    balance = unspent_xp(actor_data)
+    if amount > balance:
+        return False
+    level_key = str(qualified_level(actor_data))
+    ledger = actor_data.setdefault("xp_spent_by_level", {})
+    ledger[level_key] = int(ledger.get(level_key, 0) or 0) + amount
+    actor_data["xp_total"] = max(0, int(actor_data.get("xp_total", balance) or 0) - amount)
+    sync_progression_levels(actor_data)
+    initialize_resources(actor_data)
+    return True
+
+
+def charge_xp_penalty(actor_data, percentage):
+    """Charge a percentage loss from current XP, rounded up to one point."""
+    balance = unspent_xp(actor_data)
+    if balance <= 0:
+        return 0
+    amount = min(balance, max(1, math.ceil(balance * int(percentage) / 100)))
+    return amount if spend_xp(actor_data, amount) else 0
+
+
+def sync_progression_levels(actor_data):
+    """Keep legacy level fields aligned with current XP and class frontiers."""
+    actor_data["level"] = qualified_level(actor_data)
+    entries = actor_data.get("classes", []) or []
+    known_classes = {entry.get("name") for entry in entries if entry.get("name")}
+    known_classes.update(actor_data.get("class_spell_purchases", {}).keys())
+    known_classes.update(actor_data.get("class_ability_purchases", {}).keys())
+    for class_id in known_classes:
+        entry = next((item for item in entries if item.get("name") == class_id), None)
+        if entry is None:
+            entry = {"name": class_id, "level": 1}
+            entries.append(entry)
+        entry["level"] = class_unlocked_level(actor_data, class_id)
+    actor_data["classes"] = entries
 
 
 def next_level_xp(level):
@@ -117,9 +219,9 @@ def trainer_xp_cost(current_class_level):
     """XP spent at a class trainer to buy that class's next level.
 
     Costs use the incremental gaps in the shared fifth-edition XP threshold
-    curve. Class levels advance independently, so total class levels can exceed
-    20; each individual class remains capped at 20. The trainer UI/action that
-    charges this cost is not implemented yet.
+    curve. Current trainer spell and ability purchases use per-item
+    `xp_purchase_cost` data instead; this helper remains for later class-level
+    purchase rules.
     """
     current = max(0, int(current_class_level or 0))
     next_level = current + 1

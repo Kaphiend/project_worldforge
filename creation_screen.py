@@ -25,6 +25,7 @@ def run_creation(available_avatars=None):
     new_char_rect = pygame.Rect(250, 500, 300, 50)
     random_char_rect = pygame.Rect(250, 430, 300, 50)
     start_rect = pygame.Rect(300, 500, 200, 50)
+    back_rect = pygame.Rect(30, 500, 150, 50)
     avatar_options = [
         (pygame.Rect(150, 200, 220, 180), 'asset_pack/Orc.png', 'Orc'),
         (pygame.Rect(430, 200, 220, 180), 'asset_pack/Soldier.png', 'Soldier'),
@@ -84,6 +85,28 @@ def run_creation(available_avatars=None):
             lines.append(current)
         return lines
 
+    def draw_choice_tooltip(choice):
+        if not choice:
+            return
+        title, body = choice
+        tip_font = pygame.font.SysFont(None, 20)
+        title_font = pygame.font.SysFont(None, 23)
+        lines = wrap_lines(body, tip_font, 300)[:7]
+        width = min(330, max(title_font.size(title)[0],
+                             max((tip_font.size(line)[0] for line in lines), default=0)) + 24)
+        height = 16 + title_font.get_linesize() + len(lines) * tip_font.get_linesize() + 10
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        x = min(mouse_x + 18, screen.get_width() - width - 8)
+        y = min(mouse_y + 18, screen.get_height() - height - 8)
+        tip = pygame.Surface((width, height), pygame.SRCALPHA)
+        tip.fill((12, 15, 20, 246))
+        pygame.draw.rect(tip, (220, 205, 155), tip.get_rect(), 1, border_radius=5)
+        tip.blit(title_font.render(title, True, (255, 229, 155)), (10, 8))
+        for index, line in enumerate(lines):
+            tip.blit(tip_font.render(line, True, (240, 242, 238)),
+                     (10, 8 + title_font.get_linesize() + index * tip_font.get_linesize()))
+        screen.blit(tip, (x, y))
+
     def make_skill_buttons(skills):
         # ADJUST HERE if this layout ever gets tweaked. With the default
         # 2-column grid (see make_buttons above), row height is 62px
@@ -129,6 +152,7 @@ def run_creation(available_avatars=None):
 
     running = True
     while running:
+        choice_tooltip = None
         if flow.stage == 'menu':
             saves = list_actors()
 
@@ -160,6 +184,9 @@ def run_creation(available_avatars=None):
                     name_text += event.unicode
 
             if event.type == pygame.MOUSEBUTTONDOWN:
+                if flow.stage != 'menu' and back_rect.collidepoint(event.pos):
+                    flow.go_back()
+                    continue
                 if flow.stage == 'menu':
                     for load_rect, delete_rect, save_id, name in menu_buttons():
                         if load_rect.collidepoint(event.pos):
@@ -286,6 +313,8 @@ def run_creation(available_avatars=None):
                 pygame.draw.rect(screen, (60, 60, 60), rect)
                 screen.blit(font.render(cls.title(), True, (255, 255, 255)),
                             (rect.x + 10, rect.y + 10))
+                if rect.collidepoint(pygame.mouse.get_pos()):
+                    choice_tooltip = (cls.title(), CLASSES[cls].get('summary', ''))
 
         elif flow.stage == 'name':
             prompt = font.render("enter a name:", True, (255, 255, 255))
@@ -322,6 +351,8 @@ def run_creation(available_avatars=None):
                                              rect.width - 20),
                                    True, (255, 255, 255))
                 screen.blit(text, (rect.x + 10, rect.y + 10))
+                if rect.collidepoint(pygame.mouse.get_pos()):
+                    choice_tooltip = (race.title(), RACES[race].get('summary', ''))
             if flow.actor.race:
                 pygame.draw.rect(screen, (100, 100, 180), confirm_rect)
                 text = font.render("Confirm", True, (255, 255, 255))
@@ -339,6 +370,10 @@ def run_creation(available_avatars=None):
                                                  rect.width - 20),
                                         True, (255, 255, 255)),
                             (rect.x + 10, rect.y + 10))
+                if rect.collidepoint(pygame.mouse.get_pos()):
+                    choice_tooltip = (subrace.title(), RACES[flow.actor.race]
+                                      .get('subraces', {}).get(subrace, {})
+                                      .get('summary', ''))
             if flow.actor.subrace:
                 pygame.draw.rect(screen, (100, 100, 180), confirm_rect)
                 screen.blit(font.render("Confirm", True, (255, 255, 255)), (confirm_rect.x + 40, confirm_rect.y + 10))
@@ -365,6 +400,8 @@ def run_creation(available_avatars=None):
                                                   rect.width - 20),
                                         True, (255, 255, 255)),
                             (rect.x + 10, rect.y + 10))
+                if rect.collidepoint(pygame.mouse.get_pos()):
+                    choice_tooltip = (race.title(), RACES[race].get('summary', ''))
             if len(flow.actor.parent_races) == 2 and all(flow.actor.parent_races):
                 pygame.draw.rect(screen, (100, 100, 180), confirm_rect)
                 screen.blit(font.render("Confirm", True, (255, 255, 255)), (confirm_rect.x + 40, confirm_rect.y + 10))
@@ -377,6 +414,8 @@ def run_creation(available_avatars=None):
                                              rect.width - 20),
                                    True, (255, 255, 255))
                 screen.blit(text, (rect.x + 10, rect.y + 10))
+                if rect.collidepoint(pygame.mouse.get_pos()):
+                    choice_tooltip = (cls.title(), CLASSES[cls].get('summary', ''))
             if flow.actor.char_class:
                 pygame.draw.rect(screen, (100, 100, 180), confirm_rect)
                 text = font.render("Confirm", True, (255, 255, 255))
@@ -403,6 +442,12 @@ def run_creation(available_avatars=None):
                     screen.blit(description_font.render(line, True,
                                                        (220, 220, 220)),
                                 (rect.x + 14, rect.y + 46 + line_index * 20))
+                if rect.collidepoint(pygame.mouse.get_pos()):
+                    feature = next(iter(subclass.get('features', {}).values()), {})
+                    body = subclass.get('description', '')
+                    if feature.get('summary'):
+                        body += ' ' + feature['summary']
+                    choice_tooltip = (subclass['name'], body)
             if flow.actor.subclass:
                 pygame.draw.rect(screen, (100, 100, 180), confirm_rect)
                 screen.blit(font.render("Confirm", True, (255, 255, 255)),
@@ -491,6 +536,12 @@ def run_creation(available_avatars=None):
                 screen.blit(font.render(label, True, (255, 255, 255)),
                             (rect.x + 65, rect.y + 135))
 
+        if flow.stage != 'menu':
+            pygame.draw.rect(screen, (75, 82, 96), back_rect, border_radius=5)
+            pygame.draw.rect(screen, (180, 190, 205), back_rect, 2, border_radius=5)
+            back_text = font.render("Back", True, (255, 255, 255))
+            screen.blit(back_text, back_text.get_rect(center=back_rect.center))
+        draw_choice_tooltip(choice_tooltip)
         pygame.display.flip()
         clock.tick(60)
 

@@ -30,6 +30,9 @@ class Actor:
     xp_earned_by_level: dict = field(default_factory=dict)
     xp_spent_by_level: dict = field(default_factory=dict)
     xp_rest_spent_by_level: dict = field(default_factory=dict)
+    class_spell_purchases: dict = field(default_factory=dict)
+    class_ability_purchases: dict = field(default_factory=dict)
+    withdrawn: bool = False
     downed: bool = False
     conditions: list = field(default_factory=list)
     active_effects: list = field(default_factory=list)
@@ -73,7 +76,6 @@ class Actor:
         if self.classes:
             primary = self.classes[0]
             self.char_class = primary.get('name', self.char_class)
-            self.level = sum(max(0, int(entry.get('level', 0))) for entry in self.classes)
         elif self.char_class:
             self.classes = [{'name': self.char_class, 'level': max(1, self.level)}]
         initialize_resources(vars(self))
@@ -189,6 +191,8 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
     actor.char_class = class_name
     actor.gold = 500
     actor.level = 3
+    actor.xp_total = 900
+    actor.xp_earned_by_level = {"3": 900}
     actor.classes = [{'name': class_name, 'level': actor.level}]
     actor.abilities = dict(zip(actor.abilities, ability_points()))
     actor.skills = random.sample(
@@ -252,6 +256,7 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
     actor.prepared_spells = list(class_spell_ids)
     actor.known_abilities = [ability_id for ability_id, ability in ABILITIES.items()
                              if class_name in ability.get('classes', [])
+                             and ability.get('acquisition') != 'trainer_purchase'
                              and ability.get('prerequisite_class_level', 1) <= actor.level]
     initialize_resources(vars(actor), refill=True)
     if avatars:

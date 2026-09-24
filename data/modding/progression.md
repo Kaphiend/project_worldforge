@@ -1,66 +1,68 @@
-# Progression and rest rules
+# Progression, trainer purchases, rests, and death
 
-## Character XP
+## XP and level eligibility
 
-`progression.py` owns the current cumulative XP threshold table and helpers for
-reading class levels, computing class-based pool capacities, and determining
-the level earned from total XP. Class level entries are authoritative for
-multiclass pool contributions; the legacy `char_class` plus `level` fields are
-used when a save has no `classes` list.
+`progression.py` owns the cumulative XP threshold table and computes the
+character's qualified level from unspent XP (earned XP minus trainer purchases
+and outdoor-rest costs). The current wallet is also stored as `xp_total`.
+Combat victory awards 10 XP to each player participant, once per encounter.
 
-Combat victory awards 10 XP once per combat to every actor on the player team.
-The encounter stores an `xp_awarded` guard so another action or host frame
-cannot pay twice. XP awards update `xp_total` and `xp_earned_by_level` using the
-actor's current level. This code does not apply a new level automatically.
+The trainer charges the per-option `xp_purchase_cost` stored on each
+trainer-purchasable spell or ability. A purchase lowers unspent XP immediately
+and can lower the character's qualified level. Owned content remains in
+`known_spells` / `known_abilities`; class ownership is also recorded in
+`class_spell_purchases` / `class_ability_purchases`.
 
-## Pool curves
+The shared qualified level is the maximum tier purchasable in every class. Each
+class has an independent sequential tier chain: own at least one spell at a
+tier to unlock the next tier in that class. A class with no purchase spells at
+a tier can use a trainer-purchased ability at that tier as the chain key.
+Abilities and spells require the current shared level ceiling and their class
+frontier. Previously purchased content stays usable after XP loss. Newly
+purchased spells are added to the prepared list.
+
+Legacy saves without ownership ledgers retain their existing known trainer
+content and migrate it into the matching class ownership maps. Quick-start
+characters start with 900 XP and level 3. Feat choices at levels 4, 8, 12, 16,
+and 19 remain placeholders; the trainer does not grant them.
+
+## Class resource curves
 
 See [`classes.md`](classes.md) for `spell_points_by_level` and
 `class_resources`. Curves may be arrays indexed by class level (index zero is
-unused) or objects keyed by level. Missing later array entries repeat the last
-entry, so mods should include values through their intended maximum level.
-Multiclass spell pool capacity is the sum of each class's curve at that class's
-own level. Special class pools stay separate from spell points.
+unused) or objects keyed by level. The shared spell pool is the sum of each
+class's curve at that class's currently unlocked class tier. Special pools
+remain separate from spell points.
 
-The current baseline gives caster classes one spell point per class level.
-Known spells still come from the actor's existing `known_spells`; pool
-progression does not grant spells. Spell effects are not yet scaled from
-character level.
+## Trainer map content
 
-## Trainer multiclass costs
+A trainer entry is defined in an arena's `trainers` array. Use `F` within its
+`interaction_range_feet` to open class tabs. The screen lists trainer-purchasable
+spells and abilities from the content tables, including their per-item XP
+prices. The game validates class membership, price, current XP, and sequential
+tier access when it processes each purchase.
 
-`progression.trainer_xp_cost(current_class_level)` returns the XP gap for the
-next class level on the shared fifth-edition threshold curve. Each class is
-independently capped at level 20; the sum of class levels has no cap. This is a
-cost rule only: a trainer interaction, purchase ledger, and user interface have
-not been implemented yet. Do not subtract XP or advance a class level from a
-mod without an authoritative trainer transaction.
+## Death and revival
 
-## Repeatable encounter loop
-
-After a victory, the host retains the defeated NPC as a corpse for 30 seconds
-and creates a new NPC through `factory.create_npc_instance`. The factory
-selects from the loaded `npcs.json` templates, clones its equipment with fresh
-item IDs, and places it at a random non-obstructed map position away from
-players and living mobs. Add NPC template records to `npcs.json` or a mod's
-`npcs.json` to expand the spawn variety. Since loot is not implemented yet,
-the corpse timer starts at death; move that start point to loot completion when
-the loot flow is added.
+When downed, a player can wait for another player to revive them or press `R`
+to release their spirit. Release returns the character to the inn's configured
+`respawn_x` / `respawn_y` (or just beyond the bed if omitted), restores 1 HP,
+and costs 10% of current unspent XP. Penalties round up and cost at least 1 XP
+when any XP remains. A character revived by another player loses 2% of their
+unspent XP with the same rounding rule. Releasing removes that character from
+the current fight; they can join a later fight.
 
 ## Rest cost rules
 
-`resting.py` contains the cost and recovery functions. Press `Z` to request an
-outdoor rest; the host validates each connected character and rejects the
-request during combat. Outdoor rests require a nearest-enemy distance strictly
-greater than 100 feet, cost 1% of unspent XP at first, increase one percentage
-point per consecutive outdoor rest up to 5%, and have a 1 XP minimum. A
-character with no unspent XP cannot rest outdoors. Press `X` within the
-configured range of an `inn_beds` entry to rest at the inn for 10 gold; this
-resets the outdoor streak. Both types refill spell and configured class pools.
+`resting.py` contains the rest costs and resource recovery. Press `Z` to request
+an outdoor rest; the host requires the nearest enemy to be more than 100 feet
+away. The cost begins at 1% of unspent XP, rises by one percentage point per
+consecutive outdoor rest up to 5%, and has a 1 XP minimum. A character with no
+unspent XP cannot rest outdoors. Press `F` near an inn bed to confirm an inn
+rest for 10 gold; this resets the outdoor streak. Both types refill spell and
+configured class pools. Inn rest is available without XP if the character has
+the gold.
 
-The current action does not move a party to a camp stage, heal HP, clear
-conditions, or apply level-ups. Those behaviors need an explicit game-flow
-implementation. Rest XP costs
-are recorded in `xp_rest_spent_by_level`; the rate is based on earned minus
-spent XP ledgers, with `xp_total` as a fallback for older records without an
-earned ledger.
+Health recovery, condition removal, a party-ready flow, camp-stage travel, and
+separate concurrent party combats remain future work. The current demo shares
+one combat state among connected players.

@@ -12,8 +12,15 @@ Each top-level key is an arena ID referenced by `scenarios.json`.
   line of sight for ranged attacks and spells requiring it.
 - `inn_beds`: optional gray-box bed rectangles with `id`, `name`, x/y/width/
   height, and `interaction_range_feet`. Beds block movement, are safe spawn
-  exclusions, and enable the `X` inn-rest action when the party is in range.
-  The demo inn rest costs 10 gold and refills spell and class resource pools.
+  exclusions, and enable the `F` inn-rest confirmation when a player is in range.
+  Press `F` nearby to ask before paying 10 gold and refilling spell and class
+  resource pools.
+- `trainers`: optional interaction rectangles with `id`, `name`, x/y/width/
+  height, and `interaction_range_feet`. They block movement and open the
+  data-driven class purchase screen with `F`. `xp_purchase_cost` is authored
+  on each spell or ability, rather than on the trainer.
+- `inn_beds[].respawn_x` / `respawn_y`: optional pixel coordinates used when a
+  downed character releases their spirit and returns to the inn.
 
 Keep all obstacle rectangles inside bounds. Avoid placing an obstacle over a
 spawn point. A rectangle's visible decoration does not become solid unless you

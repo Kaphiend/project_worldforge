@@ -20,8 +20,10 @@ from spell_effects import apply_ability_effects, resolve_spell
 from storage import save_actor
 from factory import (create_npc_instance, equip_item, item_definition,
                      unequip_item)
-from progression import initialize_resources
-from progression import spell_point_max
+from progression import (initialize_resources, spell_point_max,
+                         class_unlocked_level, purchase_cost, qualified_level,
+                         unspent_xp, spend_xp, charge_xp_penalty,
+                         sync_progression_levels, character_level_for_xp)
 from resting import resolve_rest
 from runtime_paths import asset_path
 
@@ -85,6 +87,7 @@ def _arena_obstacles(arena):
     arena = arena or {}
     obstacles = list(arena.get("obstacles", []))
     obstacles.extend(arena.get("inn_beds", []))
+    obstacles.extend(arena.get("trainers", []))
     return [pygame.Rect(item["x"], item["y"], item["width"], item["height"])
             for item in obstacles]
 
@@ -266,12 +269,15 @@ def _animate_hp_changes(combat, before):
         old_hp, old_downed = before.get(
             actor_id, (entry["data"].get("current_hp", 0), entry["downed"]))
         new_hp = entry["data"].get("current_hp", 0)
-        entry["downed"] = bool(entry["downed"] or new_hp <= 0)
+        entry["downed"] = bool(entry["data"].get("downed", False) or new_hp <= 0)
         if new_hp < old_hp:
             _emit_animation(combat, actor_id,
                             "dead" if entry["downed"] else "hurt")
         elif old_downed and not entry["downed"]:
             _emit_animation(combat, actor_id, "idle")
+            penalty = charge_xp_penalty(entry["data"], 2)
+            if penalty:
+                _log(combat, f"{entry['data'].get('name', actor_id)} loses {penalty} XP after being revived.")
 
 
 def _player_id(remote):
@@ -326,6 +332,14 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
         screen.blit(pygame.font.Font(None, 17).render(
             bed.get("name", "Inn Bed"), True, (255, 255, 255)),
             (rect.x, rect.y - 18))
+    for trainer in arena.get("trainers", []):
+        rect = pygame.Rect(trainer["x"] - camera_x, trainer["y"] - camera_y,
+                           trainer["width"], trainer["height"])
+        pygame.draw.rect(screen, (102, 78, 52), rect, border_radius=4)
+        pygame.draw.rect(screen, (210, 180, 125), rect, 3, border_radius=4)
+        screen.blit(pygame.font.Font(None, 17).render(
+            trainer.get("name", "Trainer"), True, (255, 245, 220)),
+            (rect.x - 3, rect.y - 18))
     screen.blit(local_sprite, (round(actor.x - camera_x), round(actor.y - camera_y)))
     font = font or pygame.font.Font(None, 18)
     _draw_speech_bubble(screen, font, local_speech, actor.x, actor.y,
@@ -493,6 +507,21 @@ def _combat_snapshot(actor_id, data, team="players"):
             "x": float(data.get("x", 0)), "y": float(data.get("y", 0)),
             "width": ACTOR_SIZE, "height": ACTOR_SIZE,
             "downed": bool(data.get("downed", False) or data.get("current_hp", 1) <= 0)}
+
+
+def _progression_sync_state(actor, local_player_id, remote_players):
+    """Publish host-approved out-of-combat purchases to connected clients."""
+    actors = {local_player_id: _combat_snapshot(local_player_id, actor)}
+    for remote in remote_players:
+        if remote.get("actor"):
+            remote_id = _player_id(remote)
+            actors[remote_id] = _combat_snapshot(remote_id, remote["actor"])
+    return {"active": False, "sync_only": True, "actors": actors,
+            "order": [], "log": [], "result": None,
+            "scenario_id": DEFAULT_SCENARIO,
+            "scenario": deepcopy(SCENARIOS.get(DEFAULT_SCENARIO, {})),
+            "arena": deepcopy(ARENAS.get(
+                SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {}))}
 
 
 def _initiative_order(actors):
@@ -685,10 +714,12 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
     if scenario is None:
         raise ValueError(f"Unknown encounter scenario: {scenario_id}")
     actors = {local_player_id: _combat_snapshot(local_player_id, actor)}
+    actors[local_player_id]["data"]["withdrawn"] = False
     for remote in remote_players:
         if remote.get("actor"):
             remote_id = remote.get("id", remote["actor"].get("id", "remote"))
             actors[remote_id] = _combat_snapshot(remote_id, remote["actor"])
+            actors[remote_id]["data"]["withdrawn"] = False
 
     # Combat can be opened by a real-time attack. Preserve the exploration
     # positions so range and line of sight resolve where the attack was made;
@@ -829,6 +860,9 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
     if mode not in ('self',) and not target_entry:
         _reject_action(combat, 'Invalid target: select an available target first.', actor_id)
         return False
+    if target_entry and target_entry["data"].get("withdrawn"):
+        _reject_action(combat, "That character has left the fight.", target_id)
+        return False
     targets = [target_entry['data']] if target_entry else None
     point = None
     if mode == 'small_area':
@@ -836,7 +870,8 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
                  target_entry['y'] + target_entry['height'] / 2)
         radius = int(target_info.get('radius_feet', 0)) * PIXELS_PER_FOOT
         targets = [entry['data'] for entry in combat['actors'].values()
-                   if math.hypot(entry['x'] + entry['width'] / 2 - point[0],
+                   if not entry['data'].get("withdrawn")
+                   and math.hypot(entry['x'] + entry['width'] / 2 - point[0],
                                  entry['y'] + entry['height'] / 2 - point[1]) <= radius]
     if mode == 'self':
         targets = [caster]
@@ -922,6 +957,9 @@ def _do_ability(combat, actor_id, ability_id, target_id=None):
     if target_info and target_info.get('mode') != 'self' and not target_entry:
         _reject_action(combat, 'Invalid target: select an available target first.', actor_id)
         return False
+    if target_entry and target_entry["data"].get("withdrawn"):
+        _reject_action(combat, "That character has left the fight.", target_id)
+        return False
     if target_entry and target_info.get('range_feet') is not None:
         if edge_distance_feet(actor_entry, target_entry) > target_info['range_feet']:
             _reject_action(combat, 'Target is outside ability range.', target_id)
@@ -972,10 +1010,20 @@ def _award_combat_xp(combat, amount=10):
         if entry.get("team") != "players":
             continue
         data = entry["data"]
-        data["xp_total"] = int(data.get("xp_total", 0) or 0) + amount
-        level_key = str(max(1, int(data.get("level", 1) or 1)))
         by_level = data.setdefault("xp_earned_by_level", {})
+        if not sum(max(0, int(value or 0)) for value in by_level.values()):
+            recorded_costs = sum(max(0, int(value or 0)) for value in
+                                 data.get("xp_spent_by_level", {}).values())
+            recorded_costs += sum(max(0, int(value or 0)) for value in
+                                  data.get("xp_rest_spent_by_level", {}).values())
+            prior_wallet = max(0, int(data.get("xp_total", 0) or 0))
+            if prior_wallet or recorded_costs:
+                earned_key = str(character_level_for_xp(prior_wallet + recorded_costs))
+                by_level[earned_key] = prior_wallet + recorded_costs
+        level_key = str(max(1, int(qualified_level(data))))
+        data["xp_total"] = int(data.get("xp_total", 0) or 0) + amount
         by_level[level_key] = int(by_level.get(level_key, 0) or 0) + amount
+        sync_progression_levels(data)
         _log(combat, f"{data.get('name', actor_id)} gains {amount} XP.")
 
 
@@ -1034,10 +1082,12 @@ def _remove_downed_from_order(combat):
     old_index = combat.get("turn_index", 0)
     removed = combat.setdefault('removed_order', {})
     for entry in combat.get('order', []):
-        if combat['actors'][entry['id']]['downed']:
+        if (combat['actors'][entry['id']]['downed']
+                or combat['actors'][entry['id']]['data'].get('withdrawn')):
             removed[entry['id']] = entry
     combat["order"] = [entry for entry in combat.get("order", [])
-                       if not combat["actors"][entry["id"]]["downed"]]
+                       if not combat["actors"][entry["id"]]["downed"]
+                       and not combat["actors"][entry["id"]]["data"].get("withdrawn")]
     if not combat["order"]:
         combat["active"] = False
         combat["turn_index"] = 0
@@ -1055,14 +1105,20 @@ def _remove_downed_from_order(combat):
 def _restore_revived_order(combat):
     active_id = _active_actor_id(combat)
     removed = combat.setdefault('removed_order', {})
+    restored = False
     for actor_id, initiative in list(removed.items()):
         actor = combat['actors'][actor_id]
-        if actor['downed'] or actor['data'].get('current_hp', 0) <= 0:
+        if (actor['downed'] or actor['data'].get('current_hp', 0) <= 0
+                or actor['data'].get('withdrawn')):
             continue
         combat['order'].append(initiative)
         combat['order'].sort(
             key=lambda entry: (entry['total'], entry['dexterity']), reverse=True)
         del removed[actor_id]
+        restored = True
+    if restored and any(entry.get("team") == "enemies" and not entry.get("downed")
+                        for entry in combat.get("actors", {}).values()):
+        combat["active"] = True
     if active_id in [entry['id'] for entry in combat['order']]:
         combat['turn_index'] = next(
             index for index, entry in enumerate(combat['order'])
@@ -1111,6 +1167,9 @@ def _do_attack(combat, actor_id, target_id, attack_mode="primary"):
     if not actor_entry or not target_entry:
         _reject_action(combat, 'Invalid target: select an available target first.',
                        actor_id)
+        return False
+    if target_entry["data"].get("withdrawn"):
+        _reject_action(combat, "That character has left the fight.", target_id)
         return False
     if actor_entry["downed"] or target_entry["downed"]:
         _reject_action(combat, "A downed actor cannot attack or be targeted.",
@@ -1211,7 +1270,11 @@ def _do_item(combat, actor_id, item_id, target_id=None):
     if not target_entry:
         _reject_action(combat, "Invalid target: select an available target first.", actor_id)
         return False
+    if target_entry["data"].get("withdrawn"):
+        _reject_action(combat, "That character has left the fight.", target_id)
+        return False
     los = _line_of_sight(entry, target_entry, combat.get("arena"))
+    hp_before = _capture_hp(combat)
     result = resolve_spell(effect_id, entry["data"], [target_entry["data"]],
                            line_of_sight=los, from_consumable=True)
     if not result.get("success"):
@@ -1236,6 +1299,7 @@ def _do_item(combat, actor_id, item_id, target_id=None):
                                   or current["data"].get("current_hp", 1) <= 0)
     _remove_downed_from_order(combat)
     _restore_revived_order(combat)
+    _animate_hp_changes(combat, hp_before)
     return True
 
 
@@ -1258,11 +1322,16 @@ def _use_item_outside_combat(owner, item_id, target_id, local_player_id, remote_
     caster_data = vars(owner) if not isinstance(owner, dict) else owner
     target_data = vars(target) if not isinstance(target, dict) else target
     arena = ARENAS.get(SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {})
+    was_downed = bool(target_data.get("downed") or target_data.get("current_hp", 1) <= 0)
     result = resolve_spell(effect_id, caster_data, [target_data],
                            line_of_sight=_line_of_sight(caster_data, target_data, arena),
                            from_consumable=True)
     if not result.get("success"):
         return False
+    if was_downed and not target_data.get("downed") and target_data.get("current_hp", 0) > 0:
+        penalty = charge_xp_penalty(target_data, 2)
+        if penalty:
+            target_data["last_revival_xp_penalty"] = penalty
     stack_quantity = max(1, int(item.get("quantity", 1)))
     if stack_quantity > 1:
         item["quantity"] = stack_quantity - 1
@@ -1433,7 +1502,11 @@ def _resolve_party_rest(actor, local_player_id, remote_players, combat,
         notice = f"Outdoor rest complete. {total_cost} XP spent; spell and class pools replenished."
     else:
         notice = f"Inn rest complete. {total_cost} gold spent; spell and class pools replenished."
-    return {"_action_notice": notice}
+    if combat:
+        return {"_action_notice": notice}
+    sync_state = _progression_sync_state(actor, local_player_id, remote_players)
+    sync_state["_action_notice"] = notice
+    return sync_state
 
 
 def _handle_action_request(actor, local_player_id, actor_id, action, remote_players, combat):
@@ -1455,6 +1528,76 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
     if action.get("type") == "rest_inn":
         return _resolve_party_rest(actor, local_player_id, remote_players,
                                    combat, "inn")
+    if action.get("type") in {"trainer_purchase", "release_spirit"}:
+        if combat and combat.get("active") and action.get("type") == "trainer_purchase":
+            return {"_action_error": "You cannot train during combat."}
+        entry = (combat or {}).get("actors", {}).get(actor_id)
+        owner = (entry.get("data") if entry else
+                 (actor if actor_id == local_player_id else next(
+                     (remote.get("actor") for remote in remote_players
+                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
+        if owner is None:
+            return {"_action_error": "Character is unavailable."}
+        data = owner if isinstance(owner, dict) else vars(owner)
+        if action["type"] == "trainer_purchase":
+            class_id = action.get("class_id")
+            kind, item_id = action.get("kind"), action.get("item_id")
+            table = SPELLS if kind == "spell" else ABILITIES if kind == "ability" else {}
+            definition = table.get(item_id)
+            if (not definition or class_id not in definition.get("classes", [])
+                    or definition.get("acquisition") != "trainer_purchase"):
+                return {"_action_error": "That trainer option is unavailable."}
+            purchase_key = ("class_spell_purchases" if kind == "spell"
+                            else "class_ability_purchases")
+            owned_key = "known_spells" if kind == "spell" else "known_abilities"
+            purchases = data.setdefault(purchase_key, {})
+            owned_for_class = purchases.setdefault(class_id, [])
+            if item_id in owned_for_class:
+                return {"_action_notice": "You already own that option."}
+            tier = int(definition.get("prerequisite_class_level", 1))
+            if tier > min(qualified_level(data), class_unlocked_level(data, class_id)):
+                return {"_action_error": "Buy an option from each prior tier and meet its level requirement."}
+            cost = purchase_cost(definition)
+            if cost is None:
+                return {"_action_error": "This option has no XP price configured."}
+            if cost > unspent_xp(data):
+                return {"_action_error": f"Not enough unspent XP ({cost} required)."}
+            owned_for_class.append(item_id)
+            if item_id not in data.setdefault(owned_key, []):
+                data[owned_key].append(item_id)
+            if kind == "spell" and item_id not in data.setdefault("prepared_spells", []):
+                data["prepared_spells"].append(item_id)
+            spend_xp(data, cost)
+            sync_progression_levels(data)
+            if entry:
+                entry["data"].update(data)
+            if combat:
+                _log(combat, f"{data.get('name', 'Actor')} learns {definition.get('name', item_id)} for {cost} XP.")
+            return combat or _progression_sync_state(
+                actor, local_player_id, remote_players)
+        if not data.get("downed"):
+            return {"_action_error": "You are not downed."}
+        penalty = charge_xp_penalty(data, 10)
+        data["downed"] = False
+        data["current_hp"] = max(1, int(data.get("current_hp", 0) or 0))
+        data["withdrawn"] = True
+        arena = (combat or {}).get("arena") or ARENAS.get(
+            SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {})
+        bed = next(iter(arena.get("inn_beds", [])), {})
+        data["x"] = int(bed.get("respawn_x", bed.get("x", 130) + bed.get("width", 100) + 12))
+        data["y"] = int(bed.get("respawn_y", bed.get("y", 170) + bed.get("height", 60) + 12))
+        if not isinstance(owner, dict):
+            owner.x, owner.y, owner.downed = data["x"], data["y"], False
+            owner.current_hp, owner.withdrawn = data["current_hp"], True
+        if entry:
+            entry["x"], entry["y"], entry["downed"] = data["x"], data["y"], False
+            if actor_id == local_player_id:
+                actor.x, actor.y = data["x"], data["y"]
+                actor.current_hp, actor.downed, actor.withdrawn = data["current_hp"], False, True
+            _remove_downed_from_order(combat)
+            _log(combat, f"{data.get('name', 'Actor')} releases their spirit and returns to the inn, losing {penalty} XP.")
+        return combat or _progression_sync_state(
+            actor, local_player_id, remote_players)
     if not combat or not combat.get("active"):
         if action.get("type") in {"equip_item", "unequip_item", "use_item"}:
             owner = actor if actor_id == local_player_id else next(
@@ -1473,7 +1616,11 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
                 _use_item_outside_combat(owner, action.get("item"), target_id,
                                           local_player_id, remote_players)
             if combat:
-                changed = {"inventory", "equipment", "current_hp", "downed"}
+                changed = {"inventory", "equipment", "current_hp", "downed",
+                           "xp_total", "xp_spent_by_level", "level", "classes",
+                           "class_spell_purchases", "class_ability_purchases",
+                           "known_spells", "prepared_spells", "known_abilities",
+                           "withdrawn", "x", "y"}
                 source = vars(owner) if not isinstance(owner, dict) else owner
                 owner_entry = combat.get("actors", {}).get(actor_id)
                 if owner_entry:
@@ -1489,7 +1636,8 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
                         if key in target_remote:
                             target_entry["data"][key] = deepcopy(target_remote[key])
                     target_entry["downed"] = bool(target_entry["data"].get("downed", False))
-            return combat
+            return combat or _progression_sync_state(
+                actor, local_player_id, remote_players)
         if action.get("type") not in {"attack", "ranged_attack", "throw", "cast_spell", "use_ability"}:
             return combat
         combat = _new_combat(actor, local_player_id, remote_players)
@@ -1580,23 +1728,35 @@ def _sync_local_actor(actor, combat, actor_id):
     actor.xp_total = entry["data"].get("xp_total", actor.xp_total)
     actor.xp_earned_by_level = deepcopy(
         entry["data"].get("xp_earned_by_level", actor.xp_earned_by_level))
+    actor.xp_spent_by_level = deepcopy(
+        entry["data"].get("xp_spent_by_level", actor.xp_spent_by_level))
     actor.xp_rest_spent_by_level = deepcopy(
         entry["data"].get("xp_rest_spent_by_level", actor.xp_rest_spent_by_level))
     actor.spell_points = entry["data"].get("spell_points", actor.spell_points)
     actor.class_resources = deepcopy(
         entry["data"].get("class_resources", actor.class_resources))
     actor.gold = entry["data"].get("gold", actor.gold)
+    actor.level = entry["data"].get("level", actor.level)
+    actor.classes = deepcopy(entry["data"].get("classes", actor.classes))
+    actor.class_spell_purchases = deepcopy(entry["data"].get(
+        "class_spell_purchases", actor.class_spell_purchases))
+    actor.class_ability_purchases = deepcopy(entry["data"].get(
+        "class_ability_purchases", actor.class_ability_purchases))
+    actor.known_spells = deepcopy(entry["data"].get("known_spells", actor.known_spells))
+    actor.prepared_spells = deepcopy(entry["data"].get("prepared_spells", actor.prepared_spells))
+    actor.known_abilities = deepcopy(entry["data"].get("known_abilities", actor.known_abilities))
+    actor.withdrawn = bool(entry["data"].get("withdrawn", False))
     actor.outdoor_rest_streak = entry["data"].get(
         "outdoor_rest_streak", actor.outdoor_rest_streak)
     # Exploration owns the live position after a fight. The retained combat
     # snapshot is intentionally static while world mobs/corpses persist; copying
     # its old coordinates every frame makes exploration movement snap back.
-    if combat.get("active"):
+    if entry["data"].get("withdrawn") or combat.get("active"):
         actor.x, actor.y = entry["x"], entry["y"]
 
 
 def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0):
-    if not combat:
+    if not combat or combat.get("sync_only"):
         return pygame.Rect(0, 0, 0, 0)
     panel_width, panel_height = 390, 142
     panel_x = screen.get_width() - panel_width - 10
@@ -1699,10 +1859,13 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     controls_visible = False
     interact_prompt = None
     exit_to_menu = False
+    quit_prompt = False
     from inventory_ui import InventoryScreen
     from spellbook_ui import SpellbookUI, normalize_action_hotbars, action_definition
+    from trainer_ui import TrainerUI
     inventory_ui = InventoryScreen()
     spellbook_ui = SpellbookUI()
+    trainer_ui = TrainerUI()
     combat_log_rect = pygame.Rect(0, 0, 0, 0)
     combat_log_scroll = 0
     chat_mode = False
@@ -1725,6 +1888,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             if updated and "_action_notice" in updated:
                 action_notice = updated["_action_notice"]
                 action_notice_until = pygame.time.get_ticks() + 3000
+                if updated.get("sync_only"):
+                    combat = updated
                 return
             combat = updated
             _sync_local_actor(actor, combat, player_id)
@@ -1773,6 +1938,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 elif updated and "_action_notice" in updated:
                     action_notice = updated["_action_notice"]
                     action_notice_until = pygame.time.get_ticks() + 3000
+                    if updated.get("sync_only"):
+                        combat = updated
                 else:
                     combat = updated
             if combat:
@@ -1791,7 +1958,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 world_mobs = ([ _world_mob_from_entry(entry)
                                 for entry in combat.get("actors", {}).values()
                                 if entry.get("team") == "enemies"]
-                              if combat else None)
+                              if combat and not combat.get("sync_only") else None)
                 trigger = _combat_trigger(
                     actor, player_id, remote_players,
                     world_mobs=world_mobs)
@@ -1864,7 +2031,30 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                                 submit({"type": "chat", "text": message})
                     chat_mode, chat_text = False, ""
                     pygame.key.stop_text_input()
+            elif quit_prompt:
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_y, pygame.K_RETURN, pygame.K_KP_ENTER):
+                        running = False
+                    elif event.key in (pygame.K_n, pygame.K_ESCAPE):
+                        quit_prompt = False
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    panel_width, panel_height = 310, 112
+                    panel_x = (screen.get_width() - panel_width) // 2
+                    panel_y = screen.get_height() - panel_height - 32
+                    yes_rect = pygame.Rect(panel_x + 28, panel_y + 64, 112, 32)
+                    no_rect = pygame.Rect(panel_x + 170, panel_y + 64, 112, 32)
+                    if yes_rect.collidepoint(event.pos):
+                        running = False
+                    elif no_rect.collidepoint(event.pos):
+                        quit_prompt = False
             elif chat_mode:
+                continue
+            elif actor.downed:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                    submit({"type": "release_spirit"})
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_m:
+                    exit_to_menu = True
+                    running = False
                 continue
             elif event.type == pygame.MOUSEWHEEL:
                 if combat_log_rect.collidepoint(pygame.mouse.get_pos()):
@@ -1888,6 +2078,12 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     spellbook_ui.handle_event(event, spell_data)
                     actor.spell_hotbars = deepcopy(
                         spell_data.get("spell_hotbars", actor.spell_hotbars))
+            elif trainer_ui.visible:
+                trainer_data = ((combat or {}).get("actors", {}).get(player_id, {})
+                                .get("data", vars(actor)))
+                trainer_action = trainer_ui.handle_event(event, trainer_data)
+                if trainer_action:
+                    submit(trainer_action)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_MINUS:
                 spellbook_ui.toggle()
             elif interact_prompt:
@@ -1944,11 +2140,19 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 chat_mode, chat_text = True, ""
                 pygame.key.start_text_input()
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_f:
-                bed = next((item for item in current_arena.get("inn_beds", [])
-                            if edge_distance_feet(
-                                vars(actor), item, PIXELS_PER_FOOT, ACTOR_SIZE)
-                            <= int(item.get("interaction_range_feet", 5))), None)
-                if bed:
+                nearby = []
+                for kind, items in (("trainer", current_arena.get("trainers", [])),
+                                    ("inn_bed", current_arena.get("inn_beds", []))):
+                    for item in items:
+                        distance = edge_distance_feet(
+                            vars(actor), item, PIXELS_PER_FOOT, ACTOR_SIZE)
+                        if distance <= int(item.get("interaction_range_feet", 5)):
+                            nearby.append((distance, kind, item))
+                interaction = min(nearby, default=None, key=lambda item: item[0])
+                if interaction and interaction[1] == "trainer":
+                    trainer_ui.toggle()
+                elif interaction:
+                    bed = interaction[2]
                     interact_prompt = {"type": "inn_bed", "name": bed.get(
                         "name", "Inn Bed")}
                 else:
@@ -1968,7 +2172,10 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 combat = _new_combat(actor, player_id, remote_players,
                                      combat.get("scenario_id", DEFAULT_SCENARIO))
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
+                if selected_target:
+                    selected_target = None
+                else:
+                    quit_prompt = True
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_F5:
                 # The design calls for explicit saves and a session-end save,
                 # rather than continuous autosaving.
@@ -2009,7 +2216,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     clicked = True
                 if not clicked:
                     enemy_entries = list((combat or {}).get("actors", {}).values())
-                    if not combat:
+                    if not combat or combat.get("sync_only"):
                         scenario = SCENARIOS.get(DEFAULT_SCENARIO, {})
                         for index, spawn in enumerate(scenario.get("enemies", [])):
                             enemy_entries.append({
@@ -2101,7 +2308,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         "y": current_y + key_dy / length * step})
                 last_combat_key_move = now
         if (not chat_mode and not actor.downed and
-                (not combat or not combat.get("active"))):
+                (not combat or not combat.get("active") or actor.withdrawn)):
             occupied = []
             for remote in remote_players:
                 occupied.append(_actor_hitbox(remote.get("x", 0),
@@ -2142,6 +2349,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     actor, keys, speed, facing_left, current_arena, occupied)
                 moving = moving or key_moving
         local_entry = (combat or {}).get("actors", {}).get(player_id)
+        if actor.withdrawn and local_entry:
+            local_entry["x"], local_entry["y"] = actor.x, actor.y
+            local_entry["data"]["x"], local_entry["data"]["y"] = actor.x, actor.y
         local_requested = ("dead" if actor.downed or
                            (local_entry and local_entry.get("downed")) else
                            "walk" if moving else "idle")
@@ -2209,8 +2419,34 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             for line in _wrap_ui_lines(row_font, text, screen.get_width() - 24):
                 screen.blit(row_font.render(line, True, color), (12, hud_y))
                 hud_y += row_font.get_linesize() + 1
-        status_actor = (combat or {}).get("actors", {}).get(player_id)
-        status_target = (combat or {}).get("actors", {}).get(selected_target)
+        live_combat = bool(combat and combat.get("active"))
+        status_actor = ((combat or {}).get("actors", {}).get(player_id)
+                        if live_combat else None)
+        status_target = ((combat or {}).get("actors", {}).get(selected_target)
+                         if live_combat else None)
+        # Outside an active encounter, use the live exploration actor position
+        # and current remote state instead of a retained combat snapshot.
+        remote_target = None
+        if selected_target and not status_target:
+            remote_target = next((remote for remote in remote_players
+                                  if _player_id(remote) == selected_target), None)
+            if remote_target:
+                remote_x, remote_y = remote_target.get("x", 0), remote_target.get("y", 0)
+                if selected_target in drawn_positions:
+                    remote_x = drawn_positions[selected_target][0] + camera[0]
+                    remote_y = drawn_positions[selected_target][1] + camera[1]
+                status_target = {
+                    "x": remote_x, "y": remote_y,
+                    "width": ACTOR_SIZE, "height": ACTOR_SIZE,
+                    "hitbox": {"offset_x": (ACTOR_SIZE - ACTOR_HITBOX_WIDTH) / 2,
+                               "offset_y": (ACTOR_SIZE - ACTOR_HITBOX_HEIGHT) / 2,
+                               "width": ACTOR_HITBOX_WIDTH,
+                               "height": ACTOR_HITBOX_HEIGHT},
+                }
+        if selected_target and not status_target and combat:
+            retained_target = combat.get("actors", {}).get(selected_target)
+            if retained_target and retained_target.get("team") == "enemies":
+                status_target = retained_target
         if not status_target and selected_target:
             for index, spawn in enumerate(scenario.get("enemies", [])):
                 enemy_id = spawn.get("id", f"{spawn.get('npc')}-{index + 1}")
@@ -2240,7 +2476,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                             (12, hud_y))
                 hud_y += hud_font.get_linesize() + 1
         enemy_entries = list((combat or {}).get("actors", {}).values())
-        if not combat:
+        if not combat or combat.get("sync_only"):
             for index, spawn in enumerate(scenario.get("enemies", [])):
                 definition = NPCS.get(spawn.get("npc"), {})
                 enemy_entries.append({
@@ -2267,6 +2503,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             enemy_image = _advance_character_animation(
                 enemy_animation, requested, enemy.get("animation_event"),
                 dt, enemy_frames, frame_duration)
+            if enemy.get("facing_left", False):
+                enemy_image = pygame.transform.flip(enemy_image, True, False)
             enemy_image = pygame.transform.scale(enemy_image, rect.size)
             screen.blit(enemy_image, rect.topleft)
             title = _perceived_title(
@@ -2332,21 +2570,44 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                                     int(fy + fh / 2 - camera[1] - 38)))
         if selected_target:
             target_entry = combat.get("actors", {}).get(selected_target) if combat else None
+            target_name = None
             if not target_entry and not combat:
                 for index, spawn in enumerate(scenario.get("enemies", [])):
                     enemy_id = spawn.get("id", f"{spawn.get('npc')}-{index + 1}")
                     if enemy_id == selected_target:
                         target_entry = {"x": spawn.get("x", 600), "y": spawn.get("y", 280),
-                                        "width": ACTOR_SIZE, "height": ACTOR_SIZE}
+                                        "width": ACTOR_SIZE, "height": ACTOR_SIZE,
+                                        "data": NPCS.get(spawn.get("npc"), {})}
                         break
             if target_entry:
                 target_center = (int(target_entry["x"] + target_entry.get("width", ACTOR_SIZE) / 2 - camera[0]),
                                  int(target_entry["y"] + target_entry.get("height", ACTOR_SIZE) / 2 - camera[1]))
+                target_name = target_entry.get("data", {}).get("name")
             else:
                 remote = next((p for p in remote_players if p.get("id") == selected_target), None)
                 target_center = (int(remote.get("x", 0) + 50), int(remote.get("y", 0) + 50)) if remote else None
+                if remote:
+                    target_name = (remote.get("actor") or {}).get("name") or remote.get("name")
+            if selected_target == player_id:
+                target_name = actor.name
+            target_name = target_name or str(selected_target)
             if target_center:
-                pygame.draw.circle(screen, (255, 230, 100), target_center, 27, 2)
+                flash_alpha = 255 if (pygame.time.get_ticks() // 220) % 2 == 0 else 90
+                flash = pygame.Surface((68, 68), pygame.SRCALPHA)
+                pygame.draw.circle(flash, (255, 255, 255, flash_alpha),
+                                   (34, 34), 28, 3)
+                screen.blit(flash, (target_center[0] - 34,
+                                    target_center[1] - 34))
+            target_panel = pygame.Rect(16, screen.get_height() - 106, 300, 34)
+            pygame.draw.rect(screen, (15, 18, 24, 225), target_panel,
+                             border_radius=5)
+            pygame.draw.rect(screen, (235, 240, 248), target_panel, 1,
+                             border_radius=5)
+            target_label = pygame.font.Font(None, 19).render(
+                f"Target: {target_name}  ·  Esc to clear", True,
+                (255, 255, 255))
+            screen.blit(target_label, (target_panel.x + 10,
+                                       target_panel.y + 9))
         combat_log_rect = _draw_combat_ui(
             screen, font, combat, player_id, vars(actor), combat_log_scroll)
         if (combat and combat.get("result")
@@ -2403,6 +2664,22 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                           spellbook_ui.tooltips_enabled)
         inventory_data["quick_items"] = actor.quick_items
         spellbook_ui.draw(screen, font, vars(actor))
+        trainer_ui.draw(screen, vars(actor), font)
+        if actor.downed:
+            death_box = pygame.Surface((520, 160), pygame.SRCALPHA)
+            death_box.fill((18, 8, 10, 238))
+            pygame.draw.rect(death_box, (205, 90, 78), death_box.get_rect(), 2)
+            death_x = (screen.get_width() - death_box.get_width()) // 2
+            death_y = (screen.get_height() - death_box.get_height()) // 2
+            screen.blit(death_box, (death_x, death_y))
+            death_lines = ["You are downed.",
+                           "Wait here for another player to revive you, or press R to release your spirit.",
+                           "Releasing returns you to the inn and costs 10% of your unspent XP.",
+                           "M returns to the menu."]
+            for index, line in enumerate(death_lines):
+                screen.blit(font.render(_fit_ui_text(font, line, 490), True,
+                                        (255, 225, 215)),
+                            (death_x + 16, death_y + 16 + index * 30))
         if chat_mode:
             prompt = pygame.Surface((screen.get_width() - 48, 38), pygame.SRCALPHA)
             prompt.fill((10, 12, 16, 220))
@@ -2417,7 +2694,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 ("During combat, WASD or click an open spot to move; your remaining feet are shown below.", None),
                 ("Left Shift ends your turn and restores movement next turn.", None),
                 ("Z: camp outdoors when more than 100 ft from enemies; costs unspent XP.", None),
-                ("F: interact with a nearby object. At an inn bed, confirm to rest for 10 gold per character.", None),
+                ("F: interact. At the trainer, open class purchases; at the inn bed, confirm a 10-gold rest.", None),
                 ("F2: toggle tooltips    -: spells and abilities    `: switch bars", None),
                 ("Enter: chat    /act <emote>: show an emote and add it to combat log", None),
                 ("Click a character to select a target. Right-click a player for details.", None),
@@ -2426,6 +2703,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 ("Q / E: use bound consumables. In Inventory, select an item and click Q or E to bind it.", None),
                 ("I: inventory    Left Shift: end your turn    F5: save character", None),
                 ("M: return to menu    Esc: quit game    F1: close this panel", None),
+                ("When downed, wait for a revival or press R to return to the inn for a 10% XP loss.", None),
                 ("Hover action-bar or spellbook entries for details when tooltips are on:", None),
             ]
             panel_width = min(700, screen.get_width() - 32)
@@ -2487,6 +2765,26 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     screen.blit(font.render(line, True, color),
                                 (tooltip_x + 12,
                                  tooltip_y + 8 + index * tooltip_line_height))
+        if quit_prompt:
+            panel_width, panel_height = 310, 112
+            panel_x = (screen.get_width() - panel_width) // 2
+            panel_y = screen.get_height() - panel_height - 32
+            quit_panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+            quit_panel.fill((15, 18, 24, 242))
+            pygame.draw.rect(quit_panel, (225, 230, 238),
+                             quit_panel.get_rect(), 2, border_radius=6)
+            screen.blit(quit_panel, (panel_x, panel_y))
+            question = font.render("Quit the game?", True, (255, 245, 220))
+            screen.blit(question, question.get_rect(
+                center=(screen.get_width() // 2, panel_y + 30)))
+            yes_rect = pygame.Rect(panel_x + 28, panel_y + 64, 112, 32)
+            no_rect = pygame.Rect(panel_x + 170, panel_y + 64, 112, 32)
+            for rect, label in ((yes_rect, "Yes, quit"), (no_rect, "No, stay")):
+                pygame.draw.rect(screen, (76, 87, 102), rect, border_radius=4)
+                pygame.draw.rect(screen, (180, 190, 205), rect, 1,
+                                 border_radius=4)
+                text = font.render(label, True, (255, 255, 255))
+                screen.blit(text, text.get_rect(center=rect.center))
         pygame.display.flip()
 
     _sync_local_actor(actor, combat, player_id)

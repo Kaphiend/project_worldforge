@@ -14,7 +14,8 @@
     ],
     "description": "Gather force for your next successful weapon hit.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "guarded_angle": {
     "name": "Guarded Angle",
@@ -31,7 +32,8 @@
     ],
     "description": "Set your stance to blunt incoming attacks until your next turn.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "flowing_step": {
     "name": "Flowing Step",
@@ -48,7 +50,8 @@
     ],
     "description": "Move with a quick, balanced step.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "distracting_feint": {
     "name": "Distracting Feint",
@@ -68,6 +71,7 @@
     ],
     "description": "Draw a nearby opponent’s guard aside, opening a brief advantage.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   }
 }

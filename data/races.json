@@ -7,7 +7,8 @@
     "speed": 30,
     "traits": [
       "extra_language"
-    ]
+    ],
+    "summary": "Adaptable people with broad ability and an extra language."
   },
   "elf": {
     "bonuses": {
@@ -29,7 +30,8 @@
         },
         "traits": [
           "dawn_heritage"
-        ]
+        ],
+        "summary": "An elf lineage with an intellect bonus and dawn heritage."
       },
       "grove": {
         "bonuses": {
@@ -37,7 +39,8 @@
         },
         "traits": [
           "grove_heritage"
-        ]
+        ],
+        "summary": "An elf lineage with a wisdom bonus and grove heritage."
       },
       "dusk": {
         "bonuses": {
@@ -45,9 +48,11 @@
         },
         "traits": [
           "dusk_heritage"
-        ]
+        ],
+        "summary": "An elf lineage with a charisma bonus and dusk heritage."
       }
-    }
+    },
+    "summary": "Keen-sensed, graceful people with a light sleep and resistance to charm."
   },
   "dwarf": {
     "bonuses": {
@@ -69,7 +74,8 @@
         },
         "traits": [
           "hearth_heritage"
-        ]
+        ],
+        "summary": "A dwarf lineage with a wisdom bonus and hearth heritage."
       },
       "stone": {
         "bonuses": {
@@ -77,9 +83,11 @@
         },
         "traits": [
           "stone_heritage"
-        ]
+        ],
+        "summary": "A sturdy dwarf lineage with a strength bonus and stone heritage."
       }
-    }
+    },
+    "summary": "Tough, sure-footed folk known for poison resistance and stonecraft."
   },
   "halfling": {
     "bonuses": {
@@ -99,7 +107,8 @@
         },
         "traits": [
           "swift_heritage"
-        ]
+        ],
+        "summary": "A swift halfling lineage with a charisma bonus."
       },
       "steadfast": {
         "bonuses": {
@@ -107,9 +116,11 @@
         },
         "traits": [
           "steadfast_heritage"
-        ]
+        ],
+        "summary": "A hardy halfling lineage with a constitution bonus."
       }
-    }
+    },
+    "summary": "Small, quick people who recover from unlucky rolls and resist fear."
   },
   "gnome": {
     "bonuses": {
@@ -128,7 +139,8 @@
         },
         "traits": [
           "speak_with_small_beasts"
-        ]
+        ],
+        "summary": "A forest gnome with a dexterity bonus and a bond with small beasts."
       },
       "rock": {
         "bonuses": {
@@ -136,9 +148,11 @@
         },
         "traits": [
           "tinker_crafting"
-        ]
+        ],
+        "summary": "A rock gnome with a constitution bonus and tinkering craft."
       }
-    }
+    },
+    "summary": "Small, clever folk with sharp minds and a gift for craft or nature."
   },
   "orc": {
     "bonuses": {
@@ -150,7 +164,8 @@
       "low_light_sight",
       "relentless_endurance",
       "aggressive"
-    ]
+    ],
+    "summary": "Strong, relentless warriors who can push through defeat and rush foes."
   },
   "dragonborn": {
     "bonuses": {
@@ -166,25 +181,41 @@
     "subraces": {
       "red": {
         "bonuses": {},
-        "traits": ["breath_fire"]
+        "traits": [
+          "breath_fire"
+        ],
+        "summary": "Red dragon ancestry grants a fire breath weapon."
       },
       "blue": {
         "bonuses": {},
-        "traits": ["breath_lightning"]
+        "traits": [
+          "breath_lightning"
+        ],
+        "summary": "Blue dragon ancestry grants a lightning breath weapon."
       },
       "green": {
         "bonuses": {},
-        "traits": ["breath_poison"]
+        "traits": [
+          "breath_poison"
+        ],
+        "summary": "Green dragon ancestry grants a poison breath weapon."
       },
       "black": {
         "bonuses": {},
-        "traits": ["breath_acid"]
+        "traits": [
+          "breath_acid"
+        ],
+        "summary": "Black dragon ancestry grants an acid breath weapon."
       },
       "white": {
         "bonuses": {},
-        "traits": ["breath_cold"]
+        "traits": [
+          "breath_cold"
+        ],
+        "summary": "White dragon ancestry grants a cold breath weapon."
       }
-    }
+    },
+    "summary": "Proud draconic people with a breath weapon and elemental resistance."
   },
   "tiefling": {
     "bonuses": {
@@ -200,17 +231,27 @@
     "subraces": {
       "infernal": {
         "bonuses": {},
-        "traits": ["infernal_legacy"]
+        "traits": [
+          "infernal_legacy"
+        ],
+        "summary": "Infernal heritage shapes this tiefling’s innate magic."
       },
       "abyssal": {
         "bonuses": {},
-        "traits": ["abyssal_legacy"]
+        "traits": [
+          "abyssal_legacy"
+        ],
+        "summary": "Abyssal heritage shapes this tiefling’s innate magic."
       },
       "chthonic": {
         "bonuses": {},
-        "traits": ["chthonic_legacy"]
+        "traits": [
+          "chthonic_legacy"
+        ],
+        "summary": "Chthonic heritage shapes this tiefling’s innate magic."
       }
-    }
+    },
+    "summary": "People marked by fiendish heritage, with darkvision and hellish resistance."
   },
   "half-breed": {
     "bonuses": {},
@@ -220,6 +261,7 @@
     "parent_count": 2,
     "traits": [
       "choose_two_parent_races"
-    ]
+    ],
+    "summary": "Choose two parent ancestries; their traits and physical features shape this character."
   }
 }

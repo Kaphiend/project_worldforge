@@ -50,3 +50,12 @@ in `classes.py` as well. Character saves store the class ID, so keep IDs stable.
 
 Do not use comments in this JSON. For an override, copy the full class record:
 mod records replace the entire class definition, not individual fields.
+# Class selection summaries
+
+Add a `summary` string to each class record. The character creator shows it
+while a player hovers over that class. Subclass choices use their existing
+`description` and the first feature summary as their hover text.
+
+## Hover summaries
+
+Add a `summary` string to each class record. The character creator displays it while the player hovers over that class. Subclass choices use their `description` plus the first feature summary.

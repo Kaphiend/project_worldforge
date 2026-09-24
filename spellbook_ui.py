@@ -308,6 +308,8 @@ class SpellbookUI:
         self.scroll = min(self.scroll, max(0, len(known) - visible_count))
         self.spell_rects = []
         mouse = pygame.mouse.get_pos()
+        hovered_definition = None
+        hovered_kind = "spell"
         for row, (action, definition) in enumerate(known[self.scroll:self.scroll + visible_count]):
             rect = pygame.Rect(left + 18, top + 114 + row * 30, width - 36, 28)
             self.spell_rects.append((rect, action))
@@ -323,8 +325,8 @@ class SpellbookUI:
             screen.blit(font.render(label, True,
                                     (242, 244, 250)), (rect.x + 9, rect.y + 6))
             if hovered and self.tooltips_enabled:
-                _draw_tooltip(screen, font, definition, mouse,
-                              "spell" if self.page != "abilities" else "ability")
+                hovered_definition = definition
+                hovered_kind = "spell" if self.page != "abilities" else "ability"
         if not known:
             message = ("No prepared spells. Prepare known spells in the Spellbook page."
                        if self.page == "prepared" else
@@ -359,6 +361,8 @@ class SpellbookUI:
                                         True, (240, 243, 248)), (rect.x + 2, rect.y + 20))
         screen.blit(font.render("Right-click an occupied slot to clear it.", True,
                                 (180, 192, 210)), (left + 18, top + height - 22))
+        if hovered_definition:
+            _draw_tooltip(screen, font, hovered_definition, mouse, hovered_kind)
 
     def draw(self, screen, font, actor_data):
         self.draw_bar(screen, font, actor_data)

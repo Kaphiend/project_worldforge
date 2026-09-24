@@ -8,7 +8,7 @@ from factory import (
     starting_hp,
     random_fully_geared_actor,
 )
-from storage import lock_actor, load_actor, save_actor
+from storage import lock_actor, load_actor, save_actor, unlock_actor
 from progression import initialize_resources
 
 
@@ -30,8 +30,47 @@ class CharacterCreationFlow:
         self.stage = "race"
         return True
 
+    def go_back(self):
+        """Return to the previous creation step without losing current picks."""
+        previous = {
+            "quick_class": "menu",
+            "quick_name": "quick_class",
+            "name": "menu",
+            "race": "name",
+            "parents": "race",
+            "subrace": "race",
+            "class": ("parents" if self.actor and self.actor.race == "half-breed"
+                      else "subrace" if self.actor and RACES.get(
+                          self.actor.race, {}).get("subraces") else "race"),
+            "subclass": "class",
+            "skills": ("subclass" if self.actor and CLASSES.get(
+                self.actor.char_class, {}).get("subclasses") else "class"),
+            "abilities": ("skills" if self.actor and CLASSES.get(
+                self.actor.char_class, {}).get("skill_choices", 0) else
+                "subclass" if self.actor and CLASSES.get(
+                    self.actor.char_class, {}).get("subclasses") else "class"),
+            "avatar": "menu",
+            "done": "menu",
+        }
+        if self.stage in ("avatar", "done") and self.actor:
+            unlock_actor(self.actor.id)
+        self.stage = previous.get(self.stage, "menu")
+        if self.stage == "menu" and self.actor and self.actor.id:
+            # A completed or loaded character is saved; an unfinished one has
+            # not been committed yet and can be discarded safely.
+            if self.actor.avatar:
+                unlock_actor(self.actor.id)
+            self.actor = None
+
     def select_race(self, race):
         if race in RACES and RACES[race].get('selectable', True):
+            if self.actor.race != race:
+                self.actor.subrace = None
+                self.actor.parent_races = []
+                self.actor.char_class = None
+                self.actor.classes = []
+                self.actor.subclass = None
+                self.actor.skills = []
             self.actor.race = race
 
     def confirm_race(self):
@@ -78,6 +117,9 @@ class CharacterCreationFlow:
 
     def select_class(self, char_class):
         if char_class in CLASSES:
+            if self.actor.char_class != char_class:
+                self.actor.subclass = None
+                self.actor.skills = []
             self.actor.char_class = char_class
             self.actor.classes = [{'name': char_class, 'level': 1}]
             self.actor.level = 1
@@ -143,6 +185,7 @@ class CharacterCreationFlow:
         self.actor.known_abilities = [
             ability_id for ability_id, ability in ABILITIES.items()
             if class_name in ability.get('classes', [])
+            and ability.get('acquisition') != 'trainer_purchase'
             and ability.get('prerequisite_class_level', 1) <= self.actor.level
         ]
         self.actor.prepared_spells = list(self.actor.known_spells)

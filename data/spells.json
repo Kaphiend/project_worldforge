@@ -1,28 +1,76 @@
 {
   "arcane_spark": {
     "name": "Arcane Spark",
-    "classes": ["bard", "cleric", "druid", "paladin", "ranger", "sorcerer", "warlock", "wizard"],
+    "classes": [
+      "bard",
+      "cleric",
+      "druid",
+      "paladin",
+      "ranger",
+      "sorcerer",
+      "warlock",
+      "wizard"
+    ],
     "tier": 0,
     "cantrip": true,
     "spell_point_cost": 0,
     "casting_time": "action",
-    "targeting": {"mode": "one_target", "range_feet": 60, "requires_line_of_sight": true},
-    "resolution": {"kind": "spell_attack"},
-    "effects": {"hit": [{"kind": "damage", "formula": "1d8", "damage_type": "force"}], "miss": []},
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 60,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "spell_attack"
+    },
+    "effects": {
+      "hit": [
+        {
+          "kind": "damage",
+          "formula": "1d8",
+          "damage_type": "force"
+        }
+      ],
+      "miss": []
+    },
     "description": "A forceful bolt of raw magic strikes a distant foe.",
     "prerequisite_class_level": 1,
     "acquisition": "starting_cantrip"
   },
   "frost_needle": {
     "name": "Frost Needle",
-    "classes": ["bard", "cleric", "druid", "paladin", "ranger", "sorcerer", "warlock", "wizard"],
+    "classes": [
+      "bard",
+      "cleric",
+      "druid",
+      "paladin",
+      "ranger",
+      "sorcerer",
+      "warlock",
+      "wizard"
+    ],
     "tier": 0,
     "cantrip": true,
     "spell_point_cost": 0,
     "casting_time": "action",
-    "targeting": {"mode": "one_target", "range_feet": 60, "requires_line_of_sight": true},
-    "resolution": {"kind": "spell_attack"},
-    "effects": {"hit": [{"kind": "damage", "formula": "1d6", "damage_type": "cold"}], "miss": []},
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 60,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "spell_attack"
+    },
+    "effects": {
+      "hit": [
+        {
+          "kind": "damage",
+          "formula": "1d6",
+          "damage_type": "cold"
+        }
+      ],
+      "miss": []
+    },
     "description": "A narrow shard of ice flies toward a creature you can see.",
     "prerequisite_class_level": 1,
     "acquisition": "starting_cantrip"
@@ -52,7 +100,8 @@
     "consumable_equivalent": "revival_scroll",
     "description": "Rolls 2d4 healing and can restore a downed ally.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "cadence_mend": {
     "name": "Cadence Mend",
@@ -78,7 +127,8 @@
     ],
     "description": "A measured phrase restores a small amount of vitality.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "resonant_burst": {
     "name": "Resonant Burst",
@@ -115,7 +165,8 @@
     },
     "description": "A sharp chord strikes a creature’s balance and hearing.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "lantern_verdict": {
     "name": "Lantern Verdict",
@@ -145,7 +196,8 @@
     },
     "description": "A focused shaft of light punishes a target that fails to evade.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "stonebloom_mend": {
     "name": "Stonebloom Mend",
@@ -171,7 +223,8 @@
     ],
     "description": "Living growth closes wounds with patient, steady force.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "briar_coil": {
     "name": "Briar Coil",
@@ -200,7 +253,8 @@
     },
     "description": "Sudden roots and thorny runners bind a target that fails to break free.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "vowlight_touch": {
     "name": "Vowlight Touch",
@@ -226,7 +280,8 @@
     ],
     "description": "A focused touch restores a wounded ally.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "vowflare": {
     "name": "Vowflare",
@@ -253,7 +308,8 @@
     ],
     "description": "Charge your next weapon hit with a brief flare of sworn resolve.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "quarry_spark": {
     "name": "Quarry Spark",
@@ -282,7 +338,8 @@
     },
     "description": "A guided thorn of force flies toward a quarry.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "trail_mend": {
     "name": "Trail Mend",
@@ -308,7 +365,8 @@
     ],
     "description": "A field remedy and quiet charm restore a little vitality.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "cinder_thread": {
     "name": "Cinder Thread",
@@ -341,7 +399,8 @@
     },
     "description": "A narrow filament of flame lashes a target and may leave it burning.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "arc_lash": {
     "name": "Arc Lash",
@@ -378,7 +437,8 @@
     },
     "description": "A crooked arc jumps toward a creature and nearby conductive surfaces.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "gloam_leech": {
     "name": "Gloam Leech",
@@ -411,7 +471,8 @@
     },
     "description": "A strand of borrowed dusk wounds a foe and returns a little vitality.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "distant_whisper": {
     "name": "Distant Whisper",
@@ -436,7 +497,8 @@
     ],
     "description": "Send a short, quiet message to a creature you can see.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "ember_lattice": {
     "name": "Ember Lattice",
@@ -478,7 +540,8 @@
     },
     "description": "A geometric flare bursts in a small area and can set targets alight.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "glassward": {
     "name": "Glassward",
@@ -505,7 +568,8 @@
     ],
     "description": "A clear, angular ward briefly turns aside incoming attacks.",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "healing_potion_effect": {
     "name": "Healing Potion",

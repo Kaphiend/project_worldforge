@@ -223,7 +223,8 @@
       "unlock": "sequential_within_class",
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
-    }
+    },
+    "summary": "A fierce front-line warrior who turns toughness and fury into force."
   },
   "bard": {
     "hit_die": 8,
@@ -465,7 +466,8 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A versatile performer who supports allies and shapes magic through art."
   },
   "cleric": {
     "hit_die": 8,
@@ -713,7 +715,8 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A divine spellcaster who protects allies and confronts threats with faith."
   },
   "druid": {
     "hit_die": 8,
@@ -963,7 +966,8 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A nature-focused spellcaster who heals, controls the field, and adapts."
   },
   "fighter": {
     "hit_die": 10,
@@ -1195,7 +1199,8 @@
       "unlock": "sequential_within_class",
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
-    }
+    },
+    "summary": "A disciplined weapon specialist built for reliable attacks and defense."
   },
   "monk": {
     "hit_die": 8,
@@ -1417,7 +1422,8 @@
       "unlock": "sequential_within_class",
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
-    }
+    },
+    "summary": "A mobile martial artist who fights with speed, focus, and discipline."
   },
   "paladin": {
     "hit_die": 10,
@@ -1671,7 +1677,8 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A durable champion who combines martial skill with sacred magic."
   },
   "ranger": {
     "hit_die": 10,
@@ -1923,7 +1930,8 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A scout and hunter who blends weapon attacks, survival, and nature magic."
   },
   "rogue": {
     "hit_die": 8,
@@ -2152,7 +2160,8 @@
       "unlock": "sequential_within_class",
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
-    }
+    },
+    "summary": "A precise, adaptable operator who relies on stealth and decisive strikes."
   },
   "sorcerer": {
     "hit_die": 6,
@@ -2397,7 +2406,8 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A spellcaster whose innate magic offers potent, flexible offense."
   },
   "warlock": {
     "hit_die": 8,
@@ -2645,7 +2655,8 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A pact-bound caster who pairs repeatable magic with supernatural gifts."
   },
   "wizard": {
     "hit_die": 6,
@@ -2890,6 +2901,7 @@
       18,
       19,
       20
-    ]
+    ],
+    "summary": "A learned spellcaster with a broad arcane toolkit and careful preparation."
   }
 }

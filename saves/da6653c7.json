@@ -1,0 +1,277 @@
+{
+  "name": "pally",
+  "id": "da6653c7",
+  "max_hp": 35,
+  "current_hp": 5,
+  "classes": [
+    {
+      "name": "paladin",
+      "level": 1
+    }
+  ],
+  "level": 3,
+  "xp_total": 920,
+  "xp_earned_by_level": {
+    "3": 920
+  },
+  "xp_spent_by_level": {},
+  "xp_rest_spent_by_level": {},
+  "class_spell_purchases": {},
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [
+    "arcane_spark",
+    "frost_needle"
+  ],
+  "prepared_spells": [
+    "arcane_spark",
+    "frost_needle"
+  ],
+  "spell_hotbars": [
+    [
+      "spell:arcane_spark",
+      "spell:frost_needle",
+      "action:weapon_attack",
+      "action:ranged_weapon_attack",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": null,
+    "e": null
+  },
+  "known_abilities": [],
+  "spell_points": 1,
+  "class_resources": {},
+  "gold": 500,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Orc.png",
+  "abilities": {
+    "strength": 16,
+    "dexterity": 12,
+    "constitution": 16,
+    "intellect": 15,
+    "wisdom": 10,
+    "charisma": 16
+  },
+  "unspent": [
+    12,
+    13,
+    10,
+    10,
+    16,
+    8
+  ],
+  "saves": [
+    "wisdom",
+    "charisma"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "heavy",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial"
+  ],
+  "race": "human",
+  "subrace": "",
+  "subclass": "paladin_truthseeker",
+  "parent_races": [],
+  "char_class": "paladin",
+  "skills": [
+    "athletics",
+    "religion"
+  ],
+  "controller": "player",
+  "x": 479.3838749855537,
+  "y": 162.59521004592926,
+  "inventory": [
+    {
+      "id": "0e26eca9cd00",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 3,
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "c365e9622fa1",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 1,
+      "template_id": "revival_scroll"
+    }
+  ],
+  "equipment": {
+    "head": {
+      "id": "b2f42f07730a",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "4508c0b4284f",
+      "name": "Chain Shirt",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "chain_shirt"
+    },
+    "hands": {
+      "id": "112772d703c0",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "80e4bc456f27",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "602201413b6c",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "0d3259064f6e",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "c982957fd6f0",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "e2b374a6b271",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "f5fc28d4a94f",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "830a619f24f6",
+      "name": "Dagger",
+      "slot": "hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "dagger"
+    },
+    "off_hand": {
+      "id": "fd77888516ba",
+      "name": "Sword",
+      "slot": "hand",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "sword_1h"
+    },
+    "ranged": {
+      "id": "2ee6d7299a7e",
+      "name": "Longbow",
+      "slot": "ranged",
+      "tags": [
+        "2h",
+        "heavy",
+        "ammunition"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "longbow"
+    }
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

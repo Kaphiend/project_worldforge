@@ -14,8 +14,10 @@ list. Each top-level key is an ability ID.
   values are spent only after the ability resolves successfully.
 - `targeting`: optional. Without it, the ability targets its user. Current
   targeted abilities use `mode: "one_target"` and `range_feet`.
-- `prerequisite_class_level` and `acquisition`: reference fields used for
-  listing/gating the current starting options.
+- `prerequisite_class_level` and `acquisition`: set the tier and how the
+  option is learned. `acquisition: "trainer_purchase"` displays the ability
+  at the map trainer; `xp_purchase_cost` is its one-time XP price. The shared
+  character XP ceiling and that class's sequential purchase chain gate access.
 - `effects`: array of supported effect records. For a status effect, use
   `{ "kind": "condition", "condition_id": "off_balance" }` and make sure
   that condition exists.

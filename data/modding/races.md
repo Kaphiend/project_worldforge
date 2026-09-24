@@ -27,3 +27,12 @@ Example subrace:
 ```
 
 New bonuses/traits are reference data, not automatic character math.
+# Race and subrace selection summaries
+
+Add a `summary` string to each race record and each nested subrace record. The
+character creator shows that text while a player hovers over the matching
+choice. Half-breed parent choices use the selected race's summary.
+
+## Hover summaries
+
+Add a `summary` string to every race record and every nested subrace record. The character creator displays this text while the player hovers over the option. Half-breed parent choices show the selected race summary.

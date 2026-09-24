@@ -21,7 +21,12 @@
     ],
     "inn_beds": [
       {"id": "roadside_inn_bed", "name": "Roadside Inn", "x": 130, "y": 170,
-       "width": 100, "height": 60, "interaction_range_feet": 15}
+       "width": 100, "height": 60, "interaction_range_feet": 15,
+       "respawn_x": 242, "respawn_y": 242}
+    ],
+    "trainers": [
+      {"id": "roadside_trainer", "name": "Class Trainer", "x": 270, "y": 170,
+       "width": 42, "height": 54, "interaction_range_feet": 15}
     ]
   }
 }

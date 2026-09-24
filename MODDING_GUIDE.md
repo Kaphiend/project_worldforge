@@ -83,12 +83,15 @@ are saved in `prepared_spells`; old saves initialize that list from their known
 spells. Spell records marked `cantrip: true` with `spell_point_cost: 0` use an action
 without spending the shared spell pool. `starting_cantrip` acquisition is
 granted to matching classes at character creation and added to older saves;
-Known-spell progression is still manual data/save setup; the trainer unlock
-flow is not implemented. The demo includes Arcane Spark and Frost Needle as
+Trainer-purchase spells are unlocked at the map trainer using each record’s
+`xp_purchase_cost`; starting cantrips are still granted by class data. The demo includes Arcane Spark and Frost Needle as
 level-one caster attacks; tune damage, range, classes, and descriptions in
 `data/spells.json`.
-Trainer multiclass XP costs use `progression.trainer_xp_cost`; the trainer
-transaction, progression ledger, and UI are still future work.
+The map trainer charges per-item `xp_purchase_cost`. Current unspent XP sets
+the shared purchase tier and class ownership ledgers enforce sequential tiers.
+Creation hover text comes from each race, subrace, and class `summary`; subclass
+choices use their existing `description` and a feature summary. Arena trainer
+and respawn positions are configured in `arenas.json`.
 
 ## The safest way to make a mod
 
