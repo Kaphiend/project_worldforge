@@ -1,5 +1,5 @@
-"""Compatibility entry point; the game mode is chosen in the main menu."""
-from main import main
+"""Compatibility launcher for the Worldforge application."""
+from worldforge.app.main import main
 
 
 if __name__ == "__main__":

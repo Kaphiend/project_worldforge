@@ -1,0 +1,1 @@
+"""Worldforge game implementation package."""

@@ -69,7 +69,7 @@
         "condition_id": "off_balance"
       }
     ],
-    "description": "Draw a nearby opponent’s guard aside, opening a brief advantage.",
+    "description": "Draw a nearby opponents guard aside, opening a brief advantage.",
     "prerequisite_class_level": 1,
     "acquisition": "trainer_purchase",
     "xp_purchase_cost": 10
