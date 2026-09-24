@@ -16,8 +16,10 @@ known spells at creation; consumables can refer to the same record through
   normal spell action and targeting flow. Records with `cantrip: true` and
   `acquisition: "starting_cantrip"` are granted at character creation to
   matching classes and migrated onto older saves. The spellbook can prepare
-  known spells. Spell records marked `acquisition: "trainer_purchase"` are
-  sold by the map trainer. Set `xp_purchase_cost` on each record to its
+  known spells. Leveled preparations are limited to character level plus the
+  casting ability modifier (minimum one); cantrips do not count against this
+  limit. Buying a trainer-purchase spell adds it to the spellbook but does not
+  prepare it automatically. Set `xp_purchase_cost` on each record to its
   one-time XP price; this is separate from `spell_point_cost`, which is paid
   for each cast. Tier access uses `prerequisite_class_level` and the
   character's sequential purchase chain for that class. A character must own

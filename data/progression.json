@@ -1,0 +1,12 @@
+{
+  "multiclassing": {
+    "first_additional_class_xp_cost": 500,
+    "class_unlock_xp_multiplier": 3,
+    "first_additional_class_purchase_multiplier": 2,
+    "subsequent_purchase_multiplier_step": 1
+  },
+  "attribute_points": {
+    "milestones": [4, 8, 12, 16, 20],
+    "points_per_milestone": 2
+  }
+}

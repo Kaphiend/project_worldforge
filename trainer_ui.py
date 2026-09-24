@@ -6,7 +6,9 @@ without changing this screen. Purchase checks remain authoritative in game.py.
 import pygame
 
 from classes import ABILITIES, CLASSES, SPELLS
-from progression import class_unlocked_level, purchase_cost, qualified_level, unspent_xp
+from progression import (adjusted_purchase_cost, class_unlock_cost,
+                         class_unlocked_level, qualified_level,
+                         unlocked_classes, unspent_xp)
 
 
 class TrainerUI:
@@ -16,11 +18,16 @@ class TrainerUI:
         self.scroll = 0
         self.notice = ""
 
-    def toggle(self):
+    def toggle(self, data=None):
         self.visible = not self.visible
         self.notice = ""
+        if data and data.get("char_class") in CLASSES:
+            self.class_id = data["char_class"]
+            self.scroll = 0
 
     def _items(self, data):
+        if self.class_id not in unlocked_classes(data):
+            return []
         rows = []
         for kind, table, purchases_key in (
                 ("spell", SPELLS, "class_spell_purchases"),
@@ -106,10 +113,14 @@ class TrainerUI:
                 self.class_id = class_id
                 self.scroll = 0
                 return None
+        if self.class_id not in unlocked_classes(data):
+            unlock_rect = pygame.Rect(screen_width - 190, 120, 168, 30)
+            if unlock_rect.collidepoint(x, y):
+                return {"type": "unlock_class", "class_id": self.class_id}
         if y >= 142:
             visible_rows = self._items(data)[self.scroll: self.scroll + 10]
             for index, row in enumerate(visible_rows):
-                row_rect = pygame.Rect(22, 145 + index * 38,
+                row_rect = pygame.Rect(22, 165 + index * 38,
                                        screen_width - 44, 34)
                 buy_rect = pygame.Rect(screen_width - 120, row_rect.y + 2,
                                        82, 30)
@@ -117,7 +128,8 @@ class TrainerUI:
                     _tier, _name, kind, item_id, definition, _owned = row
                     return {"type": "trainer_purchase", "class_id": self.class_id,
                             "kind": kind, "item_id": item_id,
-                            "xp_purchase_cost": purchase_cost(definition)}
+                            "xp_purchase_cost": adjusted_purchase_cost(
+                                data, self.class_id, definition)}
         return None
 
     def draw(self, screen, data, font):
@@ -131,40 +143,66 @@ class TrainerUI:
         pygame.draw.rect(screen, (190, 180, 140), panel, 2, border_radius=8)
         title = pygame.font.Font(None, 30)
         screen.blit(title.render("Trainer", True, (250, 235, 190)), (26, 42))
+        selected_title = self.class_id.title() if self.class_id else "No class"
+        selected_tier = class_unlocked_level(data, self.class_id) if self.class_id else 0
         status = (f"Qualified level {qualified_level(data)}   XP {unspent_xp(data)}"
-                  f"   {self.class_id.title()} tier {class_unlocked_level(data, self.class_id)}")
+                  f"   {selected_title} tier {selected_tier}")
         screen.blit(font.render(status, True, (215, 225, 220)), (180, 48))
+        hint_font = pygame.font.Font(None, 17)
         hover_title, hover_detail = "", ""
         mouse_pos = pygame.mouse.get_pos()
+        acquired_classes = set(unlocked_classes(data))
         for index, class_id in enumerate(CLASSES):
             rect = pygame.Rect(24 + index * 80, 86, 76, 32)
-            pygame.draw.rect(screen, (82, 110, 88) if class_id == self.class_id
-                             else (55, 62, 68), rect, border_radius=4)
+            acquired = class_id in acquired_classes
+            base_color = (82, 110, 88) if class_id == self.class_id else (55, 62, 68)
+            pygame.draw.rect(screen, base_color if acquired else (43, 45, 48),
+                             rect, border_radius=4)
             label = pygame.font.Font(None, 18).render(class_id.title()[:10], True,
                                                        (245, 245, 240))
             screen.blit(label, label.get_rect(center=rect.center))
             if rect.collidepoint(mouse_pos):
                 hover_title = class_id.title()
                 hover_detail = CLASSES[class_id].get("summary", "")
+                if not acquired:
+                    hover_detail += f" Unlock cost: {class_unlock_cost(data, class_id)} XP."
         owned_spells = set(data.get("class_spell_purchases", {}).get(self.class_id, []))
         owned_abilities = set(data.get("class_ability_purchases", {}).get(self.class_id, []))
+        unlocked = self.class_id in unlocked_classes(data)
+        if not unlocked:
+            fee = class_unlock_cost(data, self.class_id)
+            unlock_rect = pygame.Rect(screen.get_width() - 190, 120, 168, 30)
+            can_unlock = fee <= unspent_xp(data)
+            pygame.draw.rect(screen, (76, 120, 78) if can_unlock else (72, 72, 72),
+                             unlock_rect, border_radius=4)
+            unlock_label = f"Unlock · {fee} XP"
+            screen.blit(hint_font.render(unlock_label, True, (250, 250, 245)),
+                        (unlock_rect.x + 9, unlock_rect.y + 8))
+            screen.blit(hint_font.render(
+                "Unlock this class before buying its options.",
+                True, (205, 215, 200)), (26, 128))
+        else:
+            screen.blit(hint_font.render(
+                "This class is unlocked. Spell and ability prices rise by class order.",
+                True, (205, 215, 200)), (26, 128))
         rows = self._items(data)
         self.scroll = min(self.scroll, max(0, len(rows) - 10))
         frontier = class_unlocked_level(data, self.class_id)
         ceiling = qualified_level(data)
         for index, row in enumerate(rows[self.scroll:self.scroll + 10]):
             tier, name, kind, item_id, definition, is_owned = row
-            y = 145 + index * 38
+            y = 165 + index * 38
             row_rect = pygame.Rect(22, y, screen.get_width() - 44, 34)
             can_buy = (not is_owned and tier <= frontier and tier <= ceiling
-                       and purchase_cost(definition) is not None
-                       and unspent_xp(data) >= purchase_cost(definition))
+                       and adjusted_purchase_cost(data, self.class_id, definition) is not None
+                       and unspent_xp(data) >= adjusted_purchase_cost(
+                           data, self.class_id, definition))
             color = (51, 67, 58) if can_buy else (43, 47, 51)
             pygame.draw.rect(screen, color, row_rect, border_radius=4)
             suffix = "owned" if is_owned else f"level {tier} {kind}"
             screen.blit(font.render(f"{name}  ·  {suffix}", True,
                                     (240, 240, 230)), (32, y + 8))
-            cost = purchase_cost(definition)
+            cost = adjusted_purchase_cost(data, self.class_id, definition)
             button = pygame.Rect(screen.get_width() - 120, y + 2, 82, 30)
             pygame.draw.rect(screen, (76, 120, 78) if can_buy else (72, 72, 72),
                              button, border_radius=4)

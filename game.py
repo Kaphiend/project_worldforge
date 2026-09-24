@@ -12,18 +12,22 @@ import pygame
 from combat import attack as resolve_attack
 from combat import (distance_feet, edge_distance_feet, initiative_for,
                     proficiency_bonus, selected_weapon, speed_feet)
-from classes import ABILITIES, SPELLS, ARENAS, NPCS, SCENARIOS
+from classes import (ABILITIES, CLASSES, SPELLS, ARENAS, NPCS, SCENARIOS,
+                     MOB_GENERATION_RULES)
 from controllers import controller_for
 from conditions import condition_names, has_condition, tick_conditions
 from sprite_sheet import load_spritesheet
 from spell_effects import apply_ability_effects, resolve_spell
 from storage import save_actor
-from factory import (create_npc_instance, equip_item, item_definition,
-                     unequip_item)
+from factory import (create_npc_instance, effective_max_hp, equip_item,
+                     item_definition, modifier, unequip_item)
 from progression import (initialize_resources, spell_point_max,
-                         class_unlocked_level, purchase_cost, qualified_level,
+                         class_unlocked_level, qualified_level,
                          unspent_xp, spend_xp, charge_xp_penalty,
-                         sync_progression_levels, character_level_for_xp)
+                         sync_progression_levels, character_level_for_xp,
+                         set_spell_prepared, class_unlock_cost,
+                         unlocked_classes, adjusted_purchase_cost,
+                         spend_attribute_point)
 from resting import resolve_rest
 from runtime_paths import asset_path
 
@@ -425,7 +429,7 @@ def _perception_score(actor_data):
     if isinstance(explicit, (int, float)):
         return int(explicit)
     wisdom = actor_data.get("abilities", {}).get("wisdom", 10)
-    score = 10 + (int(wisdom) - 10) // 2
+    score = 10 + modifier(wisdom)
     if "perception" in {skill.casefold() for skill in actor_data.get("skills", [])}:
         score += proficiency_bonus(actor_data)
     return score
@@ -630,7 +634,7 @@ def _remove_disconnected_players(combat, remote_players, host_id):
 
 DEFAULT_SCENARIO = "first_contact"
 COMBAT_TRIGGER_RANGE_FEET = 20
-CORPSE_DESPAWN_MS = 30_000
+CORPSE_DESPAWN_MS = 3_000
 
 
 def _world_mob_from_entry(entry):
@@ -643,7 +647,40 @@ def _world_mob_from_entry(entry):
         "data": deepcopy(entry.get("data", {})),
         "perception_info": deepcopy(entry.get("perception_info", {})),
         "corpse_despawn_at": entry.get("corpse_despawn_at"),
+        "loot": deepcopy(entry.get("loot", [])),
     }
+
+
+def _corpse_loot(entry):
+    """Copy an NPC instance's carried and equipped gear into a shared drop list."""
+    data = entry.get("data", {})
+    items = [deepcopy(item) for item in data.get("inventory", [])]
+    seen_ids = {item.get("id") for item in items if item.get("id") is not None}
+    for slot, item in (data.get("equipment", {}) or {}).items():
+        if item and item.get("id") not in seen_ids:
+            dropped = deepcopy(item)
+            dropped.setdefault("slot", slot)
+            items.append(dropped)
+            if item.get("id") is not None:
+                seen_ids.add(item["id"])
+    return items
+
+
+def _mob_perception_info(template, npc):
+    perception = deepcopy(template.get("perception", {}))
+    if not npc.get("elite"):
+        return perception
+    levels = perception.setdefault("levels", [])
+    if not levels:
+        return perception
+    final = max(levels, key=lambda level: int(level.get("dc", 10)))
+    elite_bonus = max(0, int(MOB_GENERATION_RULES.get("elite", {}).get(
+        "perception_dc_bonus", 3)))
+    levels.append({
+        "dc": int(final.get("dc", 10)) + elite_bonus,
+        "title": f"Elite {final.get('title', npc.get('name', 'mob'))}",
+    })
+    return perception
 
 
 def _random_mob_entry(arena, existing=(), players=()):
@@ -674,7 +711,7 @@ def _random_mob_entry(arena, existing=(), players=()):
     npc = create_npc_instance(npc_id, spot[0], spot[1])
     mob_id = npc["id"]
     entry = _combat_snapshot(mob_id, npc, "enemies")
-    entry["perception_info"] = deepcopy(definition.get("perception", {}))
+    entry["perception_info"] = _mob_perception_info(definition, npc)
     entry["width"] = entry["height"] = ACTOR_SIZE
     return entry
 
@@ -688,11 +725,11 @@ def _settle_victory(combat, players):
     combat["victory_settled"] = True
     combat["active"] = False
     combat["result"] = None
-    now = pygame.time.get_ticks()
     for entry in combat.get("actors", {}).values():
         if (entry.get("team") == "enemies" and entry.get("downed")
                 and entry.get("corpse_despawn_at") is None):
-            entry["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
+            entry["corpse_despawn_at"] = None
+            entry["loot"] = _corpse_loot(entry)
     arena = combat.get("arena", {})
     existing = [entry for entry in combat.get("actors", {}).values()
                 if entry.get("team") == "enemies"]
@@ -730,11 +767,11 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
             definition = NPCS.get(spawn.get("npc"))
             if definition is None:
                 raise ValueError(f"Scenario {scenario_id!r} references missing NPC {spawn.get('npc')!r}")
-            npc = deepcopy(definition)
             npc_id = spawn.get("id", f"{spawn.get('npc')}-{index + 1}")
-            npc.update(id=npc_id,
-                       x=spawn.get("x", npc.get("x", 600)),
-                       y=spawn.get("y", npc.get("y", 280)))
+            npc = create_npc_instance(
+                spawn.get("npc"), spawn.get("x", definition.get("x", 600)),
+                spawn.get("y", definition.get("y", 280)))
+            npc["id"] = npc_id
             enemy_sources.append(_combat_snapshot(npc_id, npc, "enemies"))
     else:
         enemy_sources = [deepcopy(entry) for entry in world_mobs]
@@ -752,17 +789,16 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
         npc.setdefault("abilities", {})
         npc.setdefault("equipment", {})
         npc.setdefault("inventory", [])
-        # Re-key equipped items for this encounter snapshot so combat mutations
-        # do not alias the persistent map actor's equipment.
-        for equipped in npc["equipment"].values():
-            if equipped:
-                equipped["id"] = uuid.uuid4().hex[:12]
+        # The snapshot deep copy isolates combat mutations; retain item IDs so
+        # generated gear remains the same instance through combat and looting.
         entry = _combat_snapshot(npc_id, npc, "enemies")
         entry["perception_info"] = deepcopy(
-            source.get("perception_info") or definition.get("perception", {}))
+            source.get("perception_info") or _mob_perception_info(definition, npc))
         entry["width"] = entry["height"] = ACTOR_SIZE
         if source.get("corpse_despawn_at"):
             entry["corpse_despawn_at"] = source["corpse_despawn_at"]
+        if source.get("downed"):
+            entry["loot"] = deepcopy(source.get("loot", []))
         actors[npc_id] = entry
     order = _initiative_order({
         key: entry for key, entry in actors.items() if not entry["downed"]
@@ -842,7 +878,14 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
         _reject_action(combat, 'Action already used this turn.', actor_id)
         return False
     caster = actor_entry['data']
-    prepared_spells = caster.get("prepared_spells", caster.get("known_spells", []))
+    prepared_spells = caster.get("prepared_spells", [])
+    actor_classes = {item.get("name") for item in caster.get("classes", []) or []
+                     if item.get("name")}
+    if caster.get("char_class"):
+        actor_classes.add(caster["char_class"])
+    if not actor_classes.intersection(spell.get("classes", [])):
+        _reject_action(combat, 'Your class cannot cast this spell.', actor_id)
+        return False
     if spell_id not in prepared_spells:
         _reject_action(combat, f"{spell['name']} is not prepared.", actor_id)
         return False
@@ -1528,8 +1571,125 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
     if action.get("type") == "rest_inn":
         return _resolve_party_rest(actor, local_player_id, remote_players,
                                    combat, "inn")
-    if action.get("type") in {"trainer_purchase", "release_spirit"}:
-        if combat and combat.get("active") and action.get("type") == "trainer_purchase":
+    if action.get("type") == "increase_ability":
+        entry = (combat or {}).get("actors", {}).get(actor_id)
+        owner = (entry.get("data") if entry else
+                 (actor if actor_id == local_player_id else next(
+                     (remote.get("actor") for remote in remote_players
+                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
+        if owner is None:
+            return {"_action_error": "Character is unavailable."}
+        data = owner if isinstance(owner, dict) else vars(owner)
+        success, message = spend_attribute_point(data, action.get("ability"))
+        if not success:
+            return {"_action_error": message}
+        if entry:
+            entry["data"].update(data)
+            return combat
+        return _progression_sync_state(actor, local_player_id, remote_players)
+    if action.get("type") == "prepare_spell":
+        entry = (combat or {}).get("actors", {}).get(actor_id)
+        owner = (entry.get("data") if entry else
+                 (actor if actor_id == local_player_id else next(
+                     (remote.get("actor") for remote in remote_players
+                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
+        if owner is None:
+            return {"_action_error": "Character is unavailable."}
+        data = owner if isinstance(owner, dict) else vars(owner)
+        success, message = set_spell_prepared(
+            data, action.get("spell_id"), bool(action.get("prepare", True)))
+        if not success:
+            return {"_action_error": message}
+        if entry:
+            entry["data"].update(data)
+            return combat
+        return _progression_sync_state(actor, local_player_id, remote_players)
+    if action.get("type") in {"loot_take", "loot_take_all", "loot_finish"}:
+        if not combat or combat.get("active"):
+            return {"_action_error": "There is no corpse available to loot."}
+        corpse_id = action.get("target")
+        corpse = combat.get("actors", {}).get(corpse_id)
+        if (not corpse or corpse.get("team") != "enemies"
+                or not corpse.get("downed")):
+            return {"_action_error": "That corpse is no longer available."}
+        now = pygame.time.get_ticks()
+        expiry = corpse.get("corpse_despawn_at")
+        if expiry is not None and now >= expiry:
+            return {"_action_error": "That corpse has already been looted and is gone."}
+        player_entry = combat.get("actors", {}).get(actor_id)
+        owner = (player_entry.get("data") if player_entry else
+                 (actor if actor_id == local_player_id else next(
+                     (remote.get("actor") for remote in remote_players
+                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
+        if owner is None:
+            return {"_action_error": "Character is unavailable."}
+        data = owner if isinstance(owner, dict) else vars(owner)
+        if actor_id == local_player_id:
+            loot_x, loot_y = actor.x, actor.y
+        else:
+            remote = next((item for item in remote_players
+                           if _player_id(item) == actor_id), {})
+            loot_x, loot_y = remote.get("x", data.get("x", 0)), remote.get("y", data.get("y", 0))
+        loot_position = {"x": loot_x, "y": loot_y,
+                         "width": ACTOR_SIZE, "height": ACTOR_SIZE}
+        distance = edge_distance_feet(loot_position, corpse,
+                                      PIXELS_PER_FOOT, ACTOR_SIZE)
+        if distance > 5:
+            return {"_action_error": "Move within 5 feet of the corpse to loot it."}
+
+        loot = corpse.setdefault("loot", [])
+        if action["type"] in {"loot_take", "loot_take_all"}:
+            if action["type"] == "loot_take_all":
+                claimed = list(loot)
+                loot.clear()
+            else:
+                item_id = action.get("item_id")
+                item = next((item for item in loot if item.get("id") == item_id), None)
+                if item is None:
+                    return {"_action_error": "That item has already been taken."}
+                claimed = [item]
+                loot.remove(item)
+            inventory = data.setdefault("inventory", [])
+            for item in claimed:
+                definition = item_definition(item)
+                template_id = item.get("template_id")
+                quantity = max(1, int(item.get("quantity", 1) or 1))
+                if definition.get("stackable") and template_id:
+                    max_stack = max(1, int(definition.get("max_stack", 99)))
+                    remaining = quantity
+                    for existing in inventory:
+                        if existing.get("template_id") != template_id:
+                            continue
+                        current = max(1, int(existing.get("quantity", 1) or 1))
+                        added = min(remaining, max(0, max_stack - current))
+                        existing["quantity"] = current + added
+                        remaining -= added
+                        if not remaining:
+                            break
+                    while remaining:
+                        added = min(remaining, max_stack)
+                        copy_item = deepcopy(item)
+                        copy_item["id"] = uuid.uuid4().hex[:12]
+                        copy_item["quantity"] = added
+                        inventory.append(copy_item)
+                        remaining -= added
+                else:
+                    inventory.append(deepcopy(item))
+            if player_entry:
+                player_entry["data"].update(data)
+            for item in claimed:
+                _log(combat, f"{data.get('name', actor_id)} takes {item.get('name', 'an item')} from the shared loot.")
+            if action["type"] == "loot_take_all":
+                corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
+            return combat
+
+        if corpse.get("corpse_despawn_at") is None:
+            corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
+        _log(combat, f"Looting {corpse.get('data', {}).get('name', 'the corpse')} ends.")
+        return combat
+    if action.get("type") in {"trainer_purchase", "unlock_class", "release_spirit"}:
+        if combat and combat.get("active") and action.get("type") in {
+                "trainer_purchase", "unlock_class"}:
             return {"_action_error": "You cannot train during combat."}
         entry = (combat or {}).get("actors", {}).get(actor_id)
         owner = (entry.get("data") if entry else
@@ -1539,6 +1699,24 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
         if owner is None:
             return {"_action_error": "Character is unavailable."}
         data = owner if isinstance(owner, dict) else vars(owner)
+        if action["type"] == "unlock_class":
+            class_id = action.get("class_id")
+            if class_id not in CLASSES:
+                return {"_action_error": "That class is unavailable."}
+            if class_id in unlocked_classes(data):
+                return {"_action_notice": "That class is already unlocked."}
+            cost = class_unlock_cost(data, class_id)
+            if cost > unspent_xp(data):
+                return {"_action_error": f"Not enough unspent XP ({cost} required)."}
+            if not spend_xp(data, cost):
+                return {"_action_error": "Could not spend XP for the class unlock."}
+            data.setdefault("classes", []).append({"name": class_id, "level": 1})
+            sync_progression_levels(data)
+            initialize_resources(data)
+            if entry:
+                entry["data"].update(data)
+            return combat or _progression_sync_state(
+                actor, local_player_id, remote_players)
         if action["type"] == "trainer_purchase":
             class_id = action.get("class_id")
             kind, item_id = action.get("kind"), action.get("item_id")
@@ -1547,6 +1725,8 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
             if (not definition or class_id not in definition.get("classes", [])
                     or definition.get("acquisition") != "trainer_purchase"):
                 return {"_action_error": "That trainer option is unavailable."}
+            if class_id not in unlocked_classes(data):
+                return {"_action_error": "Unlock this class before buying its options."}
             purchase_key = ("class_spell_purchases" if kind == "spell"
                             else "class_ability_purchases")
             owned_key = "known_spells" if kind == "spell" else "known_abilities"
@@ -1557,7 +1737,7 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
             tier = int(definition.get("prerequisite_class_level", 1))
             if tier > min(qualified_level(data), class_unlocked_level(data, class_id)):
                 return {"_action_error": "Buy an option from each prior tier and meet its level requirement."}
-            cost = purchase_cost(definition)
+            cost = adjusted_purchase_cost(data, class_id, definition)
             if cost is None:
                 return {"_action_error": "This option has no XP price configured."}
             if cost > unspent_xp(data):
@@ -1565,8 +1745,6 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
             owned_for_class.append(item_id)
             if item_id not in data.setdefault(owned_key, []):
                 data[owned_key].append(item_id)
-            if kind == "spell" and item_id not in data.setdefault("prepared_spells", []):
-                data["prepared_spells"].append(item_id)
             spend_xp(data, cost)
             sync_progression_levels(data)
             if entry:
@@ -1724,6 +1902,9 @@ def _sync_local_actor(actor, combat, actor_id):
     # the local save authoritative instead of overwriting it from a network
     # combat snapshot that may predate the player's assignment.
     actor.equipment = deepcopy(entry["data"].get("equipment", actor.equipment))
+    actor.abilities = deepcopy(entry["data"].get("abilities", actor.abilities))
+    actor.attribute_points_spent = deepcopy(entry["data"].get(
+        "attribute_points_spent", actor.attribute_points_spent))
     actor.active_weapon_set = entry["data"].get("active_weapon_set", actor.active_weapon_set)
     actor.xp_total = entry["data"].get("xp_total", actor.xp_total)
     actor.xp_earned_by_level = deepcopy(
@@ -1778,7 +1959,7 @@ def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0)
                     (panel_x + 10, panel_y + 8))
     own_data = combat.get("actors", {}).get(actor_id, {}).get("data", observer_data)
     resource_line = (
-        f"HP {own_data.get('current_hp', 0)}/{own_data.get('max_hp', 0)}  |  "
+        f"HP {own_data.get('current_hp', 0)}/{effective_max_hp(own_data)}  |  "
         f"Spell points {own_data.get('spell_points', 0)}/{spell_point_max(own_data)}")
     small_font = pygame.font.Font(None, 14)
     screen.blit(small_font.render(_fit_ui_text(
@@ -1863,9 +2044,11 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     from inventory_ui import InventoryScreen
     from spellbook_ui import SpellbookUI, normalize_action_hotbars, action_definition
     from trainer_ui import TrainerUI
+    from loot_ui import LootUI
     inventory_ui = InventoryScreen()
     spellbook_ui = SpellbookUI()
     trainer_ui = TrainerUI()
+    loot_ui = LootUI()
     combat_log_rect = pygame.Rect(0, 0, 0, 0)
     combat_log_scroll = 0
     chat_mode = False
@@ -2057,7 +2240,10 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     running = False
                 continue
             elif event.type == pygame.MOUSEWHEEL:
-                if combat_log_rect.collidepoint(pygame.mouse.get_pos()):
+                if loot_ui.visible:
+                    corpse = ((combat or {}).get("actors", {}).get(loot_ui.corpse_id))
+                    loot_ui.handle_event(event, corpse.get("loot", []) if corpse else [])
+                elif combat_log_rect.collidepoint(pygame.mouse.get_pos()):
                     log_count = sum(max(1, math.ceil(
                         font.size(str(message))[0] / 370))
                         for message in (combat or {}).get("log", []))
@@ -2075,7 +2261,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     spellbook_ui.toggle()
                 else:
                     spell_data = vars(actor)
-                    spellbook_ui.handle_event(event, spell_data)
+                    spellbook_action = spellbook_ui.handle_event(event, spell_data)
+                    if spellbook_action:
+                        submit(spellbook_action)
                     actor.spell_hotbars = deepcopy(
                         spell_data.get("spell_hotbars", actor.spell_hotbars))
             elif trainer_ui.visible:
@@ -2095,6 +2283,14 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 elif event.type == pygame.KEYDOWN and event.key in (
                         pygame.K_n, pygame.K_ESCAPE):
                     interact_prompt = None
+            elif loot_ui.visible:
+                corpse = ((combat or {}).get("actors", {}).get(loot_ui.corpse_id))
+                loot_action = loot_ui.handle_event(
+                    event, corpse.get("loot", []) if corpse else [])
+                if loot_action:
+                    submit(loot_action)
+                    if loot_action["type"] in {"loot_finish", "loot_take_all"}:
+                        loot_ui.close()
             elif event.type == pygame.KEYDOWN and event.key in (pygame.K_q, pygame.K_e):
                 key = "q" if event.key == pygame.K_q else "e"
                 item_id = actor.quick_items.get(key)
@@ -2148,9 +2344,23 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                             vars(actor), item, PIXELS_PER_FOOT, ACTOR_SIZE)
                         if distance <= int(item.get("interaction_range_feet", 5)):
                             nearby.append((distance, kind, item))
+                for corpse in (combat or {}).get("actors", {}).values():
+                    if (combat and combat.get("active")
+                            or corpse.get("team") != "enemies"
+                            or not corpse.get("downed")):
+                        continue
+                    expiry = corpse.get("corpse_despawn_at")
+                    if expiry is not None and pygame.time.get_ticks() >= expiry:
+                        continue
+                    distance = edge_distance_feet(
+                        vars(actor), corpse, PIXELS_PER_FOOT, ACTOR_SIZE)
+                    if distance <= 5:
+                        nearby.append((distance, "loot", corpse))
                 interaction = min(nearby, default=None, key=lambda item: item[0])
                 if interaction and interaction[1] == "trainer":
-                    trainer_ui.toggle()
+                    trainer_ui.toggle(vars(actor))
+                elif interaction and interaction[1] == "loot":
+                    loot_ui.open(interaction[2]["id"])
                 elif interaction:
                     bed = interaction[2]
                     interact_prompt = {"type": "inn_bed", "name": bed.get(
@@ -2359,7 +2569,11 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             local_animation, local_requested,
             local_entry.get("animation_event") if local_entry else None,
             dt, sprite_frames.get(actor.avatar, default_frames), frame_duration)
-        if local_entry and "facing_left" in local_entry:
+        # The combat entry is authoritative only while turns are active.
+        # After victory it remains as a world/corpse snapshot, so its last
+        # facing must not overwrite exploration movement every frame.
+        if (combat and combat.get("active") and local_entry
+                and "facing_left" in local_entry):
             facing_left = local_entry["facing_left"]
         if facing_left:
             sprite = pygame.transform.flip(sprite, True, False)
@@ -2373,13 +2587,15 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
 
         if combat:
             combat_actors = combat.get("actors", {})
+            combat_is_active = bool(combat.get("active"))
             remote_players = [
                 {**remote,
                  "x": combat_actors.get(_player_id(remote), {}).get("x", remote.get("x", 0)),
                  "y": combat_actors.get(_player_id(remote), {}).get("y", remote.get("y", 0)),
                  "combat_animation": combat_actors.get(_player_id(remote), {}).get("animation_event"),
-                 "facing": combat_actors.get(_player_id(remote), {}).get(
-                     "facing_left", remote.get("facing", False)),
+                 "facing": (combat_actors.get(_player_id(remote), {}).get(
+                     "facing_left", remote.get("facing", False))
+                     if combat_is_active else remote.get("facing", False)),
                  "downed": combat_actors.get(_player_id(remote), {}).get("downed",
                      (remote.get("actor") or {}).get("downed", False))}
                 for remote in remote_players
@@ -2665,6 +2881,12 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
         inventory_data["quick_items"] = actor.quick_items
         spellbook_ui.draw(screen, font, vars(actor))
         trainer_ui.draw(screen, vars(actor), font)
+        if loot_ui.visible:
+            loot_corpse = ((combat or {}).get("actors", {}).get(loot_ui.corpse_id))
+            if loot_corpse:
+                loot_ui.draw(screen, loot_corpse, font)
+            else:
+                loot_ui.close()
         if actor.downed:
             death_box = pygame.Surface((520, 160), pygame.SRCALPHA)
             death_box.fill((18, 8, 10, 238))

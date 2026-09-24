@@ -9,7 +9,6 @@ from networking import MAX_PLAYERS, client_callbacks
 from storage import unlock_actor
 
 
-
 def _spawn_position(mode, session):
     # player_spawns in scenarios.json is the co-op spawn ring: 8 points for
     # the 8-player party cap (host + 7 joiners). Host always takes spawns[0];

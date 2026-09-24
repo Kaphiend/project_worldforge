@@ -44,10 +44,13 @@ example:
  "width":100, "height":60, "interaction_range_feet":15}
 ```
 
-Doors, chests, and corpse-loot interactions are planned to use this same `F`
-interaction path; they do not have runtime behavior yet. When adding one,
-prefer an explicit interaction type and keep proximity, confirmation, and
-result feedback consistent with the inn-bed flow.
+Corpse looting uses this same `F` interaction path: within five feet of a
+defeated mob, open its shared loot container. The container holds the mob
+instance's carried inventory and equipped gear. Taking all or closing the
+panel starts its three-second despawn timer. Doors and chests still need
+runtime interactions; when adding one, prefer an explicit interaction type
+and keep proximity, confirmation, and result feedback consistent with the
+inn-bed flow.
 
 ## Spell bars and saved assignments
 
@@ -78,9 +81,12 @@ log entry. Ordinary chat is not added to the combat event log. Network speech
 uses an absolute expiry timestamp in each player's relayed state, and chat
 commands use the existing combat-action request path.
 The spellbook separates prepared spells (assignable and castable), all known
-spells (click a row to toggle preparation), and class abilities. Prepared IDs
-are saved in `prepared_spells`; old saves initialize that list from their known
-spells. Spell records marked `cantrip: true` with `spell_point_cost: 0` use an action
+spells (click a row to toggle preparation), and class abilities. Leveled
+preparations are limited to character level plus the class spellcasting ability
+modifier (minimum one); cantrips do not use a preparation slot. The game checks
+the limit on both the client UI and host action path. Prepared IDs are saved in
+`prepared_spells`; older saves are trimmed to the limit while preserving
+cantrips. Spell records marked `cantrip: true` with `spell_point_cost: 0` use an action
 without spending the shared spell pool. `starting_cantrip` acquisition is
 granted to matching classes at character creation and added to older saves;
 Trainer-purchase spells are unlocked at the map trainer using each record’s
@@ -159,6 +165,9 @@ A scenario, arena, or NPC that refers to a misspelled ID will not be found.
 | Add a map | `arenas.json` | No, for rectangles and existing decoration kinds |
 | Put NPCs on a map and set objective text | `scenarios.json` | No |
 | Add or tune character classes | `classes.json` | Mostly; new skills may need a Python change |
+| Tune multiclass unlock and purchase costs | `progression.json` | No |
+| Tune mob class priorities, elite scaling, rarity weights, and affix counts | `mob_generation.json` | No |
+| Add or tune rollable gear attributes | `item_attributes.json` | No for supported effects |
 | Add race/subrace choices | `races.json` | Mostly; new race rules may need code |
 | Add subclass names and milestone descriptions | `subclasses.json` and class `subclasses` list | No for descriptions; code for mechanical powers |
 | Change how a field is interpreted or invent a new effect | `combat.py`, `spell_effects.py`, `conditions.py`, or `game.py` | Yes |

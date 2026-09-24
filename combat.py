@@ -2,8 +2,9 @@
 import math
 
 from classes import EQUIPMENT_ITEMS, RACES
-from dice import roll_d20, roll_dice
-from factory import modifier
+from dice import roll_d20, roll_dice, scale_dice_count
+from factory import (effective_max_hp, item_attribute_total, modifier,
+                     _unique_equipped_items)
 from conditions import consume_condition_use, has_condition
 
 
@@ -54,11 +55,13 @@ def armor_class(actor):
         _definition(equipment.get(slot)).get("category") == "shield"
         for slot in ("main_hand", "off_hand")
     ) else 0
+    item_bonus = sum(item_attribute_total(item, "armor_class_bonus")
+                     for item in _unique_equipped_items(equipment))
     temporary_bonus = sum(
         int(effect.get("amount", 0)) for effect in (_value(actor, "active_effects", []) or [])
         if effect.get("kind") == "armor_bonus"
     )
-    return base + dexterity + shield_bonus + temporary_bonus
+    return base + dexterity + shield_bonus + temporary_bonus + item_bonus
 
 
 def initiative_for(actor):
@@ -94,7 +97,7 @@ def apply_healing(target, amount, *, can_revive=False):
     downed = bool(_value(target, "downed", False)) or current_hp <= 0
     if downed and not can_revive:
         return 0
-    max_hp = max(1, int(_value(target, "max_hp", current_hp + amount)))
+    max_hp = effective_max_hp(target)
     new_hp = min(max_hp, current_hp + int(amount))
     if isinstance(target, dict):
         hp_key = "current_hp" if "current_hp" in target else "hp"
@@ -200,6 +203,7 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
     ability_mod = modifier(abilities.get(ability, 10))
     proficient = _proficient(actor, definition)
     proficiency = proficiency_bonus(actor) if proficient else 0
+    weapon_attack_bonus = item_attribute_total(weapon, "weapon_attack_bonus")
     attack_definition = definition
     if thrown_attack:
         attack_definition = dict(definition, ranges=ranges)
@@ -211,7 +215,7 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
         consume_condition_use(actor, "off_balance")
     critical = natural == 20
     target_ac = armor_class(target)
-    total = natural + ability_mod + proficiency
+    total = natural + ability_mod + proficiency + weapon_attack_bonus
     hit = critical or (natural != 1 and total >= target_ac)
     event = {
         "kind": "attack", "success": True, "attacker": _value(actor, "name", "Actor"),
@@ -220,6 +224,7 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
         "rolls": dice, "natural": natural, "total": total, "target_ac": target_ac,
         "ability": ability, "ability_modifier": ability_mod,
         "proficiency_bonus": proficiency, "disadvantage": disadvantage,
+        "weapon_attack_bonus": weapon_attack_bonus,
         "critical": critical, "hit": hit, "damage": 0, "damage_rolls": [],
         "damage_type": definition.get("damage_type", "untyped"),
     }
@@ -230,8 +235,13 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
             damage_expression = definition["damage_profiles"][
                 "off_hand_occupied" if has_offhand else "off_hand_empty"
             ]
+        dice_multiplier = item_attribute_total(
+            weapon, "weapon_damage_dice_multiplier") or 1
+        if dice_multiplier > 1:
+            damage_expression = scale_dice_count(damage_expression, dice_multiplier)
         damage, damage_rolls = roll_dice(damage_expression, critical=critical)
-        damage = max(0, damage + ability_mod)
+        rolled_damage_bonus = item_attribute_total(weapon, "weapon_damage_bonus")
+        damage = max(0, damage + ability_mod + rolled_damage_bonus)
         bonus_effects = [effect for effect in (_value(actor, "active_effects", []) or [])
                          if effect.get("kind") == "next_weapon_hit_bonus"]
         bonus_rolls = []

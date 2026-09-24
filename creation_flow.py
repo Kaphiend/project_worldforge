@@ -5,6 +5,7 @@ from factory import (
     apply_class_proficiencies,
     apply_starting_gear,
     assign,
+    class_ability_priorities,
     starting_hp,
     random_fully_geared_actor,
 )
@@ -127,6 +128,7 @@ class CharacterCreationFlow:
     def confirm_class(self):
         if self.actor and self.actor.char_class:
             apply_class_proficiencies(self.actor)
+            self.ability_order = class_ability_priorities(self.actor.char_class)
             if CLASSES[self.actor.char_class].get('subclasses'):
                 self.stage = 'subclass'
             else:
@@ -188,7 +190,12 @@ class CharacterCreationFlow:
             and ability.get('acquisition') != 'trainer_purchase'
             and ability.get('prerequisite_class_level', 1) <= self.actor.level
         ]
-        self.actor.prepared_spells = list(self.actor.known_spells)
+        # Starting cantrips are ready by default. Leveled spells are learned
+        # from trainers and selected explicitly within the class prep limit.
+        self.actor.prepared_spells = [
+            spell_id for spell_id in self.actor.known_spells
+            if SPELLS[spell_id].get("acquisition") == "starting_cantrip"
+        ]
         initialize_resources(vars(self.actor), refill=True)
         self.stage = 'avatar'
 

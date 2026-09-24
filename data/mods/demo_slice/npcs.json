@@ -3,6 +3,14 @@
     "name": "Roadside Raider",
     "avatar": "asset_pack/Orc.png",
     "controller": "ai",
+    "elite_chance": 0.08,
+    "class_pool": ["barbarian", "fighter", "ranger", "rogue", "paladin"],
+    "gear_slots": ["chest", "main_hand", "off_hand"],
+    "gear_pools": {
+      "chest": ["leather", "chain_shirt", "scale_mail"],
+      "main_hand": ["dagger", "sword_1h", "axe_1h", "hammer_1h", "sword_2h", "axe_2h"],
+      "off_hand": ["shield", "dagger", "sword_1h", "axe_1h", "hammer_1h"]
+    },
     "perception": {
       "levels": [
         {"dc": 10, "title": "Orc"},

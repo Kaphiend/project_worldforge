@@ -1,7 +1,9 @@
 """Spell and ability book plus numbered action bars saved on each actor."""
 import pygame
-from classes import ABILITIES, SPELLS
+from classes import ABILITIES, CLASSES, SPELLS
 from factory import item_definition
+from progression import (prepared_leveled_spells, prepared_spell_limit,
+                         spell_source_class)
 
 BAR_COUNT = 4
 SLOTS_PER_BAR = 10
@@ -180,12 +182,9 @@ class SpellbookUI:
             if rect.collidepoint(event.pos):
                 if action.startswith("prepare:"):
                     spell_id = action.partition(":")[2]
-                    prepared = actor_data.setdefault("prepared_spells", [])
-                    if spell_id in prepared:
-                        prepared.remove(spell_id)
-                    else:
-                        prepared.append(spell_id)
-                    return
+                    return {"type": "prepare_spell", "spell_id": spell_id,
+                            "prepare": spell_id not in actor_data.get(
+                                "prepared_spells", [])}
                 self.selected_action = action
                 return
         if self.selected_action:
@@ -199,7 +198,7 @@ class SpellbookUI:
     def _known_actions(self, actor_data):
         if self.page in {"prepared", "spellbook"}:
             known = actor_data.get("known_spells", [])
-            ids = (actor_data.get("prepared_spells", known)
+            ids = (actor_data.get("prepared_spells", [])
                    if self.page == "prepared" else known)
             if self.page == "spellbook":
                 return [(f"prepare:{item_id}", SPELLS[item_id])
@@ -285,10 +284,10 @@ class SpellbookUI:
                                 (255, 225, 150)), (left + 18, top + 14))
         guide_font = pygame.font.Font(None, 16)
         screen.blit(guide_font.render(
-            "Spellbook: click known spells to prepare or unprepare them.",
+            "Click a known spell to prepare or unprepare it.",
             True, (210, 220, 235)), (left + 18, top + 40))
         screen.blit(guide_font.render(
-            "Assign from Prepared Spells or Class Abilities. Backtick switches bars.",
+            "Leveled spells use your class preparation limit; cantrips are free.",
             True, (210, 220, 235)), (left + 18, top + 57))
         self.page_rects = []
         tabs_y = top + 78
@@ -304,14 +303,32 @@ class SpellbookUI:
             screen.blit(font.render(label, True, (240, 240, 245)),
                         (rect.x + 12, rect.y + 6))
         known = self._known_actions(actor_data)
-        visible_count = max(1, (height - 210) // 30)
+        if self.page == "prepared":
+            class_ids = {entry.get("name") for entry in actor_data.get("classes", []) or []
+                         if entry.get("name")}
+            if actor_data.get("char_class"):
+                class_ids.add(actor_data["char_class"])
+            casting_classes = [class_id for class_id in CLASSES
+                               if class_id in class_ids
+                               and CLASSES[class_id].get("spellcasting_ability")]
+            counts = [f"{class_id.title()} "
+                      f"{len(prepared_leveled_spells(actor_data, class_id))}/"
+                      f"{prepared_spell_limit(actor_data, class_id)}"
+                      for class_id in casting_classes]
+            count_text = ("Prepared: " + ", ".join(counts)
+                          if counts else "No spellcasting class")
+            count_text += "  (cantrips don't count)"
+            screen.blit(guide_font.render(count_text, True, (255, 225, 150)),
+                        (left + 18, top + 101))
+        row_top = top + (132 if self.page == "prepared" else 114)
+        visible_count = max(1, (height - (228 if self.page == "prepared" else 210)) // 30)
         self.scroll = min(self.scroll, max(0, len(known) - visible_count))
         self.spell_rects = []
         mouse = pygame.mouse.get_pos()
         hovered_definition = None
         hovered_kind = "spell"
         for row, (action, definition) in enumerate(known[self.scroll:self.scroll + visible_count]):
-            rect = pygame.Rect(left + 18, top + 114 + row * 30, width - 36, 28)
+            rect = pygame.Rect(left + 18, row_top + row * 30, width - 36, 28)
             self.spell_rects.append((rect, action))
             hovered = rect.collidepoint(mouse)
             color = ((67, 78, 100) if action == self.selected_action else

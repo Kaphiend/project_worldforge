@@ -54,6 +54,7 @@ def load_actor(actor_id):
     data.setdefault('class_spell_purchases', {})
     data.setdefault('class_ability_purchases', {})
     data.setdefault('xp_rest_spent_by_level', {})
+    data.setdefault('attribute_points_spent', {})
     data.setdefault('withdrawn', False)
     data.setdefault('downed', data.get('current_hp', 1) <= 0)
     data.setdefault('conditions', [])
@@ -75,12 +76,29 @@ def load_actor(actor_id):
     class_names = {entry.get('name') for entry in data.get('classes', [])}
     if not class_names and data.get('char_class'):
         class_names.add(data['char_class'])
+    class_names.update(class_id for class_id, ids in
+                       (data.get('class_spell_purchases', {}) or {}).items() if ids)
+    class_names.update(class_id for class_id, ids in
+                       (data.get('class_ability_purchases', {}) or {}).items() if ids)
     for spell_id, spell in SPELLS.items():
         if spell.get('cantrip') and class_names.intersection(spell.get('classes', [])):
             if spell_id not in data['known_spells']:
                 data['known_spells'].append(spell_id)
+    if data.get('char_class'):
+        class_names.add(data['char_class'])
+    # Remove class spells that may have entered a legacy save through the old
+    # trainer's unrestricted class tabs.
+    data['known_spells'] = [
+        spell_id for spell_id in data['known_spells']
+        if spell_id in SPELLS
+        and class_names.intersection(SPELLS[spell_id].get('classes', []))
+    ]
     if not isinstance(data.get('prepared_spells'), list):
-        data['prepared_spells'] = list(data['known_spells'])
+        data['prepared_spells'] = [
+            spell_id for spell_id in data['known_spells']
+            if SPELLS.get(spell_id, {}).get('acquisition') == 'starting_cantrip'
+            or SPELLS.get(spell_id, {}).get('cantrip')
+        ]
     data['prepared_spells'] = [spell_id for spell_id in data['prepared_spells']
                                if spell_id in data['known_spells']]
     if 'known_abilities' not in data:
@@ -123,6 +141,24 @@ def load_actor(actor_id):
         data['controller'] = 'player'
     from progression import sync_progression_levels
     sync_progression_levels(data)
+    # Migrate older saves that treated every learned spell as prepared. Keep
+    # cantrips ready and retain the earliest leveled preparations up to cap.
+    from progression import (is_cantrip, prepared_spell_limit,
+                             spell_source_class)
+    cantrips, leveled_by_class = [], {}
+    for spell_id in data['prepared_spells']:
+        definition = SPELLS.get(spell_id, {})
+        if is_cantrip(definition):
+            if spell_id not in cantrips:
+                cantrips.append(spell_id)
+            continue
+        class_id = spell_source_class(data, spell_id)
+        if class_id:
+            leveled_by_class.setdefault(class_id, []).append(spell_id)
+    trimmed = []
+    for class_id, spell_ids in leveled_by_class.items():
+        trimmed.extend(spell_ids[:prepared_spell_limit(data, class_id)])
+    data['prepared_spells'] = cantrips + trimmed
     actor = Actor(**data)
 
     for slot in EQUIPMENT_SLOTS:

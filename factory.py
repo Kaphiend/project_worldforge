@@ -7,8 +7,9 @@ legality and the randomized fully geared demo actor are also defined here.
 """
 from dataclasses import dataclass, field
 from copy import deepcopy
-from classes import ABILITIES, EQUIPMENT_ITEMS, RACES, CLASSES, SPELLS, NPCS
-from dice import ability_points
+from classes import (ABILITIES, ALL_SKILLS, EQUIPMENT_ITEMS, RACES, CLASSES,
+                     SPELLS, NPCS, ITEM_ATTRIBUTES, MOB_GENERATION_RULES)
+from dice import ability_points, ability_modifier
 from progression import initialize_resources
 import random
 import uuid
@@ -46,6 +47,7 @@ class Actor:
     known_abilities: list = field(default_factory=list)
     spell_points: int = None
     class_resources: dict = field(default_factory=dict)
+    attribute_points_spent: dict = field(default_factory=dict)
     gold: int = 50
     outdoor_rest_streak: int = 0
     avatar: str = 'asset_pack/Soldier.png'
@@ -94,28 +96,276 @@ def npc_factory(name, **actor_data):
 
 
 def create_npc_instance(template_id, x, y):
-    """Create a positioned, independently equipped instance from an NPC table entry."""
+    """Create a class-aware, independently geared instance from an NPC template."""
     if template_id not in NPCS:
         raise KeyError(f"Unknown NPC template: {template_id}")
-    instance = deepcopy(NPCS[template_id])
-    instance.update(id=f"{template_id}-{uuid.uuid4().hex[:8]}", x=x, y=y,
+    template = deepcopy(NPCS[template_id])
+    template.setdefault("controller", "ai")
+    level = min(20, max(1, int(template.get("level", 1) or 1)))
+    rules = MOB_GENERATION_RULES
+    class_pool = [class_id for class_id in
+                  template.get("class_pool", rules.get("class_pool", list(CLASSES)))
+                  if class_id in CLASSES]
+    class_id = template.get("char_class")
+    if class_id not in CLASSES:
+        class_id = random.choice(class_pool or list(CLASSES))
+    template["char_class"] = class_id
+    template["classes"] = [{"name": class_id, "level": level}]
+    class_data = CLASSES[class_id]
+    for field_name in ("saves", "armor_prof", "weapon_prof"):
+        template[field_name] = list(class_data.get(field_name, []))
+    class_skills = class_data.get("skills", [])
+    skill_pool = ALL_SKILLS if class_skills == ["any"] else class_skills
+    skill_count = min(int(class_data.get("skill_choices", 0) or 0), len(skill_pool))
+    template["skills"] = random.sample(list(skill_pool), skill_count) if skill_count else []
+
+    supplied_abilities = template.get("abilities", {}) or {}
+    scores = [int(supplied_abilities.get(name, 10) or 10) for name in ABILITY_NAMES]
+    template["abilities"] = prioritize_ability_scores(scores, class_id)
+    template["level"] = level
+
+    tags = list(template.get("tags", []) or [])
+    elite_chance = min(1.0, max(0.0, float(template.get("elite_chance", 0) or 0)))
+    elite = bool(template.get("elite", False) or "elite" in tags
+                 or random.random() < elite_chance)
+    template["elite"] = elite
+    if elite and "elite" not in tags:
+        tags.append("elite")
+    template["tags"] = tags
+    if elite:
+        elite_rules = rules.get("elite", {})
+        priorities = class_ability_priorities(class_id)
+        base_cap = int(elite_rules.get("ability_score_base_cap", 15))
+        score_cap = min(30, base_cap + level)
+        for index, amount_key in ((0, "primary_ability_bonus"),
+                                  (1, "secondary_ability_bonus")):
+            ability = priorities[index]
+            amount = max(0, int(elite_rules.get(amount_key, 0)))
+            base_score = int(template["abilities"].get(ability, 10))
+            level_cap = max(base_score, score_cap)
+            template["abilities"][ability] = min(
+                level_cap, base_score + amount)
+        hp_multiplier = max(1.0, float(elite_rules.get("hit_points_multiplier", 1.15)))
+        template["max_hp"] = max(1, round(int(template.get("max_hp", 10)) * hp_multiplier))
+
+    template["template_id"] = template_id
+    template["elite"] = elite
+    template["equipment"] = _generate_npc_equipment(template, template_id, class_id, level, elite)
+    template.update(id=f"{template_id}-{uuid.uuid4().hex[:8]}", x=x, y=y,
                     downed=False)
-    instance['current_hp'] = int(instance.get('max_hp', 10))
-    instance.setdefault('conditions', [])
-    instance.setdefault('active_effects', [])
-    instance.setdefault('abilities', {})
-    instance.setdefault('equipment', {})
-    instance.setdefault('inventory', [])
-    for item in instance['equipment'].values():
-        if item:
-            item['id'] = uuid.uuid4().hex[:12]
-    return instance
+    template["current_hp"] = effective_max_hp(template)
+    template.setdefault("conditions", [])
+    template.setdefault("active_effects", [])
+    template.setdefault("inventory", [])
+    initialize_resources(template, refill=True)
+    return template
+
+
+def _eligible_item_templates(slot, class_id, configured_pool=None):
+    class_data = CLASSES.get(class_id, {})
+    armor_proficiencies = set(class_data.get("armor_prof", []))
+    weapon_proficiencies = set(class_data.get("weapon_prof", []))
+    candidates = []
+    ids = configured_pool if configured_pool is not None else EQUIPMENT_ITEMS.keys()
+    for item_id in ids:
+        definition = EQUIPMENT_ITEMS.get(item_id, {})
+        if not definition or definition.get("category") == "consumable":
+            continue
+        allowed_slots = definition.get("allowed_slots", [])
+        if slot not in allowed_slots:
+            continue
+        category = definition.get("category")
+        if category == "weapon" and definition.get("weapon_class") not in weapon_proficiencies:
+            continue
+        if category == "shield" and "shields" not in armor_proficiencies:
+            continue
+        if category == "shield" and slot == "main_hand":
+            continue
+        if category in {"light", "medium", "heavy"} and category not in armor_proficiencies:
+            continue
+        if category == "armor_piece" or category == "accessory" or category == "focus":
+            pass
+        elif category not in {"weapon", "shield", "light", "medium", "heavy", "unarmored"}:
+            continue
+        candidates.append(item_id)
+    return candidates
+
+
+def _roll_item_rarity(elite=False):
+    gear_rules = MOB_GENERATION_RULES.get("gear", {})
+    tiers = list(gear_rules.get("rarity_tiers", ["common", "uncommon", "rare", "epic", "legendary"]))
+    weights = gear_rules.get("rarity_weights", {})
+    available = [(tier, max(0, float(weights.get(tier, 0)))) for tier in tiers]
+    if not any(weight for _tier, weight in available):
+        chosen = tiers[0] if tiers else "common"
+    else:
+        chosen = random.choices([tier for tier, _weight in available],
+                                weights=[weight for _tier, weight in available], k=1)[0]
+    if elite and tiers:
+        shift = max(0, int(MOB_GENERATION_RULES.get("elite", {}).get("rarity_shift", 1)))
+        chosen = tiers[min(len(tiers) - 1, tiers.index(chosen) + shift)]
+    return chosen
+
+
+def _roll_item_attributes(template_id, slot, item_level, rarity):
+    definition = EQUIPMENT_ITEMS[template_id]
+    rarity_counts = MOB_GENERATION_RULES.get("gear", {}).get(
+        "attribute_count_by_rarity", {})
+    count = max(0, int(rarity_counts.get(rarity, 0)))
+    eligible = []
+    for attribute_id, attribute in ITEM_ATTRIBUTES.items():
+        if not (int(attribute.get("min_item_level", 1)) <= item_level
+                <= int(attribute.get("max_item_level", 20))):
+            continue
+        if definition.get("category") not in attribute.get("allowed_categories", []):
+            continue
+        if slot not in attribute.get("allowed_slots", []):
+            continue
+        eligible.append((attribute_id, attribute))
+    rolled, groups = {}, set()
+    for _ in range(count):
+        choices = [(attribute_id, attribute) for attribute_id, attribute in eligible
+                   if attribute.get("group") not in groups]
+        if not choices:
+            break
+        weights = [max(0.0, float(attribute.get("weight", 1)))
+                   for _attribute_id, attribute in choices]
+        if not any(weights):
+            weights = None
+        attribute_id, attribute = random.choices(
+            choices, weights=weights, k=1)[0]
+        value_range = attribute.get("value_range")
+        if value_range:
+            value = random.randint(int(value_range["min"]), int(value_range["max"]))
+        else:
+            value = int(attribute.get("effect", {}).get("multiplier", 1))
+        rolled[attribute_id] = value
+        groups.add(attribute.get("group"))
+    return rolled
+
+
+def _generated_item(template_id, slot, item_level, elite):
+    definition = EQUIPMENT_ITEMS[template_id]
+    rarity = _roll_item_rarity(elite)
+    attributes = _roll_item_attributes(template_id, slot, item_level, rarity)
+    affix_names = [ITEM_ATTRIBUTES[key].get("name", key)
+                   for key in attributes if key in ITEM_ATTRIBUTES]
+    item_name = " ".join(affix_names + [definition.get("name", template_id)])
+    return {
+        "id": uuid.uuid4().hex[:12], "template_id": template_id,
+        "name": item_name, "slot": slot, "tags": list(definition.get("tags", [])),
+        "rarity": rarity, "item_level": item_level,
+        "rolled_attributes": attributes,
+    }
+
+
+def _generate_npc_equipment(template, template_id, class_id, level, elite):
+    source = NPCS.get(template_id, {})
+    requested_slots = (list(source.get("gear_slots") or [])
+                       if "gear_slots" in source else [
+                           slot for slot, item in
+                           (source.get("equipment", {}) or {}).items() if item])
+    pools = source.get("gear_pools", {}) or {}
+    item_level = min(20, level + (int(MOB_GENERATION_RULES.get("elite", {}).get(
+        "item_level_bonus", 2)) if elite else 0))
+    equipment = {slot: None for slot in EQUIPMENT_SLOTS}
+    for slot in requested_slots:
+        if slot not in equipment or equipment.get(slot):
+            continue
+        candidate_ids = _eligible_item_templates(slot, class_id, pools.get(slot))
+        if not candidate_ids:
+            continue
+        template_id_choice = random.choice(candidate_ids)
+        item = _generated_item(template_id_choice, slot, item_level, elite)
+        two_handed = is_two_handed(item_definition(item))
+        if two_handed and slot in {"main_hand", "off_hand"}:
+            other_hand = "off_hand" if slot == "main_hand" else "main_hand"
+            if equipment.get(other_hand):
+                continue
+            equipment[slot] = item
+            equipment[other_hand] = item
+        else:
+            equipment[slot] = item
+    return equipment
 
 def assign(actor, ability, roll_index):
     actor.abilities[ability] = actor.unspent.pop(roll_index)
 
 def modifier(score):
-    return (score - 10)//2
+    return ability_modifier(score)
+
+
+ABILITY_NAMES = ("strength", "dexterity", "constitution", "intellect",
+                 "wisdom", "charisma")
+
+
+def class_ability_priorities(class_name):
+    configured = MOB_GENERATION_RULES.get("ability_priorities", {}).get(class_name, [])
+    valid = [name for name in configured if name in ABILITY_NAMES]
+    casting_ability = CLASSES.get(class_name, {}).get("spellcasting_ability")
+    if not valid and casting_ability in ABILITY_NAMES:
+        valid = [casting_ability, "constitution"]
+    return valid + [name for name in ABILITY_NAMES if name not in valid]
+
+
+def prioritize_ability_scores(scores, class_name):
+    """Place a score pool into abilities from most to least class useful."""
+    if isinstance(scores, dict):
+        values = [int(scores.get(name, 10) or 10) for name in ABILITY_NAMES]
+    else:
+        values = [int(value) for value in scores]
+        values.extend([10] * max(0, len(ABILITY_NAMES) - len(values)))
+        values = values[:len(ABILITY_NAMES)]
+    values.sort(reverse=True)
+    return dict(zip(class_ability_priorities(class_name), values))
+
+
+def item_attribute_total(item, effect_kind):
+    """Sum values for rolled attributes with the requested effect kind."""
+    total = 0
+    rolled = (item or {}).get("rolled_attributes", {}) or {}
+    if not isinstance(rolled, dict):
+        return 0
+    for attribute_id, value in rolled.items():
+        definition = ITEM_ATTRIBUTES.get(attribute_id, {})
+        effect = definition.get("effect", {})
+        if effect.get("kind") == effect_kind:
+            if effect_kind == "weapon_damage_dice_multiplier":
+                total = max(total, int(effect.get("multiplier", value) or 1))
+            else:
+                total += int(value or 0)
+    return total
+
+
+def effective_max_hp(actor):
+    """Return base max HP plus bonuses on currently equipped gear."""
+    equipment = actor.get("equipment", {}) if isinstance(actor, dict) else actor.equipment
+    base = actor.get("max_hp", 1) if isinstance(actor, dict) else actor.max_hp
+    bonuses = sum(item_attribute_total(item, "maximum_hp_bonus")
+                  for item in _unique_equipped_items(equipment))
+    return max(1, int(base or 1) + bonuses)
+
+
+def _unique_equipped_items(equipment):
+    seen, result = set(), []
+    for item in (equipment or {}).values():
+        if not item:
+            continue
+        item_id = item.get("id")
+        identity = item_id if item_id is not None else id(item)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        result.append(item)
+    return result
+
+
+def _clamp_current_hp(actor):
+    if isinstance(actor, dict):
+        if "current_hp" in actor:
+            actor["current_hp"] = min(int(actor["current_hp"]), effective_max_hp(actor))
+    elif actor.current_hp is not None:
+        actor.current_hp = min(int(actor.current_hp), effective_max_hp(actor))
 
 def racial_bonus_data(actor):
     """Return selected ancestry bonus data without interpreting or applying it."""
@@ -194,7 +444,7 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
     actor.xp_total = 900
     actor.xp_earned_by_level = {"3": 900}
     actor.classes = [{'name': class_name, 'level': actor.level}]
-    actor.abilities = dict(zip(actor.abilities, ability_points()))
+    actor.abilities = prioritize_ability_scores(ability_points(), class_name)
     actor.skills = random.sample(
         CLASSES[class_name].get('skills', []),
         min(CLASSES[class_name].get('skill_choices', 0),
@@ -221,27 +471,39 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
         item = add_equipment_item(actor, template_id=template_id)
         equip_item(actor, item['id'], slot)
 
-    chest_templates = ['leather', 'chain_shirt', 'scale_mail', 'chain_mail']
+    chest_templates = ['unarmored', 'leather', 'chain_shirt', 'scale_mail', 'chain_mail']
     armor_proficiencies = set(actor.armor_prof)
     legal_chest = [template_id for template_id in chest_templates
                    if EQUIPMENT_ITEMS[template_id]['category'] in armor_proficiencies]
-    chest_template = random.choice(legal_chest or ['leather'])
+    chest_template = random.choice(legal_chest or ['unarmored'])
     item = add_equipment_item(actor, template_id=chest_template)
     equip_item(actor, item['id'], 'chest')
 
-    main_template = random.choice(['dagger', 'sword_1h', 'axe_1h', 'hammer_1h', 'staff'])
+    main_candidates = _eligible_item_templates('main_hand', class_name)
+    dex_favored = (class_ability_priorities(class_name).index('dexterity')
+                   < class_ability_priorities(class_name).index('strength'))
+    if dex_favored:
+        finesse = [item_id for item_id in main_candidates
+                   if 'finesse' in EQUIPMENT_ITEMS[item_id].get('tags', [])]
+        main_candidates = finesse or main_candidates
+    main_template = random.choice(main_candidates) if main_candidates else 'dagger'
     item = add_equipment_item(actor, template_id=main_template)
     equip_item(actor, item['id'], 'main_hand')
-    offhand_template = random.choice(['shield', 'dagger', 'sword_1h', 'axe_1h', 'hammer_1h'])
-    item = add_equipment_item(actor, template_id=offhand_template)
-    equip_item(actor, item['id'], 'off_hand')
+    offhand_candidates = _eligible_item_templates('off_hand', class_name)
+    offhand_candidates = [item_id for item_id in offhand_candidates
+                          if not is_two_handed(EQUIPMENT_ITEMS[item_id])]
+    if offhand_candidates:
+        item = add_equipment_item(actor, template_id=random.choice(offhand_candidates))
+        equip_item(actor, item['id'], 'off_hand')
 
-    ranged_template = random.choice(['longbow', 'crossbow'])
-    item = add_equipment_item(actor, template_id=ranged_template)
-    equip_item(actor, item['id'], 'ranged')
-    if ranged_template == 'crossbow':
-        item = add_equipment_item(actor, template_id='crossbow')
-        equip_item(actor, item['id'], 'ranged_offhand')
+    ranged_candidates = _eligible_item_templates('ranged', class_name)
+    if ranged_candidates:
+        ranged_template = random.choice(ranged_candidates)
+        item = add_equipment_item(actor, template_id=ranged_template)
+        equip_item(actor, item['id'], 'ranged')
+        if 'ranged_offhand' in EQUIPMENT_ITEMS[ranged_template].get('allowed_slots', []):
+            item = add_equipment_item(actor, template_id=ranged_template)
+            equip_item(actor, item['id'], 'ranged_offhand')
 
     for _ in range(3):
         add_equipment_item(actor, template_id='healing_potion')
@@ -253,7 +515,10 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
                        and (not spell.get('acquisition')
                             or spell.get('acquisition') == 'starting_cantrip')]
     actor.known_spells = class_spell_ids
-    actor.prepared_spells = list(class_spell_ids)
+    actor.prepared_spells = [
+        spell_id for spell_id in class_spell_ids
+        if SPELLS[spell_id].get("acquisition") == "starting_cantrip"
+    ]
     actor.known_abilities = [ability_id for ability_id, ability in ABILITIES.items()
                              if class_name in ability.get('classes', [])
                              and ability.get('acquisition') != 'trainer_purchase'
@@ -363,6 +628,7 @@ def equip_item(actor, item_id, slot):
     if two_handed:
         equipment['off_hand' if slot == 'main_hand' else 'main_hand'] = item
     inventory.remove(item)
+    _clamp_current_hp(actor)
     return True
 
 
@@ -378,6 +644,7 @@ def unequip_item(actor, slot):
         if equipped_item and equipped_item.get('id') == item_id:
             equipment[equipped_slot] = None
     inventory.append(item)
+    _clamp_current_hp(actor)
     return True
 
 

@@ -19,13 +19,24 @@ subclass feature effects are not yet implemented.
 
 `races.json` contains ancestry and trait reference data, including a
 Two-Parent Half-Breed choice. Ability bonuses are not automatically applied.
+`progression.json` contains tuneable multiclass unlock prices and class-order
+price multipliers for trained spells and abilities.
 
 ## Combat and items
 
 `equipment.json` contains item templates, slot rules, damage dice, range, and
 armor properties. Actor inventory entries are uniquely identified instances.
-Rarity and rolled attributes remain empty placeholders; loot generation is not
-implemented. Consumable templates can reference an effect in `spells.json`.
+`item_attributes.json` defines the initial rollable gear-effect pool: doubled
+weapon damage dice, weapon attack and damage bonuses, armor class, maximum hit
+points, and saving throws.
+Each attribute declares eligible categories and slots, item-level bounds, a
+uniqueness group, and its effect. `mob_generation.json` tunes class priorities,
+elite scaling, rarity weights, and how many attributes each rarity can carry.
+Generated attributes apply to combat stats. Defeated NPCs place
+their carried inventory and equipped gear into one shared corpse container;
+press `F` within 5 feet to loot it. Taking all or closing the loot panel starts
+the corpse's three-second despawn timer. New mob instances use their NPC
+template's equipment as their drops. Consumable templates can reference an effect in `spells.json`.
 The demo includes healing potions and a revival scroll; each effect has its own
 healing formula. Press 1 for the active weapon set's primary attack. Press T to
 explicitly throw a thrown-tagged main-hand weapon; pressing 1 never auto-throws.

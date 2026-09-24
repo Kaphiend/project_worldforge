@@ -472,7 +472,9 @@ def run_creation(available_avatars=None):
         elif flow.stage == 'abilities':
             if flow.current_ability_index < len(flow.ability_order):
                 ability = flow.ability_order[flow.current_ability_index]
-                prompt = font.render(f"pick a roll for {ability}", True, (255, 255, 255))
+                prompt = font.render(
+                    f"Pick a roll for {ability} (ordered for {flow.actor.char_class.title()})",
+                    True, (255, 255, 255))
                 screen.blit(prompt, (250, 80))
                 for rect, roll_index, roll in roll_buttons():
                     pygame.draw.rect(screen, (60, 60, 60), rect)

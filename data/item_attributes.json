@@ -1,0 +1,95 @@
+{
+  "double_weapon_dice": {
+    "name": "Overpowering",
+    "description": "Doubles the weapon's damage dice.",
+    "group": "weapon_damage",
+    "allowed_categories": ["weapon"],
+    "allowed_slots": ["main_hand", "off_hand", "ranged", "ranged_offhand"],
+    "min_item_level": 5,
+    "max_item_level": 20,
+    "effect": {
+      "kind": "weapon_damage_dice_multiplier",
+      "multiplier": 2
+    }
+  },
+  "weapon_damage_bonus": {
+    "name": "Forceful",
+    "description": "Adds flat damage to weapon hits.",
+    "group": "weapon_damage",
+    "allowed_categories": ["weapon"],
+    "allowed_slots": ["main_hand", "off_hand", "ranged", "ranged_offhand"],
+    "min_item_level": 1,
+    "max_item_level": 20,
+    "value_range": {
+      "min": 1,
+      "max": 3
+    },
+    "effect": {
+      "kind": "weapon_damage_bonus"
+    }
+  },
+  "weapon_attack_bonus": {
+    "name": "Accurate",
+    "description": "Improves weapon attack rolls.",
+    "group": "weapon_accuracy",
+    "allowed_categories": ["weapon"],
+    "allowed_slots": ["main_hand", "off_hand", "ranged", "ranged_offhand"],
+    "min_item_level": 1,
+    "max_item_level": 20,
+    "value_range": {
+      "min": 1,
+      "max": 2
+    },
+    "effect": {
+      "kind": "weapon_attack_bonus"
+    }
+  },
+  "armor_class_bonus": {
+    "name": "Guarded",
+    "description": "Raises the wearer's armor class.",
+    "group": "armor_defense",
+    "allowed_categories": ["light", "medium", "heavy", "unarmored", "shield", "armor_piece", "accessory"],
+    "allowed_slots": ["chest", "head", "hands", "feet", "belt", "cape", "ring1", "ring2", "amulet", "main_hand", "off_hand"],
+    "min_item_level": 1,
+    "max_item_level": 20,
+    "value_range": {
+      "min": 1,
+      "max": 3
+    },
+    "effect": {
+      "kind": "armor_class_bonus"
+    }
+  },
+  "maximum_hp_bonus": {
+    "name": "Vital",
+    "description": "Increases the wearer's maximum hit points.",
+    "group": "vitality",
+    "allowed_categories": ["light", "medium", "heavy", "unarmored", "shield", "armor_piece", "accessory"],
+    "allowed_slots": ["chest", "head", "hands", "feet", "belt", "cape", "ring1", "ring2", "amulet", "main_hand", "off_hand"],
+    "min_item_level": 1,
+    "max_item_level": 20,
+    "value_range": {
+      "min": 2,
+      "max": 8
+    },
+    "effect": {
+      "kind": "maximum_hp_bonus"
+    }
+  },
+  "saving_throw_bonus": {
+    "name": "Warding",
+    "description": "Improves the wearer's saving throws.",
+    "group": "saving_throw",
+    "allowed_categories": ["light", "medium", "heavy", "unarmored", "shield", "armor_piece", "accessory"],
+    "allowed_slots": ["chest", "head", "hands", "feet", "belt", "cape", "ring1", "ring2", "amulet", "main_hand", "off_hand"],
+    "min_item_level": 1,
+    "max_item_level": 20,
+    "value_range": {
+      "min": 1,
+      "max": 2
+    },
+    "effect": {
+      "kind": "saving_throw_bonus"
+    }
+  }
+}

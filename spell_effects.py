@@ -104,12 +104,16 @@ def _spellcasting_modifier(caster, casting_class):
 
 def _target_save_modifier(target, ability):
     from combat import proficiency_bonus
+    from factory import item_attribute_total, _unique_equipped_items
 
     abilities = target.get("abilities", {})
     save_proficiencies = target.get("saves", [])
+    equipment = target.get("equipment", {}) or {}
+    gear_bonus = sum(item_attribute_total(item, "saving_throw_bonus")
+                     for item in _unique_equipped_items(equipment))
     return modifier(abilities.get(ability, 10)) + (
         proficiency_bonus(target) if ability in save_proficiencies else 0
-    )
+    ) + gear_bonus
 
 
 def resolve_spell(spell_id, caster, targets=None, *, casting_class=None,

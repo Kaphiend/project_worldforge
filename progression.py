@@ -8,8 +8,9 @@ own class level.
 
 import math
 
-from classes import CLASSES
+from classes import CLASSES, PROGRESSION_RULES
 from classes import ABILITIES, SPELLS
+from dice import ability_modifier
 
 
 # Cumulative character XP thresholds from the fifth-edition advancement table.
@@ -65,6 +66,45 @@ def qualified_level(actor_data):
     return character_level_for_xp(unspent_xp(actor_data))
 
 
+def attribute_points_earned(actor_data):
+    """Return permanent attribute points granted by gross earned XP level."""
+    earned_xp = sum(max(0, int(value or 0))
+                    for value in actor_data.get("xp_earned_by_level", {}).values())
+    if earned_xp == 0:
+        spent_xp = sum(max(0, int(value or 0)) for value in
+                       (actor_data.get("xp_spent_by_level", {}) or {}).values())
+        spent_xp += sum(max(0, int(value or 0)) for value in
+                        (actor_data.get("xp_rest_spent_by_level", {}) or {}).values())
+        earned_xp = max(0, int(actor_data.get("xp_total", 0) or 0)) + spent_xp
+    earned_level = character_level_for_xp(earned_xp)
+    rules = PROGRESSION_RULES.get("attribute_points", {})
+    per_milestone = max(0, int(rules.get("points_per_milestone", 2)))
+    milestones = rules.get("milestones", [4, 8, 12, 16, 20])
+    return sum(per_milestone for level in milestones
+               if earned_level >= int(level))
+
+
+def attribute_points_available(actor_data):
+    spent = sum(max(0, int(value or 0)) for value in
+                (actor_data.get("attribute_points_spent", {}) or {}).values())
+    return max(0, attribute_points_earned(actor_data) - spent)
+
+
+def spend_attribute_point(actor_data, ability):
+    """Spend one earned point to increase one stored ability score by one."""
+    valid_abilities = {"strength", "dexterity", "constitution", "intellect",
+                       "wisdom", "charisma"}
+    if ability not in valid_abilities:
+        return False, "Choose a valid ability score."
+    if attribute_points_available(actor_data) < 1:
+        return False, "No attribute points are available to spend."
+    actor_data.setdefault("abilities", {})[ability] = (
+        int(actor_data.get("abilities", {}).get(ability, 10) or 10) + 1)
+    spent = actor_data.setdefault("attribute_points_spent", {})
+    spent[ability] = int(spent.get(ability, 0) or 0) + 1
+    return True, ""
+
+
 def class_unlocked_level(actor_data, class_id):
     """Return a class's sequential tier frontier, capped by character level.
 
@@ -103,6 +143,147 @@ def purchase_cost(definition):
         return max(0, int(definition["xp_purchase_cost"]))
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def unlocked_classes(actor_data):
+    """Return acquired classes in progression order, preserving the primary."""
+    entries = [entry.get("name") for entry in actor_data.get("classes", []) or []
+               if entry.get("name") in CLASSES]
+    primary = actor_data.get("char_class")
+    if primary in CLASSES:
+        entries = [primary] + [class_id for class_id in entries if class_id != primary]
+    for key in ("class_spell_purchases", "class_ability_purchases"):
+        for class_id, purchases in (actor_data.get(key, {}) or {}).items():
+            if purchases and class_id in CLASSES and class_id not in entries:
+                entries.append(class_id)
+    return entries
+
+
+def class_unlock_cost(actor_data, class_id):
+    """Calculate the XP fee for unlocking the next additional class."""
+    if class_id not in CLASSES or class_id in unlocked_classes(actor_data):
+        return 0
+    rules = PROGRESSION_RULES.get("multiclassing", {})
+    base = max(0, int(rules.get("first_additional_class_xp_cost", 500)))
+    multiplier = max(1, int(rules.get("class_unlock_xp_multiplier", 3)))
+    additional_classes = max(0, len(unlocked_classes(actor_data)) - 1)
+    return base * multiplier ** additional_classes
+
+
+def class_purchase_multiplier(actor_data, class_id):
+    """Return 1x for primary class, then 2x, 3x, etc. for later classes."""
+    acquired = unlocked_classes(actor_data)
+    if class_id not in acquired:
+        return 1
+    index = acquired.index(class_id)
+    if index == 0:
+        return 1
+    rules = PROGRESSION_RULES.get("multiclassing", {})
+    first = max(1, int(rules.get(
+        "first_additional_class_purchase_multiplier", 2)))
+    step = max(0, int(rules.get("subsequent_purchase_multiplier_step", 1)))
+    return first + (index - 1) * step
+
+
+def adjusted_purchase_cost(actor_data, class_id, definition):
+    """Apply the class-order XP multiplier to a spell or ability cost."""
+    cost = purchase_cost(definition)
+    if cost is None:
+        return None
+    return cost * class_purchase_multiplier(actor_data, class_id)
+
+
+def is_cantrip(spell):
+    """Cantrips are always available and do not use prepared-spell slots."""
+    return (spell.get("acquisition") == "starting_cantrip"
+            or int(spell.get("level", 1) or 0) == 0)
+
+
+def prepared_spell_limit(actor_data, class_id=None):
+    """Return the prepared leveled-spell limit for the actor's casting class.
+
+    This first playable rule uses class level plus the class's casting ability
+    modifier, with a minimum of one. Keeping the formula here makes the limit
+    easy to replace or move into content data as Worldforge's progression
+    rules are tuned.
+    """
+    class_id = class_id or actor_data.get("char_class")
+    class_data = CLASSES.get(class_id, {})
+    casting_ability = class_data.get("spellcasting_ability")
+    if not casting_ability:
+        return 0
+    scores = actor_data.get("abilities", {}) or {}
+    ability_mod = ability_modifier(scores.get(casting_ability, 10) or 10)
+    # The primary class uses earned character level. A secondary class starts
+    # from its own class level, recorded when a purchase opens that class.
+    if class_id == actor_data.get("char_class"):
+        earned = sum(max(0, int(value or 0))
+                     for value in actor_data.get("xp_earned_by_level", {}).values())
+        level = (character_level_for_xp(earned) if earned else
+                 max(1, int(actor_data.get("level", 1) or 1)))
+    else:
+        entry = next((item for item in actor_data.get("classes", []) or []
+                      if item.get("name") == class_id), {})
+        level = max(1, int(entry.get("level", 1) or 1))
+    return max(1, level + ability_mod)
+
+
+def spell_source_class(actor_data, spell_id):
+    """Find the actor's learned casting class that grants a spell."""
+    spell_classes = set(SPELLS.get(spell_id, {}).get("classes", []))
+    learned = {entry.get("name") for entry in actor_data.get("classes", []) or []
+               if entry.get("name")}
+    if actor_data.get("char_class"):
+        learned.add(actor_data["char_class"])
+    purchases = actor_data.get("class_spell_purchases", {}) or {}
+    learned.update(class_id for class_id, ids in purchases.items() if ids)
+    learned.update(class_id for class_id, ids in
+                   (actor_data.get("class_ability_purchases", {}) or {}).items()
+                   if ids)
+    purchased_classes = [class_id for class_id, ids in purchases.items()
+                         if spell_id in ids and class_id in learned
+                         and class_id in spell_classes
+                         and CLASSES.get(class_id, {}).get("spellcasting_ability")]
+    if purchased_classes:
+        return purchased_classes[0]
+    candidates = [class_id for class_id in learned & spell_classes
+                  if CLASSES.get(class_id, {}).get("spellcasting_ability")]
+    primary = actor_data.get("char_class")
+    if primary in candidates:
+        return primary
+    return next((class_id for class_id in CLASSES if class_id in candidates), None)
+
+
+def prepared_leveled_spells(actor_data, class_id=None):
+    """Return prepared leveled spells, optionally for one casting class."""
+    prepared = actor_data.get("prepared_spells", []) or []
+    return [spell_id for spell_id in prepared
+            if spell_id in SPELLS and not is_cantrip(SPELLS[spell_id])
+            and (class_id is None
+                 or spell_source_class(actor_data, spell_id) == class_id)]
+
+
+def set_spell_prepared(actor_data, spell_id, prepare=True):
+    """Prepare or unprepare a known spell, enforcing the class limit."""
+    if spell_id not in actor_data.get("known_spells", []):
+        return False, "That spell is not in your spellbook."
+    class_id = spell_source_class(actor_data, spell_id)
+    if not class_id:
+        return False, "Your class cannot prepare this spell."
+    prepared = actor_data.setdefault("prepared_spells", [])
+    if prepare:
+        if spell_id in prepared:
+            return True, ""
+        if not is_cantrip(SPELLS[spell_id]):
+            limit = prepared_spell_limit(actor_data, class_id)
+            if len(prepared_leveled_spells(actor_data, class_id)) >= limit:
+                return False, f"You can prepare only {limit} leveled spell(s)."
+        prepared.append(spell_id)
+    elif spell_id in prepared:
+        if is_cantrip(SPELLS[spell_id]):
+            return False, "Cantrips are always available and cannot be unprepared."
+        prepared.remove(spell_id)
+    return True, ""
 
 
 def spend_xp(actor_data, amount):

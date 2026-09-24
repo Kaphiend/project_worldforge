@@ -11,12 +11,12 @@ This document describes the current playable slice and tracks the work still nee
 
 ## Product direction
 
-Worldforge is a moddable, data-driven, top-down co-op RPG. Players should be able to form parties of the size and composition they want, with multiple parties sharing the world. Each party may enter its own combat; unrelated parties should remain in the world and continue playing while another fight is underway. The immediate target is a gray-box demo slice: create characters, enter a small area together, encounter a dummy enemy, and use the basic combat and character systems. Content should be authored in project data and original to Worldforge; avoid copying proprietary setting text, feature prose, or other protected material. Familiar tabletop concepts can inspire the rules, while the actual content and wording remain ours.
+Worldforge is a moddable, data-driven, top-down co-op RPG. A session supports up to eight connected players who share the world and combat encounter. The immediate target is a gray-box demo slice: create characters, enter a small area together, encounter mobs, and use the basic combat and character systems. Content should be authored in project data and original to Worldforge; avoid copying proprietary setting text, feature prose, or other protected material. Familiar tabletop concepts can inspire the rules, while the actual content and wording remain ours.
 
 ## Current playable slice
 
 - `[x]` Start a single-player session or host/join a co-op session. Direct TCP supports a party limit of eight players including the host; Internet hosts may need to forward the configured port.
-- `[~]` The current demo synchronizes one shared combat state for one session of up to eight players. When any player/enemy pair triggers combat, all connected players enter that shared encounter. Flexible party sizes, multiple parties in the same world, and concurrent independent combats are not implemented.
+- `[~]` The current demo synchronizes one shared combat state for one session of up to eight players. When any player/enemy pair triggers combat, all connected players enter that shared encounter.
 - `[x]` Create/select a character with class, race, subrace, subclass, parent races for a half-breed, abilities, skills, avatar, and starting equipment.
 - `[x]` New characters start with 50 gold; quick-start demo characters start with 500.
 - `[x]` Create a quick-start, higher-level, geared test character after choosing its class.
@@ -39,13 +39,14 @@ The intended repeatable loop is:
 1. The encounter factory creates and equips a random mob, then places it at a
    valid random position in the shared world.
 2. A visible, conscious player within 20 feet starts combat in place for that
-   player's party. Independent parties can have independent combats once the
-   combat-state architecture supports them.
+   shared session.
 3. Defeating a mob awards 10 XP to each participant in that combat.
 4. The next random mob spawns immediately after the kill. The defeated mob
-   remains as a corpse for looting; until loot exists, the corpse despawns 30
-   seconds after death. Once looting exists, start that timer after looting is
-   finished. Respawning does not wait for corpse cleanup.
+   remains as a corpse with one shared loot container. It drops the NPC
+   instance's carried items and equipped starting gear. Press `F` within 5
+   feet to open it; each taken item is removed for everyone. Closing the loot
+   panel or taking all starts a three-second despawn timer. Respawning does not
+   wait for corpse cleanup.
 5. Abilities default to one use per fight and can override that limit in data.
    Uses reset for a new fight.
 6. Spells have no ranks or rank-specific slots. A character casts spells at
@@ -70,14 +71,25 @@ The intended repeatable loop is:
    points remain open. Rest reports current XP-based level eligibility but
    does not apply a level-up.
 
-The first repeatable encounter loop is wired: a victory awards XP once, leaves
-the defeated mob in the world for 30 seconds, and immediately adds a factory
-created NPC at a random clear map position. The victory replay prompt is gone.
-The timer currently starts at death because loot is not implemented. Ability
+The first repeatable encounter loop is wired: a victory awards XP once, keeps
+the defeated mob in the world for looting, and immediately adds a factory
+created NPC with its configured gear at a random clear map position. Corpse
+loot is shared; its three-second despawn timer starts when looting ends. The
+victory replay prompt is gone. Ability
 use limits, shared spell-point spending, configurable class resource pools,
 and rest cost/replenishment rules are implemented. Rest confirmation and
 co-op party application are wired; camp-stage travel and applying earned
 levels are not.
+
+### Mob generation and loot
+
+The encounter factory assigns a class, class-prioritized abilities, and
+proficiency-filtered gear to each mob. Templates tune elite chance and base
+item pools; elite stats stay level-bounded while item level and rarity shift up.
+Rarity controls the count of eligible attributes, which apply to weapon damage,
+attack rolls, AC, max HP, and saving throws. Corpse loot preserves those exact
+item instances and IDs. Broader mob variety, drop tables, and gold drops remain
+future work.
 
 ## Roadmap checklist
 
@@ -97,19 +109,24 @@ levels are not.
 - XP is spent to buy spells and abilities. XP spending can lower level
   eligibility, as can outdoor resting and death. Releasing the spirit after
   death costs 10% XP; being revived by another player costs 2% XP.
-- Feat levels need a visible placeholder in progression until feat choices and
-  effects are designed. Do not silently grant or sell a feat in this phase.
+- Character levels 4, 8, 12, 16, and 20 each grant two spendable attribute
+  points. Each point raises one ability score by one; scores may be stored above
+  30, but calculations cap at 30.
 - Each spell and ability has a data-authored `xp_purchase_cost`; currently the
-  tier-N default demo entries cost N × 10 XP. Abilities can advance a tier for
-  classes with no trainer-purchase spells at the prior tier.
+  tier-N default demo entries cost N × 10 XP. The primary class pays the base
+  price; later classes pay 2x, 3x, and so on. Unlocking an additional class
+  costs 500 XP for the second class, then triples for each later unlock.
+  These values are configured in `data/progression.json`. Abilities can
+  advance a tier for classes with no trainer-purchase spells at the prior tier.
 - `[x]` Trainer screen, purchase validation, ownership ledgers, XP deleveling,
-  inn release, and revival penalties are implemented. Feat choices remain a
-  visible placeholder.
+  explicit class unlock fees and class-order price multipliers, inn release,
+  revival penalties, and character-sheet attribute-point spending are
+  implemented. Applying earned levels and level-based HP growth remain open.
 
 ### 1. Make the demo slice easy to understand and extend
 
 - `[x]` Add a short in-game controls panel covering movement, target selection, attack, throw, spell/ability controls, inventory, and turn advance (toggle with F1).
-- `[~]` Use `F` as the shared nearby-interaction key. Inn beds open a confirmation prompt before charging 10 gold per character and resting; doors, chests, and corpse looting should plug into the same interaction flow as those systems are added.
+- `[~]` Use `F` as the shared nearby-interaction key. Inn beds open a confirmation prompt before charging 10 gold per character and resting; defeated corpses open a shared loot panel within 5 feet. Doors and chests still need interaction behavior.
 - `[x]` Spell and ability selection uses four saved bars of ten numbered slots, stacked in the lower-left area when assigned; backtick selects the active bar for number-key use. The `-` key opens separate spell and ability pages; choose an available action and click a slot to assign it. F2 toggles hover tooltips.
 - `[x]` Q/E bind to consumables from Inventory and use one item per press. Stackable consumables share an inventory row, decrement on use, and remain bound until the stack is empty.
 - `[x]` Expand the play window to 1024x768 and the demo arena to 1600x1100 so the camera can scroll around a world larger than the viewport. Place action bars lower-left and combat log lower-right.
@@ -137,12 +154,12 @@ levels are not.
 - `[~]` Actor storage tracks total XP and earned/spent-by-level ledgers. Combat awards update total and earned XP; outdoor rests separately track XP costs.
 - `[x]` A defeated encounter awards 10 XP once to every player participant. Other XP sources remain undecided.
 - `[x]` XP thresholds, current unspent-XP eligibility, per-item trainer prices, and ownership ledgers are implemented in `progression.py` and the trainer action flow.
-- `[?]` Define level-up choices: hit point growth, abilities/features, subclass features, spell/ability acquisition, class-specific spell-point progression curves, and other multiclass rules. Multiclass spell-pool capacity sums each class's curve at that class level.
+- `[~]` Attribute points are awarded at levels 4, 8, 12, 16, and 20 and can be spent from the character sheet. Applying earned character levels, hit point growth, subclass features, and other level-up choices remain open.
 - `[x]` One map trainer has tabs for all classes. Spell/ability ownership is per character and retained after deleveling; current XP eligibility and the class purchase chain control access.
 - `[x]` Implement one authoritative XP award path with duplicate-award protection.
 - `[x]` Implement XP-based level eligibility, spell/ability purchases, and a player-facing trainer flow.
 - `[ ]` Connect class and subclass progression data to actual unlocks/effects; current progression entries are mostly descriptive records.
-- `[x]` Add the single trainer interaction and class-tab purchase interface. Feat-level placeholders remain pending feat design.
+- `[x]` Add the single trainer interaction and class-tab purchase interface. Attribute-point milestones replace the previous feat placeholders.
 - `[ ]` Show character level and progression history on the character sheet.
 
 ### 4. Combat and abilities
@@ -161,17 +178,16 @@ levels are not.
 - `[ ]` Improve target selection and combat feedback based on playtesting.
 - `[ ]` Add reactions only when the core attack-and-turn loop is stable; reactions were intentionally deferred.
 - `[ ]` Replace the dummy NPC behavior with richer AI after the demo mechanics are established.
-- `[?]` Define party membership and encounter boundaries for a shared world: each combat needs its own participants, initiative, turn budgets, and log, while players in other parties continue exploring or fighting independently. The current single shared combat snapshot cannot do this.
 
 ### 5. Inventory, equipment, and item content
 
 - `[x]` Equipment slots are represented, with slot validation, two ring slots, separate ranged slot, and melee/ranged weapon sets.
 - `[x]` Item instances have unique IDs, so identical items can be carried separately. Carried unequipped items are stored on the actor.
 - `[x]` Starting gear is class-based static data; unspecified slots remain empty. Character creation can also roll a fully equipped test actor.
-- `[~]` Inventory is unlimited for now; item acquisition and capacity rules are not implemented.
-- `[ ]` Improve the inventory screen to show equipment, carried items, consumables, and item details clearly.
+- `[~]` Inventory is unlimited for now; corpse loot supports item acquisition, but general capacity rules are not implemented.
+- `[x]` Inventory shows character stats, skills, saves, proficiencies, resources, equipped gear, carried items, and item details.
 - `[ ]` Add item use/equip feedback and safeguards for invalid slot combinations or duplicate item instances.
-- `[ ]` Define item rarity and the rolled attributes that rarity may influence. Random loot generation is intentionally out of scope for now.
+- `[x]` Define initial rarity rolls and gear attributes. Mob equipment rolls rarity and eligible affixes at spawn; corpse loot preserves the generated item instances.
 - `[ ]` Add more original sample items only as needed to exercise the systems; preserve a compact base list with data-driven attributes.
 
 ### 6. Character data, content, and mod support
@@ -191,7 +207,6 @@ levels are not.
 - `[~]` Direct Internet connection depends on host network/router configuration; there is no relay service.
 - `[ ]` Add reconnect handling and a clear response when the host disconnects or a client drops.
 - `[ ]` Define host authority for combat rolls, inventory changes, XP awards, and rest results to prevent conflicting state.
-- `[ ]` Replace the fixed eight-player, single-session model with flexible party membership and multiple concurrent combat instances. Keep encounter state isolated so starting one fight does not pause or enlist other parties.
 - `[ ]` Review save/load behavior for party members, combat state, consumed items, and progression.
 - `[ ]` Add a user-facing connection setup/help panel and expose the configured host port in one place.
 - `[ ]` Consider a relay or matchmaking service only if direct hosting becomes a blocker; it requires infrastructure beyond the current local game.
@@ -208,7 +223,6 @@ levels are not.
 
 ## Explicitly deferred
 
-- Random loot generation.
 - Reactions and opportunity attacks.
 - Advanced NPC AI.
 - A hosted relay/matchmaking service.

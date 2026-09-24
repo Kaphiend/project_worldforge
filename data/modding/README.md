@@ -9,6 +9,8 @@ loader behavior, and Python source map, read [`../../MODDING_GUIDE.md`](../../MO
 - [`races.md`](races.md): race traits, subraces, selectable options, and half-breed.
 - [`subclasses.md`](subclasses.md): class links and milestone entries.
 - [`equipment.md`](equipment.md): item templates, slots, tags, weapon math, and consumables.
+- [`item_attributes.md`](item_attributes.md): rollable gear attributes, item-level filters, and effects.
+- [`mob_generation.md`](mob_generation.md): mob class priorities, elite rolls, item rarity, and affix counts.
 - [`spells.md`](spells.md): targets, range, resolution, and effect records.
 - [`abilities.md`](abilities.md): class abilities and action costs.
 - [`conditions.md`](conditions.md): status duration and supported condition primitives.

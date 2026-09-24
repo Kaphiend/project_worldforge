@@ -39,6 +39,23 @@ def roll_dx(number, sides):
     return [random.randint(1, sides) for _ in range(number)]
 
 
+def ability_modifier(score, maximum_score=30):
+    """Calculate an ability modifier, ignoring stored score above the cap."""
+    score = min(int(score), int(maximum_score))
+    return (score - 10) // 2
+
+
+def scale_dice_count(expression, multiplier):
+    """Multiply the dice count in an expression without scaling its flat bonus."""
+    match = _DICE_EXPRESSION.fullmatch(str(expression).replace(" ", ""))
+    if not match:
+        raise ValueError(f"Invalid dice expression: {expression!r}")
+    count, sides = int(match.group(1)), int(match.group(2))
+    modifier = match.group(3) or ""
+    scaled_count = max(1, count * max(1, int(multiplier)))
+    return f"{scaled_count}d{sides}{modifier}"
+
+
 def ability_points():
     """Generate six 4d6-drop-lowest ability scores, with a floor of 8."""
     scores = []
