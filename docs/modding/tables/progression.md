@@ -45,11 +45,10 @@ levels 4, 8, 12, 16, and 20; points are spent from the character sheet.
 
 ## Class resource curves
 
-See [`classes.md`](classes.md) for `spell_points_by_level` and
+See [`classes.md`](classes.md) for class spell-slot and resource curves and
 `class_resources`. Curves may be arrays indexed by class level (index zero is
-unused) or objects keyed by level. The shared spell pool is the sum of each
-class's curve at that class's currently unlocked class tier. Special pools
-remain separate from spell points.
+unused) or objects keyed by level. Standard Spellcasting slots are based on combined caster level; Pact Magic
+slots are separate. Class resource pools remain separate from spell slots.
 
 ## Trainer map content
 
@@ -87,10 +86,11 @@ to safe camp; every party member must be more than 100 feet from every living
 enemy and able to pay before travel begins. At camp, each member checks in at
 their assigned bedroll. The individual XP cost begins at 1% of unspent XP,
 rises by one percentage point per consecutive outdoor rest up to 5%, and has a
-1 XP minimum. A character with no unspent XP cannot camp. At an inn, each
-party member interacts with the bed and pays 10 gold for the night. Both types
-refill spell and configured class pools only after every connected member
-checks in. Inn rest resets the outdoor streak.
-
-Health recovery and condition removal remain future work. The current demo
+1 XP minimum. A character with no unspent XP cannot rest outdoors. At an inn, each party
+member pays the base gold price. Long rests cost more through the campaign
+multiplier at either location. Short rests can spend selected Hit Dice to
+heal and recover short-rest resources (including Warlock Pact Magic). Long rests
+restore HP, recover half of spent Hit Dice, standard spell slots, and long-rest
+resources. Rested conditions remain in place unless a specific rule clears them.
+Both types complete after every connected member checks in. The current demo
 shares rest readiness and combat state among connected players.

@@ -4,20 +4,29 @@ import pygame
 from worldforge.content.classes import NPCS, SCENARIOS
 from worldforge.ui.sprite_sheet import load_spritesheet
 from worldforge.actors.factory import effective_max_hp
-from worldforge.core.progression import (spell_point_max, total_earned_xp,
+from worldforge.core.progression import (spell_slot_summary, total_earned_xp,
                                          XP_THRESHOLDS, levels_to_apply)
 from worldforge.app.combat_flow import _active_actor_id
 from worldforge.app.encounters import DEFAULT_SCENARIO
 from worldforge.app.world import ACTOR_HITBOX_HEIGHT, ACTOR_HITBOX_WIDTH, ACTOR_SIZE, _attack_readiness_text, _perceived_title
 from worldforge.app.rendering import _advance_character_animation, _fit_ui_text, _player_id, _wrap_ui_lines
 from worldforge.content.campaign import ACTIVE_CAMPAIGN, campaign_rule
+from worldforge.ui.prompt_dialog import interaction_prompt_rects
+from worldforge.combat.resting import inn_rest_gold_cost
 
-def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0):
+def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0,
+                    verbose=False):
     if not combat:
         return pygame.Rect(0, 0, 0, 0)
-    panel_width, panel_height = 390, 142
-    panel_x = screen.get_width() - panel_width - 10
-    panel_y = screen.get_height() - panel_height - 10
+    if verbose:
+        panel_width = min(820, screen.get_width() - 32)
+        panel_height = min(620, screen.get_height() - 32)
+        panel_x = (screen.get_width() - panel_width) // 2
+        panel_y = (screen.get_height() - panel_height) // 2
+    else:
+        panel_width, panel_height = 390, 142
+        panel_x = screen.get_width() - panel_width - 10
+        panel_y = screen.get_height() - panel_height - 10
     panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
     panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
     panel.fill((0, 0, 0, 180))
@@ -36,12 +45,13 @@ def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0)
     own_data = combat.get("actors", {}).get(actor_id, {}).get("data", observer_data)
     resource_line = (
         f"HP {own_data.get('current_hp', 0)}/{effective_max_hp(own_data)}  |  "
-        f"Spell points {own_data.get('spell_points', 0)}/{spell_point_max(own_data)}")
+        f"Slots {spell_slot_summary(own_data)}")
     small_font = pygame.font.Font(None, 14)
     screen.blit(small_font.render(_fit_ui_text(
         small_font, resource_line, panel_width - 20), True, (210, 230, 255)),
                 (panel_x + 10, panel_y + 30))
-    log_lines = combat.get("log", [])
+    log_lines = (combat.get("verbose_log", combat.get("log", []))
+                 if verbose else combat.get("log", []))
     wrapped_lines = []
     text_width = panel_width - 20
     for message in log_lines:
@@ -56,12 +66,17 @@ def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0)
                 wrapped = candidate
         if wrapped:
             wrapped_lines.append(wrapped)
-    max_rows = 5
+    max_rows = max(5, (panel_height - 62) // 17) if verbose else 5
     end = max(0, len(wrapped_lines) - max(0, int(log_scroll)))
     visible = wrapped_lines[max(0, end - max_rows):end]
     for index, message in enumerate(visible):
         screen.blit(small_font.render(message, True, (245, 245, 245)),
                     (panel_x + 10, panel_y + 52 + index * 17))
+    if verbose:
+        label = pygame.font.Font(None, 17).render(
+            "VERBOSE COMBAT LOG · F9 / Esc closes · Mouse wheel scrolls",
+            True, (255, 220, 145))
+        screen.blit(label, (panel_x + 10, panel_y + panel_height - 22))
     return panel_rect
 
 def draw_game_frame(context):
@@ -74,6 +89,7 @@ def draw_game_frame(context):
     chat_text = context["chat_text"]
     combat = context["combat"]
     combat_log_scroll = context["combat_log_scroll"]
+    verbose_combat_log = context.get("verbose_combat_log", False)
     controls_visible = context["controls_visible"]
     combat_positions = context.get("combat_positions", {})
     current_arena = context["current_arena"]
@@ -153,8 +169,7 @@ def draw_game_frame(context):
             copy_label = ("Press C to copy invite" if internet_address
                           else "Press C to copy LAN invite")
             hud_rows.append((copy_label, (195, 220, 195), hud_font))
-    hud_rows.append((f"Spell points: {screen_spell_data.get('spell_points', 0)}"
-                     f"/{spell_point_max(screen_spell_data)}",
+    hud_rows.append((f"Spell slots: {spell_slot_summary(screen_spell_data)}",
                      (210, 225, 255), hud_font))
     hud_y = 12
     for text, color, row_font in hud_rows:
@@ -460,7 +475,8 @@ def draw_game_frame(context):
         screen.blit(target_label, (target_panel.x + 10,
                                    target_panel.y + 9))
     combat_log_rect = _draw_combat_ui(
-        screen, font, combat, player_id, vars(actor), combat_log_scroll)
+        screen, font, combat, player_id, vars(actor), combat_log_scroll,
+        verbose_combat_log)
     if (combat and combat.get("result")
             and combat["result"].get("outcome") != "victory"):
         result = combat["result"]
@@ -492,12 +508,12 @@ def draw_game_frame(context):
                         (12, hud_y))
             hud_y += hud_font.get_linesize() + 1
     if interact_prompt:
-        dialog = pygame.Surface((460, 132), pygame.SRCALPHA)
+        panel_rect, yes_rect, no_rect = interaction_prompt_rects(screen.get_size())
+        dialog = pygame.Surface(panel_rect.size, pygame.SRCALPHA)
         dialog.fill((18, 20, 22, 235))
         pygame.draw.rect(dialog, (195, 190, 165), dialog.get_rect(), 2)
-        dialog_x = (screen.get_width() - dialog.get_width()) // 2
-        dialog_y = (screen.get_height() - dialog.get_height()) // 2
-        screen.blit(dialog, (dialog_x, dialog_y))
+        dialog_x, dialog_y = panel_rect.topleft
+        screen.blit(dialog, panel_rect.topleft)
         dialog_font = pygame.font.Font(None, 18)
         if interact_prompt.get("type") == "area_exit":
             prompt_text = (f"Travel through {interact_prompt['name']}? "
@@ -507,26 +523,30 @@ def draw_game_frame(context):
             prompt_text = "Leave the safe camp and return to the map without resting?"
             confirm_text = "Y / Enter: leave camp     N / Esc: cancel"
         elif interact_prompt.get("type") == "innkeeper":
-            price = campaign_rule("inn_rest_gold_cost", 10)
-            prompt_text = (f"Rent a bed for the night for {price} gold. "
+            price_text = f"{inn_rest_gold_cost('long_rest')} gold"
+            prompt_text = (f"Book a bed for a long rest ({price_text}). "
                            "Your party can check in together.")
-            confirm_text = "Y / Enter: rent a bed     N / Esc: cancel"
+            confirm_text = "Y / Enter: book a bed     N / Esc: cancel"
         elif interact_prompt.get("type") == "inn_bed":
             prompt_text = f"Check in at {interact_prompt['name']} after paying the innkeeper."
             confirm_text = "Y / Enter: check in     N / Esc: cancel"
         else:
-            price = campaign_rule("inn_rest_gold_cost", 10)
+            price_text = f"{inn_rest_gold_cost('long_rest')} gold"
             prompt_text = (f"Stay at {interact_prompt['name']}? Each party member "
-                           f"must check in and pay {price} gold for the night.")
-            confirm_text = "Y / Enter: check in and pay     N / Esc: cancel"
+                           f"must check in and pay {price_text} for a long rest.")
+            confirm_text = "Y / Enter: check in     N / Esc: cancel"
         dialog_lines = _wrap_ui_lines(
             dialog_font, prompt_text, dialog.get_width() - 36)
         for line_index, line in enumerate(dialog_lines[:3]):
             screen.blit(dialog_font.render(line, True, (245, 235, 205)),
                         (dialog_x + 18, dialog_y + 18 + line_index * 20))
-        screen.blit(dialog_font.render(
-            confirm_text, True,
-            (210, 220, 220)), (dialog_x + 18, dialog_y + 92))
+        for label, rect in (("Yes", yes_rect), ("No", no_rect)):
+            pygame.draw.rect(screen, (73, 119, 78) if label == "Yes"
+                             else (76, 78, 82), rect, border_radius=4)
+            rendered = dialog_font.render(label, True, (250, 250, 245))
+            screen.blit(rendered, rendered.get_rect(center=rect.center))
+        screen.blit(dialog_font.render(confirm_text, True, (210, 220, 220)),
+                    (dialog_x + 18, dialog_y + 92))
     inventory_data = (combat.get("actors", {}).get(player_id, {}).get("data", {})
                       if combat else vars(actor))
     inventory_ui.draw(screen, inventory_data, font,
@@ -587,7 +607,9 @@ def draw_game_frame(context):
             ("Z: travel to a safe camp beyond 100 ft from enemies; each party member pays XP and checks in at their bed.", None),
             ("F: use a nearby trainer, vendor, bed, corpse, dropped item, or area exit.", None),
             ("F2: toggle tooltips    -: spells and abilities    `: cycle hotbars", None),
+            ("Spell and ability choices open above their hotbar slot; choose by number, then Y / Enter to confirm or Esc to cancel.", None),
             ("Enter: chat    /act <emote>: show an emote and add it to combat log", None),
+            ("F9: open the large verbose combat log with roll math", None),
             ("Click a character to target it. Right-click a character or mob to inspect its debug data.", None),
             ("1-0: use assigned action; empty 1 uses primary weapon. R: ranged    T: throw", None),
             ("G: Thief Fast Hands Sleight of Hand check during combat.", None),

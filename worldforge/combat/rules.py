@@ -1,5 +1,6 @@
 """Data-driven combat calculations and turn-order helpers."""
 import math
+import random
 
 from worldforge.content.classes import EQUIPMENT_ITEMS, RACES
 from worldforge.core.dice import roll_d20, roll_dice, scale_dice_count
@@ -20,6 +21,26 @@ ROGUE_WEAPON_MASTERY = {
 }
 
 FIGHTING_STYLE_OPTIONS = {
+    "archery": {
+        "name": "Archery",
+        "description": "You gain a +2 bonus to attack rolls you make with ranged weapons.",
+    },
+    "defense": {
+        "name": "Defense",
+        "description": "While you are wearing armor, you gain a +1 bonus to Armor Class.",
+    },
+    "dueling": {
+        "name": "Dueling",
+        "description": "When you wield a melee weapon in one hand and no other weapons, you deal +2 damage with it.",
+    },
+    "great_weapon_fighting": {
+        "name": "Great Weapon Fighting",
+        "description": "When you roll damage for a melee weapon wielded with two hands, reroll a 1 or 2 once per die.",
+    },
+    "protection": {
+        "name": "Protection",
+        "description": "When a creature you can see attacks an ally within 5 feet, use your Reaction to impose Disadvantage (requires a shield).",
+    },
     "two_weapon_fighting": {
         "name": "Two-Weapon Fighting",
         "description": "Add your ability modifier to the damage of the extra Light-property attack if it is not already included.",
@@ -100,7 +121,9 @@ def armor_class(actor):
         int(effect.get("amount", 0)) for effect in (_value(actor, "active_effects", []) or [])
         if effect.get("kind") == "armor_bonus"
     )
-    return base + dexterity + shield_bonus + temporary_bonus + item_bonus
+    styles = {str(value).casefold() for value in _value(actor, "fighting_styles", []) or []}
+    style_bonus = 1 if "defense" in styles and category != "unarmored" else 0
+    return base + dexterity + shield_bonus + temporary_bonus + item_bonus + style_bonus
 
 
 def initiative_for(actor):
@@ -152,7 +175,10 @@ def resolve_skill_check(actor, skill, ability):
         dice += reroll
     return {"natural": natural, "dice": dice, "bonus": bonus,
             "total": natural + bonus, "proficient": proficient,
-            "expertise": expertise}
+            "expertise": expertise, "ability_modifier": modifier(
+                (_value(actor, "abilities", {}) or {}).get(ability, 10)),
+            "proficiency_bonus": (proficiency_bonus(actor) if proficient else 0),
+            "ability": ability, "skill": skill}
 
 
 def apply_healing(target, amount, *, can_revive=False):
@@ -311,6 +337,10 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
     proficient = _proficient(actor, definition)
     proficiency = proficiency_bonus(actor) if proficient else 0
     weapon_attack_bonus = item_attribute_total(weapon, "weapon_attack_bonus")
+    fighting_styles = {str(value).casefold() for value in
+                       _value(actor, "fighting_styles", []) or []}
+    if ranged_weapon and "archery" in fighting_styles:
+        weapon_attack_bonus += 2
     attack_definition = definition
     if thrown_attack:
         attack_definition = dict(definition, ranges=ranges)
@@ -364,7 +394,16 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
         dice += reroll
     if has_condition(actor, "off_balance"):
         consume_condition_use(actor, "off_balance")
-    critical = natural >= campaign_rule("critical_hit_natural_roll", 20)
+    critical_threshold = campaign_rule("critical_hit_natural_roll", 20)
+    subclass = _value(actor, "subclass", "")
+    fighter_level = class_levels.get(
+        "fighter", _value(actor, "level", 1)
+        if _value(actor, "char_class", "") == "fighter" else 0)
+    if subclass == "fighter_champion" and fighter_level >= 15:
+        critical_threshold = min(critical_threshold, 18)
+    elif subclass == "fighter_champion" and fighter_level >= 3:
+        critical_threshold = min(critical_threshold, 19)
+    critical = natural >= critical_threshold
     target_ac = armor_class(target)
     total = natural + ability_mod + proficiency + weapon_attack_bonus
     hit = (critical or (natural > campaign_rule("automatic_miss_natural_roll", 1)
@@ -377,11 +416,18 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
         "ability": ability, "ability_modifier": ability_mod,
         "proficiency_bonus": proficiency, "disadvantage": disadvantage,
         "weapon_attack_bonus": weapon_attack_bonus,
+        "attack_modifier": ability_mod + proficiency + weapon_attack_bonus,
+        "critical_threshold": critical_threshold,
         "critical": critical, "hit": hit, "damage": 0, "graze_damage": 0,
         "damage_rolls": [],
         "damage_type": definition.get("damage_type", "untyped"),
     }
     if hit:
+        damage_modifier = ability_mod
+        rolled_damage_bonus = 0
+        style_damage_bonus = 0
+        great_weapon_rerolls = []
+        damage_formula = "unarmed strike"
         if unarmed_attack:
             if monk_level > 0:
                 martial_die = (6 if monk_level < 5 else 8 if monk_level < 11
@@ -398,11 +444,25 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
                 damage_expression = definition["damage_profiles"][
                     "off_hand_occupied" if has_offhand else "off_hand_empty"
                 ]
+            damage_formula = damage_expression
             dice_multiplier = item_attribute_total(
                 weapon, "weapon_damage_dice_multiplier") or 1
             if dice_multiplier > 1:
                 damage_expression = scale_dice_count(damage_expression, dice_multiplier)
             damage, damage_rolls = roll_dice(damage_expression, critical=critical)
+            if ("great_weapon_fighting" in fighting_styles and not ranged
+                    and definition.get("hands_required") == 2):
+                # Reroll each initial 1 or 2 once; critical dice are included.
+                flat_damage = damage - sum(damage_rolls)
+                sides = int(damage_expression.split("d", 1)[1].split("+", 1)[0])
+                rerolled_damage_rolls = []
+                for roll in damage_rolls:
+                    reroll = random.randint(1, sides) if roll <= 2 else roll
+                    if roll <= 2:
+                        great_weapon_rerolls.append((roll, reroll))
+                    rerolled_damage_rolls.append(reroll)
+                damage_rolls = rerolled_damage_rolls
+                damage = sum(damage_rolls) + flat_damage
             rolled_damage_bonus = item_attribute_total(weapon, "weapon_damage_bonus")
             damage_modifier = ability_mod
             if attack_mode in {"offhand", "offhand_nick"}:
@@ -418,6 +478,13 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
             if damage_modifier_cap is not None:
                 damage_modifier = min(int(damage_modifier_cap), ability_mod)
             damage = max(0, damage + damage_modifier + rolled_damage_bonus)
+            if ("dueling" in fighting_styles and not ranged
+                    and attack_mode not in {"offhand", "offhand_nick"}
+                    and not any(_is_weapon(_equipment(actor).get(slot))
+                                for slot in ("off_hand", "ranged_offhand"))
+                    and definition.get("hands_required") != 2):
+                damage += 2
+                style_damage_bonus += 2
         sneak_damage, sneak_rolls = 0, []
         if (sneak_attack_dice and not unarmed_attack and not disadvantage
                 and (attacker_advantage or sneak_attack_opportunity)
@@ -482,9 +549,16 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
                 target.downed = True
         event.update(damage=damage, resisted=resisted,
                      damage_multiplier=damage_multiplier,
+                     damage_formula=damage_formula,
+                     damage_modifier=damage_modifier,
+                     weapon_damage_bonus=rolled_damage_bonus,
+                     style_damage_bonus=style_damage_bonus,
                      damage_rolls=damage_rolls + bonus_rolls + sneak_rolls,
+                     great_weapon_rerolls=great_weapon_rerolls,
                      feature_bonus_damage=feature_bonus_damage,
+                     feature_bonus_rolls=bonus_rolls,
                      sneak_attack_damage=sneak_damage,
+                     sneak_attack_rolls=sneak_rolls,
                      target_hp=_value(target, "current_hp", _value(target, "hp", 0)))
     elif (not unarmed_attack and proficient and ability_mod > 0
           and {"rogue_weapon_mastery", "fighter_weapon_mastery",

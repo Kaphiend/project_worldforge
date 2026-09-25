@@ -76,9 +76,12 @@ does not grant behavior. Remaining melee work:
   Danger Sense (Dexterity save advantage), rage extension/early ending, and
   higher-level damage/uses progression still need playtest and fuller rules.
 - **Fighter:** Second Wind and Action Surge resolve with class-level resource
-  pools. Weapon mastery properties, Extra Attack, and Indomitable (save reroll)
-  remain. The Worldforge `fighter_05` Second Windup is a distinct custom
-  follow-up attack and only functions when owned.
+  pools. Level 5 Extra Attack, Tactical Shift, Champion critical range, and
+  Archery, Defense, Dueling, Great Weapon Fighting, and Two-Weapon Fighting
+  resolve. Protection remains a data choice without its reaction prompt and
+  attack-imposition flow. Tactical Mind, Indomitable, higher-level Champion
+  features, and general ability-check resolution remain queued. Fighter
+  features still use Worldforge's XP trainer acquisition policy.
 - **Monk:** Focus points, Flurry of Blows, Patient Defense, and level-based
   unarmed damage resolve. Step of the Wind, Deflect Attacks (reaction),
   Patient Defense's Dexterity-save advantage, Stunning Strike, and several

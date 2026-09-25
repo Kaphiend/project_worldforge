@@ -15,25 +15,7 @@ purchase.
   consumable bypasses class-known-spell checks.
 - `casting_time`: `action` or `bonus_action` selects the matching combat
   budget. Other descriptive values currently resolve as an action.
-- `prerequisite_class_level`, `acquisition`: progression fields. Spells have
-  no ranks; casts use the character's level
-  and one shared spell-point pool. Each class defines a tuneable point
-  progression curve. `spell_point_cost` is the number of points charged
-  for a successful cast (defaults to `1`; set it to `0` for a cantrip, or use a
-  larger integer for a more expensive spell). A zero-cost spell still uses the
-  normal spell action and targeting flow. Trainer-purchase cantrips use XP;
-  class-configured starter cantrips are granted at creation. The spellbook can prepare
-  known spells. Leveled preparations are limited to character level plus the
-  casting ability modifier (minimum one); cantrips do not count against this
-  limit. Buying a trainer-purchase spell adds it to the spellbook but does not
-  prepare it automatically. Set `xp_purchase_cost` on each record to its
-  one-time XP price; this is separate from `spell_point_cost`, which is paid
-  for each cast. Tier access uses `prerequisite_class_level` and the
-  character's sequential purchase chain for that class. A character must own
-  at least one purchase spell at each prior tier, and current unspent XP sets
-  the shared tier ceiling. Consumable items that invoke a spell do not spend
-  the character's pool. Component requirements are not wired. Existing `tier`
-  values are legacy data and have no runtime effect.
+- `level`, `prerequisite_class_level`, `acquisition`: spell level and progression fields. Leveled spells consume the lowest available eligible class Spellcasting slot; Warlock spells may use Pact Magic slots. A cast request may provide `slot_level` to choose a higher slot for upcasting. Cantrips consume no slots. Trainer-purchase cantrips use XP; class-configured starter cantrips are granted at creation. The spellbook can prepare known spells. Class data sets preparation and cantrip limits by class level. Buying a trainer-purchase spell adds it to the spellbook but does not prepare it automatically. Set `xp_purchase_cost` on each record to its one-time XP price. Tier access uses `prerequisite_class_level` and the character's sequential purchase chain for that class. A character must own at least one purchase spell at each prior tier, and current unspent XP sets the shared tier ceiling. Consumable items that invoke a spell do not spend spell slots. Component requirements are not wired. Existing `tier` values are legacy data and have no runtime effect.
 - `targeting.mode`: currently used modes include `self`, `one_target`,
   `one_ally`, `small_area`. The game requires a selected actor for non-self
   actions; `small_area` centers on that selected actor.

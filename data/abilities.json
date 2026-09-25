@@ -106,6 +106,8 @@
       "amount": 1
     },
     "requires_action_spent": true,
+    "once_per_turn": true,
+    "forbid_magic_action": true,
     "targeting": {
       "mode": "self"
     },
@@ -214,6 +216,24 @@
       {"kind": "next_attack_advantage", "duration_turns": 1},
       {"kind": "end_movement"}
     ]
+  },
+  "rogue_sneak_attack": {
+    "name": "Sneak Attack",
+    "description": "Toggle the automatic Sneak Attack rider on or off. When on, your first eligible hit each turn adds your Sneak Attack dice.",
+    "classes": ["rogue"], "acquisition": "starting_ability",
+    "prerequisite_class_level": 1, "requires_feature": "rogue_sneak_attack",
+    "action_cost": "free", "uses_per_combat": null,
+    "sneak_attack_toggle": true, "targeting": {"mode": "self"},
+    "effects": []
+  },
+  "rogue_cunning_strike": {
+    "name": "Cunning Strike",
+    "description": "Choose Withdraw, Trip, or Poison, then apply it to your next eligible Sneak Attack.",
+    "classes": ["rogue"], "acquisition": "starting_ability",
+    "prerequisite_class_level": 5, "requires_feature": "rogue_cunning_strike",
+    "action_cost": "free", "uses_per_combat": null,
+    "cunning_strike_selector": true, "targeting": {"mode": "self"},
+    "effects": []
   },
   "rogue_cunning_withdraw": {
     "name": "Cunning Strike: Withdraw",

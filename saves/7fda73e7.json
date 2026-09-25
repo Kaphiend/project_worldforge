@@ -1,0 +1,494 @@
+{
+  "name": "fighter",
+  "id": "7fda73e7",
+  "max_hp": 39,
+  "current_hp": 36,
+  "classes": [
+    {
+      "name": "fighter",
+      "level": 4
+    }
+  ],
+  "level": 4,
+  "class_levels_initialized": true,
+  "xp_total": 4552,
+  "xp_earned_by_level": {
+    "3": 3700,
+    "4": 2000
+  },
+  "xp_spent_by_level": {
+    "3": 80,
+    "4": 1068
+  },
+  "xp_rest_spent_by_level": {},
+  "class_spell_purchases": {},
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "prepared_spells": [],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      "ability:fighter_second_wind",
+      "ability:fighter_action_surge",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": "20c51ea73c7d",
+    "e": null
+  },
+  "known_abilities": [
+    "fighter_second_wind",
+    "fighter_action_surge"
+  ],
+  "class_features": [
+    "fighter_01",
+    "fighter_02",
+    "fighter_03",
+    "fighter_champion_improved_critical",
+    "fighter_fighting_style",
+    "fighter_weapon_mastery"
+  ],
+  "expertise_skills": [],
+  "fighting_styles": [
+    "great_weapon_fighting"
+  ],
+  "weapon_masteries": {},
+  "class_feature_purchases": {
+    "fighter": [
+      "fighter_fighting_style",
+      "fighter_01",
+      "fighter_weapon_mastery",
+      "fighter_02",
+      "fighter_champion_improved_critical",
+      "fighter_03"
+    ]
+  },
+  "class_skill_purchases": {
+    "fighter": [
+      "perception",
+      "athletics"
+    ]
+  },
+  "spell_slots": {
+    "5": 0,
+    "2": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "4": 0,
+    "3": 0,
+    "1": 0,
+    "6": 0
+  },
+  "pact_slots": 0,
+  "pact_slot_level": 0,
+  "hit_dice_remaining": {},
+  "class_resources": {
+    "fighter.second_wind_uses": 2,
+    "fighter.action_surge_uses": 1
+  },
+  "attribute_points_spent": {
+    "strength": 1,
+    "constitution": 1
+  },
+  "gold": 300,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Fighter.png",
+  "abilities": {
+    "strength": 18,
+    "constitution": 15,
+    "dexterity": 14,
+    "wisdom": 14,
+    "charisma": 13,
+    "intellect": 11
+  },
+  "unspent": [
+    11,
+    8,
+    12,
+    13,
+    8,
+    9
+  ],
+  "saves": [
+    "strength",
+    "constitution"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "heavy",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial"
+  ],
+  "race": "orc",
+  "subrace": "",
+  "subclass": "fighter_champion",
+  "parent_races": [],
+  "char_class": "fighter",
+  "skills": [
+    "athletics",
+    "perception"
+  ],
+  "controller": "player",
+  "x": 1017.2385297738226,
+  "y": 193.19616697024827,
+  "inventory": [
+    {
+      "id": "20c51ea73c7d",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 14,
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "c256bdd8e6a8",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 2,
+      "template_id": "revival_scroll"
+    },
+    {
+      "id": "7cad2ebb104f",
+      "template_id": "chain_shirt",
+      "name": "Chain Shirt",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "f313819244ba",
+      "template_id": "axe_1h",
+      "name": "Axe",
+      "slot": "main_hand",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "51ab8ed4a194",
+      "template_id": "dagger",
+      "name": "Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "24cd6b959737",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 4
+    },
+    {
+      "id": "17609568e426",
+      "template_id": "leather",
+      "name": "Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "39dd702adb63",
+      "template_id": "dagger",
+      "name": "Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "0b01639509eb",
+      "template_id": "dagger",
+      "name": "Dagger",
+      "slot": "main_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "7e6992d9ab68",
+      "template_id": "leather",
+      "name": "Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "e6a780caa8c7",
+      "template_id": "dagger",
+      "name": "Accurate Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "weapon_attack_bonus": 1
+      }
+    },
+    {
+      "id": "81fcc8cd0ff7",
+      "template_id": "dagger",
+      "name": "Dagger",
+      "slot": "main_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "9c91201f19cd",
+      "template_id": "leather",
+      "name": "Vital Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "uncommon",
+      "item_level": 3,
+      "rolled_attributes": {
+        "maximum_hp_bonus": 5
+      }
+    },
+    {
+      "id": "ad62f6424e3e",
+      "name": "Handaxe",
+      "slot": "hand",
+      "tags": [
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "handaxe"
+    },
+    {
+      "id": "72885e50f30f",
+      "name": "Light Hammer",
+      "slot": "hand",
+      "tags": [
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "light_hammer"
+    }
+  ],
+  "personal_storage": [],
+  "equipment": {
+    "head": {
+      "id": "f8e1e00fdf75",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "b19d8d7edda3",
+      "name": "Chain Mail",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "chain_mail"
+    },
+    "hands": {
+      "id": "fc60bcc497b4",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "201ab68fa15c",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "47c89d05912d",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "514206d196bd",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "891cdda588ec",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "4848c5364513",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "f436e48cdb32",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "881ea0110c6a",
+      "template_id": "axe_2h",
+      "name": "Forceful Axe (2H)",
+      "slot": "main_hand",
+      "tags": [
+        "2h",
+        "heavy"
+      ],
+      "rarity": "uncommon",
+      "item_level": 3,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 2
+      }
+    },
+    "off_hand": {
+      "id": "881ea0110c6a",
+      "template_id": "axe_2h",
+      "name": "Forceful Axe (2H)",
+      "slot": "main_hand",
+      "tags": [
+        "2h",
+        "heavy"
+      ],
+      "rarity": "uncommon",
+      "item_level": 3,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 2
+      }
+    },
+    "ranged": {
+      "id": "83ac13590a20",
+      "name": "Longbow",
+      "slot": "ranged",
+      "tags": [
+        "2h",
+        "heavy",
+        "ammunition"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "longbow"
+    }
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

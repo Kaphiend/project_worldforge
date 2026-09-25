@@ -52,7 +52,8 @@ def _apply_action(combat, actor_id, action):
     elif action_type == "throw":
         _do_attack(combat, actor_id, action.get("target"), attack_mode="throw")
     elif action_type == 'cast_spell':
-        _do_spell(combat, actor_id, action.get('spell'), action.get('target'))
+        _do_spell(combat, actor_id, action.get('spell'), action.get('target'),
+                  action.get('slot_level'), action.get('slot_pool'))
     elif action_type == 'use_ability':
         _do_ability(combat, actor_id, action.get('ability'), action.get('target'))
     elif action_type == "use_item":

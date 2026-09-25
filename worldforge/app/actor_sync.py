@@ -38,7 +38,11 @@ def _sync_local_actor(actor, combat, actor_id, *, consume_position_sync=False,
         entry["data"].get("xp_spent_by_level", actor.xp_spent_by_level))
     actor.xp_rest_spent_by_level = deepcopy(
         entry["data"].get("xp_rest_spent_by_level", actor.xp_rest_spent_by_level))
-    actor.spell_points = entry["data"].get("spell_points", actor.spell_points)
+    actor.spell_slots = deepcopy(entry["data"].get("spell_slots", actor.spell_slots))
+    actor.pact_slots = entry["data"].get("pact_slots", actor.pact_slots)
+    actor.pact_slot_level = entry["data"].get("pact_slot_level", actor.pact_slot_level)
+    actor.hit_dice_remaining = deepcopy(entry["data"].get(
+        "hit_dice_remaining", actor.hit_dice_remaining))
     actor.class_resources = deepcopy(
         entry["data"].get("class_resources", actor.class_resources))
     actor.gold = entry["data"].get("gold", actor.gold)

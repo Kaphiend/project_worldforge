@@ -4,7 +4,8 @@ import uuid
 
 from worldforge.actors.factory import item_definition, modifier
 from worldforge.app.combat_flow import (
-    _award_combat_xp, _log, _reject_action, _remove_downed_from_order,
+    _award_combat_xp, _debug_log, _log, _reject_action,
+    _remove_downed_from_order,
 )
 from worldforge.app.rendering import _emit_animation
 from worldforge.app.world import (ACTOR_SIZE, PIXELS_PER_FOOT, _hidden_from,
@@ -48,7 +49,8 @@ def _rogue_level(actor_data):
 
 
 def _sneak_attack_dice(actor_data):
-    if "rogue_sneak_attack" not in set(actor_data.get("class_features", []) or []):
+    if ("rogue_sneak_attack" not in set(actor_data.get("class_features", []) or [])
+            or actor_data.get("sneak_attack_enabled", True) is False):
         return 0
     return max(0, min(10, (_rogue_level(actor_data) + 1) // 2))
 
@@ -123,7 +125,10 @@ def _resolve_cunning_strike(combat, actor_id, actor_data, target_data, option):
     dc = (8 + modifier((actor_data.get("abilities", {}) or {}).get(
         "dexterity", 10)) + proficiency_bonus(actor_data))
     natural, dice = roll_d20()
-    save = natural + _target_save_modifier(target_data, save_ability)
+    save_modifier = _target_save_modifier(target_data, save_ability)
+    save = natural + save_modifier
+    _debug_log(combat, (f"Cunning Strike {option.title()} save: d20 {dice} -> {natural} "
+                        f"+ {save_ability} modifier {save_modifier:+} = {save} vs DC {dc}."))
     if save < dc:
         apply_condition(target_data, condition_id, source_id="rogue_cunning_strike")
         _log(combat, f"Cunning Strike {option.title()} takes hold (save {dice}: {save} vs DC {dc}).")
@@ -197,6 +202,9 @@ def _apply_weapon_mastery(combat, actor_id, target_id, weapon):
         dc = 8 + modifier(abilities.get(attack_ability, 10)) + proficiency_bonus(actor)
         natural, dice = roll_d20()
         save = natural + _target_save_modifier(target, "constitution")
+        _debug_log(combat, (f"Topple save: d20 {dice} -> {natural} + Constitution "
+                            f"modifier {_target_save_modifier(target, 'constitution'):+} "
+                            f"= {save} vs DC {dc}."))
         if save < dc:
             apply_condition(target, "prone", source_id="weapon_mastery_topple")
             _log(combat, f"Topple knocks {target.get('name', target_id)} prone (save {dice}: {save} vs DC {dc}).")
@@ -230,6 +238,11 @@ def _do_hide(combat, actor_id):
     budget[cost] = False
     check = _stealth_check(actor_data)
     hide_dc = max(1, int(MOB_GENERATION_RULES.get("stealth", {}).get("hide_dc", 15)))
+    _debug_log(combat, (f"Stealth check: d20 {check['dice']} -> {check['natural']} + "
+                        f"Dexterity {check['ability_modifier']:+} + skill bonus "
+                        f"{check['bonus'] - check['ability_modifier']:+} "
+                        f"({'Expertise' if check.get('expertise') else 'Proficiency' if check.get('proficient') else 'untrained'}) = "
+                        f"{check['total']} vs DC {hide_dc}."))
     if check["total"] < hide_dc:
         _log(combat, f"{actor_data.get('name', actor_id)} fails to hide (Stealth {check['total']}; DC {hide_dc}).")
         return True
@@ -256,6 +269,10 @@ def _do_fast_hands(combat, actor_id):
         return False
     check = resolve_skill_check(actor, "sleight of hand", "dexterity")
     bonus, natural, rolls = check["bonus"], check["natural"], check["dice"]
+    _debug_log(combat, (f"Sleight of Hand check: d20 {rolls} -> {natural} + "
+                        f"Dexterity {check['ability_modifier']:+} + skill bonus "
+                        f"{bonus - check['ability_modifier']:+} "
+                        f"({'Expertise' if check.get('expertise') else 'Proficiency' if check.get('proficient') else 'untrained'}) = {natural + bonus}."))
     budget["bonus_action"] = False
     _log(combat, f"{actor.get('name', actor_id)} uses Fast Hands for Sleight of Hand (d20 {rolls} + {bonus} = {natural + bonus}).")
     return True
@@ -264,6 +281,19 @@ def _do_fast_hands(combat, actor_id):
 def _do_attack(combat, actor_id, target_id, attack_mode="primary",
                cunning_strike=None):
     actor_entry = combat["actors"].get(actor_id)
+    if actor_entry and target_id is None:
+        # Attack hotkeys can arrive before the UI's aggro target selection is
+        # synchronized. Resolve a missing target to the nearest visible foe.
+        candidates = [entry for entry in combat.get("actors", {}).values()
+                      if entry.get("team") != actor_entry.get("team")
+                      and not entry.get("downed")
+                      and entry.get("data", {}).get("current_hp", 1) > 0
+                      and not entry.get("data", {}).get("withdrawn")
+                      and not _hidden_from(actor_entry, entry,
+                                           combat.get("arena"))]
+        if candidates:
+            target_id = min(candidates, key=lambda entry: edge_distance_feet(
+                actor_entry, entry, PIXELS_PER_FOOT, ACTOR_SIZE))["id"]
     target_entry = combat["actors"].get(target_id)
     if not actor_entry or not target_entry:
         _reject_action(combat, 'Invalid target: select an available target first.',
@@ -371,6 +401,30 @@ def _do_attack(combat, actor_id, target_id, attack_mode="primary",
                 for ally_id, ally in combat.get("actors", {}).items()),
             damage_multiplier=0.5 if uncanny_dodge else 1.0)
         if not event.get("success"):
+            _debug_log(combat, f"Attack could not resolve: {event.get('message', 'unknown reason')}.")
+        if event.get("success"):
+            _debug_log(combat, (
+            f"Attack: {event.get('attacker')} vs {event.get('target')}; "
+            f"d20 {event.get('rolls')} -> {event.get('natural')}; "
+            f"ability modifier {event.get('ability_modifier', 0):+}, "
+            f"proficiency {event.get('proficiency_bonus', 0):+}, "
+            f"weapon bonus {event.get('weapon_attack_bonus', 0):+} = "
+            f"{event.get('total')} vs AC {event.get('target_ac')} "
+            f"({'critical' if event.get('critical') else 'hit' if event.get('hit') else 'miss'})."))
+        if event.get("success") and event.get("hit"):
+            _debug_log(combat, (
+                f"Damage: weapon {event.get('damage_formula')} rolls "
+                f"{event.get('damage_rolls', [])}; ability modifier "
+                f"{event.get('damage_modifier', 0):+}, weapon bonus "
+                f"{event.get('weapon_damage_bonus', 0):+}, style bonus "
+                f"{event.get('style_damage_bonus', 0):+}, Sneak Attack rolls "
+                f"{event.get('sneak_attack_rolls', [])}, feature rolls "
+                f"{event.get('feature_bonus_rolls', [])}, Great Weapon Fighting rerolls "
+                f"{event.get('great_weapon_rerolls', [])}; resistance "
+                f"{'halved' if event.get('resisted') else 'none'}, "
+                f"damage multiplier {event.get('damage_multiplier', 1)}; "
+                f"final {event.get('damage', 0)} {event.get('damage_type', 'damage')}."))
+        if not event.get("success"):
             if attack_index == 0:
                 _reject_action(combat, event.get("message", "Attack unavailable."), target_id)
                 return False
@@ -392,6 +446,7 @@ def _do_attack(combat, actor_id, target_id, attack_mode="primary",
             thrown_item = deepcopy(
                 actor_entry["data"].get("equipment", {}).get("main_hand"))
         budget["action"] = False
+        budget.pop("additional_action_forbids_magic", None)
         if event.get("hit") and event.get("damage", 0) > 0 and uncanny_dodge:
             target_budget["reaction"] = False
             _log(combat, f"{target_entry['data'].get('name', target_id)} uses Uncanny Dodge and halves the damage.")
@@ -540,6 +595,19 @@ def _opportunity_attacks_on_move(combat, mover_id, old_position, new_position):
             melee_distance_feet=old_distance,
             adjacent_distance_feet=old_distance,
             line_of_sight=True)
+        if event.get("success"):
+            _debug_log(combat, (
+                f"Opportunity attack: {event.get('attacker')} vs {event.get('target')}; "
+                f"d20 {event.get('rolls')} -> {event.get('natural')} + "
+                f"attack modifier {event.get('attack_modifier', 0):+} = "
+                f"{event.get('total')} vs AC {event.get('target_ac')}; "
+                f"{'critical' if event.get('critical') else 'hit' if event.get('hit') else 'miss'}."))
+            if event.get("hit"):
+                _debug_log(combat, (f"Opportunity damage: formula "
+                                    f"{event.get('damage_formula')}, rolls "
+                                    f"{event.get('damage_rolls', [])}, ability modifier "
+                                    f"{event.get('damage_modifier', 0):+} = "
+                                    f"{event.get('damage')} {event.get('damage_type')}"))
         if not event.get("success"):
             budget["reaction"] = True
             continue

@@ -40,8 +40,9 @@ modders and maintainers can follow the implemented behavior.
 `F` is the shared nearby-interaction key. At an area exit, confirm with `Y` or
 Enter to move the connected party to its destination scenario. Each area keeps
 its living mobs while the party is elsewhere. At an inn bed, each party member
-presses `F`, confirms with `Y` or Enter, and pays 10 gold for the night. Inn
-rest completes when every connected party member has checked in and can pay.
+presses `F`, confirms with `Y` or Enter, and pays the configured XP rest price. Inn
+rest completes when every connected party member has checked in and paid the inn
+gold price.
 Outdoor `Z` travel first checks that every character is more than 100 feet from
 every living enemy and can pay their individual XP cost, then moves the party
 to the `safe_camp` stage. Each character has an assigned bedroll and must
@@ -104,8 +105,8 @@ preparations are limited to character level plus the class spellcasting ability
 modifier (minimum one); cantrips do not use a preparation slot. The game checks
 the limit on both the client UI and host action path. Prepared IDs are saved in
 `prepared_spells`; older saves are trimmed to the limit while preserving
-cantrips. Spell records marked `cantrip: true` with `spell_point_cost: 0` use an
-action without spending the shared spell pool. Trainer acquisition uses each
+cantrips. Cantrips use an action without spending a spell slot; leveled spells
+use class Spellcasting or Pact Magic slots. Trainer acquisition uses each
 record's `xp_purchase_cost`. New characters receive the class's configured
 `starting_spells`; those are learned, prepared, and placed on the first action
 bar. The built-in spell list now contains an SRD-guided subset with supported

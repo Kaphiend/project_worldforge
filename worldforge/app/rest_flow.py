@@ -7,15 +7,16 @@ from worldforge.app.encounters import (DEFAULT_SCENARIO, _combat_snapshot,
 from worldforge.app.party import party_members, set_remote_position
 from worldforge.app.rendering import _player_id
 from worldforge.app.world import ACTOR_SIZE, PIXELS_PER_FOOT
-from worldforge.combat.resting import (INN_REST_GOLD_COST, outdoor_rest_cost, resolve_paid_inn_rest,
-                                       resolve_rest)
+from worldforge.combat.resting import (inn_rest_gold_cost, outdoor_rest_cost,
+                                       resolve_paid_inn_rest, resolve_rest)
 from worldforge.combat.rules import edge_distance_feet
 from worldforge.content.classes import ARENAS, NPCS, SCENARIOS
 from worldforge.content.campaign import ACTIVE_CAMPAIGN
 
 
 def _resolve_party_rest(actor, local_player_id, remote_players, combat,
-                        location="outdoor", *, prepaid=False):
+                        location="outdoor", *, prepaid=False,
+                        rest_type="long_rest", hit_dice_spent_by_actor=None):
     if combat and combat.get("active"):
         return {"_action_error": "You cannot rest while combat is active."}
 
@@ -71,8 +72,15 @@ def _resolve_party_rest(actor, local_player_id, remote_players, combat,
         distances = [edge_distance_feet(data, mob, PIXELS_PER_FOOT, ACTOR_SIZE)
                      for mob in mobs]
         nearest_enemy = min(distances) if distances else float("inf")
-        result = (resolve_paid_inn_rest(data) if prepaid else resolve_rest(
-            data, location, distance_to_nearest_enemy_feet=nearest_enemy))
+        spent = (hit_dice_spent_by_actor or {}).get(player_id, {})
+        gold_cost = 0
+        if prepaid:
+            # The caller has already collected each guest's inn price.
+            paid = (combat or {}).get("rest_session", {}).get("paid", {})
+            gold_cost = paid.get(player_id, 0)
+        result = (resolve_paid_inn_rest(data, rest_type, spent, gold_cost) if prepaid else resolve_rest(
+            data, location, distance_to_nearest_enemy_feet=nearest_enemy,
+            rest_type=rest_type, hit_dice_spent=spent))
         if not result.get("success"):
             return {"_action_error": result.get("reason", "Rest failed.")}
         prepared.append((player_id, target, data, result))
@@ -92,11 +100,12 @@ def _resolve_party_rest(actor, local_player_id, remote_players, combat,
             entry["downed"] = bool(data.get("downed", False))
     if combat:
         cost_label = "XP" if location == "outdoor" else "gold"
-        _log(combat, f"The party rests at {'camp' if location == 'outdoor' else 'the inn'}. {total_cost} {cost_label} spent.")
+        _log(combat, f"The party takes a {rest_type.replace('_', ' ')} at {'camp' if location == 'outdoor' else 'the inn'}. {total_cost} {cost_label} spent.")
+    rest_label = rest_type.replace("_", " ").title()
     if location == "outdoor":
-        notice = f"Outdoor rest complete. {total_cost} XP spent; spell and class pools replenished."
+        notice = f"{rest_label} complete at camp. {total_cost} XP spent; eligible resources recovered."
     else:
-        notice = f"Inn rest complete. {total_cost} gold spent; spell and class pools replenished."
+        notice = f"{rest_label} complete at the inn. {total_cost} gold spent; eligible resources recovered."
     if combat:
         return {"_action_notice": notice}
     sync_state = _progression_sync_state(actor, local_player_id, remote_players)
@@ -128,9 +137,11 @@ def _ensure_rest_state(actor, local_player_id, remote_players, combat):
     return state
 
 
-def _start_camp(actor, local_player_id, remote_players, combat):
+def _start_camp(actor, local_player_id, remote_players, combat, rest_type="long_rest"):
     if combat and combat.get("active"):
         return {"_action_error": "You cannot set up camp while combat is active."}
+    if rest_type not in {"short_rest", "long_rest"}:
+        return {"_action_error": "Choose a short or long rest."}
     if combat and combat.get("rest_session"):
         return {"_action_error": "The party is already preparing to rest."}
     arena = (combat or {}).get("arena") or ARENAS.get(
@@ -154,10 +165,11 @@ def _start_camp(actor, local_player_id, remote_players, combat):
                      for mob in mobs]
         nearest = min(distances) if distances else float("inf")
         check = resolve_rest(
-            deepcopy(data), "outdoor", distance_to_nearest_enemy_feet=nearest)
+            deepcopy(data), "outdoor", distance_to_nearest_enemy_feet=nearest,
+            rest_type=rest_type)
         if not check.get("success"):
             return {"_action_error": f"{data.get('name', player_id)} cannot camp: {check.get('reason', 'rest unavailable')}"}
-        costs[player_id] = outdoor_rest_cost(data)[0]
+        costs[player_id] = outdoor_rest_cost(data, rest_type)[0]
 
     return_positions = {player_id: [data.get("x", 0), data.get("y", 0)]
                         for player_id, _, data in players}
@@ -220,24 +232,25 @@ def _start_camp(actor, local_player_id, remote_players, combat):
                  arena=camp_instance, result=None)
     state["rest_session"] = {
         "location": "outdoor", "participants": participants, "ready": [],
+        "rest_type": rest_type, "hit_dice_spent": {},
         "costs": costs, "bed_by_actor": bed_by_actor,
         "return_positions": return_positions,
         "return_arena": deepcopy(arena), "return_mobs": return_mobs,
         "return_sync_only": return_sync_only,
     }
     state["_action_notice"] = (
-        "The party reaches the safe camp. Each character must interact with their assigned bed; "
-        "everyone will pay their own XP cost when the party rests.")
+        f"The party reaches the safe camp for a {rest_type.replace('_', ' ')}. "
+        "Each character checks in at their assigned bed and pays their XP cost.")
     state["rest_state_changed"] = True
     return state
 
 
-INN_NIGHT_COST = INN_REST_GOLD_COST
-
-
-def _book_inn_bed(actor, local_player_id, actor_id, remote_players, combat):
+def _book_inn_bed(actor, local_player_id, actor_id, remote_players, combat,
+                  rest_type="long_rest"):
     if combat and combat.get("active"):
         return {"_action_error": "You cannot rest while combat is active."}
+    if rest_type not in {"short_rest", "long_rest"}:
+        return {"_action_error": "Choose a short or long rest."}
     state = _ensure_rest_state(actor, local_player_id, remote_players, combat)
     session = state.get("rest_session")
     if session and session.get("location") != "inn":
@@ -261,8 +274,11 @@ def _book_inn_bed(actor, local_player_id, actor_id, remote_players, combat):
         state["rest_session"] = {
             "location": "inn", "participants": [record[0] for record in players],
             "ready": [], "paid": {}, "bed_by_actor": {},
+            "rest_type": rest_type, "hit_dice_spent": {},
         }
         session = state["rest_session"]
+    session.setdefault("rest_type", rest_type)
+    session.setdefault("hit_dice_spent", {})
     if actor_id not in session["participants"]:
         return {"_action_error": "You joined after the party began checking in. Try again after this rest."}
     if actor_id in session["paid"]:
@@ -271,23 +287,26 @@ def _book_inn_bed(actor, local_player_id, actor_id, remote_players, combat):
         state["_action_notice"] = f"Your room is paid for. Check in at {bed.get('name', 'your assigned bed')}."
         state["rest_state_changed"] = True
         return state
-    if int(data.get("gold", 0) or 0) < INN_NIGHT_COST:
-        return {"_action_error": (
-            f"An inn night costs {INN_NIGHT_COST} gold; you do not have enough.")}
+    if session.get("rest_type") != rest_type:
+        return {"_action_error": "The party has already chosen a different rest type."}
+    cost = inn_rest_gold_cost(rest_type)
     assigned = set(session["bed_by_actor"].values())
     free_beds = [bed for bed in beds if bed.get("id") not in assigned]
     if not free_beds:
         return {"_action_error": "There are no unassigned beds available."}
     import random
     bed = random.choice(free_beds)
-    data["gold"] = int(data.get("gold", 0) or 0) - INN_NIGHT_COST
+    if int(data.get("gold", 0) or 0) < cost:
+        return {"_action_error": f"An inn {rest_type.replace('_', ' ')} costs {cost} gold; you do not have enough."}
+    data["gold"] = int(data.get("gold", 0) or 0) - cost
     if isinstance(target, dict):
-        target["gold"] = data["gold"]
+        target.update(data)
     else:
-        target.gold = data["gold"]
+        vars(target).update({key: value for key, value in data.items()
+                             if key in vars(target)})
     if actor_id in state.get("actors", {}):
-        state["actors"][actor_id]["data"]["gold"] = data["gold"]
-    session["paid"][actor_id] = INN_NIGHT_COST
+        state["actors"][actor_id]["data"].update(data)
+    session["paid"][actor_id] = cost
     session["bed_by_actor"][actor_id] = bed["id"]
     bed["owner_name"] = data.get("name") or actor_id
     for chest in arena.get("personal_chests", []):
@@ -295,14 +314,14 @@ def _book_inn_bed(actor, local_player_id, actor_id, remote_players, combat):
             chest["owner_id"] = actor_id
             chest["owner_name"] = bed["owner_name"]
     state["_action_notice"] = (
-        f"{data.get('name', actor_id)} pays {INN_NIGHT_COST} gold and is assigned "
+        f"{data.get('name', actor_id)} pays {cost} gold and is assigned "
         f"{bed.get('name', 'a bed')}. Interact with it to check in.")
     state["rest_state_changed"] = True
     return state
 
 
 def _start_inn_checkin(actor, local_player_id, actor_id, remote_players,
-                       combat, bed_id):
+                       combat, bed_id, hit_dice_spent=None):
     session = (combat or {}).get("rest_session")
     if not session or session.get("location") != "inn":
         return {"_action_error": "Book a bed with the innkeeper first."}
@@ -323,6 +342,7 @@ def _start_inn_checkin(actor, local_player_id, actor_id, remote_players,
     if not member:
         return {"_action_error": "That character is not in the party."}
     _, _, data = member
+    session.setdefault("hit_dice_spent", {})[actor_id] = hit_dice_spent or {}
     if edge_distance_feet(data, bed, PIXELS_PER_FOOT, ACTOR_SIZE) > int(
             bed.get("interaction_range_feet", 5)):
         return {"_action_error": "Move closer to your assigned bed to check in."}
@@ -337,7 +357,9 @@ def _start_inn_checkin(actor, local_player_id, actor_id, remote_players,
         combat["rest_state_changed"] = True
         return combat
     result = _resolve_party_rest(actor, local_player_id, remote_players,
-                                 combat, "inn", prepaid=True)
+                                 combat, "inn", prepaid=True,
+                                 rest_type=session.get("rest_type", "long_rest"),
+                                 hit_dice_spent_by_actor=session.get("hit_dice_spent"))
     if "_action_error" in result:
         return result
     assigned_beds = set(session.get("bed_by_actor", {}).values())
@@ -350,8 +372,7 @@ def _start_inn_checkin(actor, local_player_id, actor_id, remote_players,
             chest.pop("owner_name", None)
     combat["rest_session"] = None
     combat["_action_notice"] = (
-        f"Everyone checked in. Each guest paid {INN_NIGHT_COST} gold; "
-        "the party rests at the inn.")
+        f"Everyone checked in. The party completes its {session.get('rest_type', 'long_rest').replace('_', ' ')} at the inn; each guest paid {inn_rest_gold_cost(session.get('rest_type', 'long_rest'))} gold.")
     combat["rest_state_changed"] = True
     return combat
 
@@ -423,7 +444,7 @@ def _leave_camp(actor, local_player_id, actor_id, remote_players, combat):
 
 
 def _camp_bed_checkin(actor, local_player_id, actor_id, remote_players, combat,
-                      bed_id):
+                      bed_id, hit_dice_spent=None):
     session = (combat or {}).get("rest_session")
     if not session or session.get("location") != "outdoor":
         return {"_action_error": "The party is not at a safe camp."}
@@ -438,6 +459,7 @@ def _camp_bed_checkin(actor, local_player_id, actor_id, remote_players, combat,
     if not bed or not member:
         return {"_action_error": "Your assigned camp bed is unavailable."}
     _, _, data = member
+    session.setdefault("hit_dice_spent", {})[actor_id] = hit_dice_spent or {}
     if edge_distance_feet(data, bed, PIXELS_PER_FOOT, ACTOR_SIZE) > int(
             bed.get("interaction_range_feet", 5)):
         return {"_action_error": "Move closer to your assigned bed to check in."}
@@ -451,7 +473,9 @@ def _camp_bed_checkin(actor, local_player_id, actor_id, remote_players, combat,
         combat["rest_state_changed"] = True
         return combat
     result = _resolve_party_rest(actor, local_player_id, remote_players,
-                                 combat, "outdoor")
+                                 combat, "outdoor",
+                                 rest_type=session.get("rest_type", "long_rest"),
+                                 hit_dice_spent_by_actor=session.get("hit_dice_spent"))
     if "_action_error" in result:
         return result
     session = deepcopy(session)

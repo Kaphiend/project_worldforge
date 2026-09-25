@@ -3,7 +3,8 @@ import pygame
 from worldforge.content.classes import ABILITIES, CLASSES, SPELLS
 from worldforge.combat.rules import selected_weapon
 from worldforge.core.progression import (prepared_leveled_spells, prepared_spell_limit,
-                         is_cantrip, spell_source_class)
+                         is_cantrip, spell_source_class,
+                         pact_slot_maxima, spell_slot_maxima)
 
 BAR_COUNT = 4
 SLOTS_PER_BAR = 10
@@ -46,6 +47,12 @@ SYSTEM_ACTIONS = {
         "name": "Hide",
         "description": "Hide behind cover. Make a DC 15 Dexterity (Stealth) check; enemies can find you with Perception.",
         "action_cost": "action",
+        "targeting": {"mode": "self"},
+    },
+    "rogue_cunning_action": {
+        "name": "Cunning Action",
+        "description": "Choose Dash, Disengage, or Hide as a bonus action.",
+        "action_cost": "bonus_action",
         "targeting": {"mode": "self"},
     },
     "flee": {
@@ -168,8 +175,8 @@ def _draw_tooltip(screen, font, definition, position, kind="spell",
     if current:
         lines.append(current)
     if kind == "spell":
-        cost = max(0, int(definition.get("spell_point_cost", 1)))
-        lines.append(f"Spell points: {cost}")
+        spell_level = max(0, int(definition.get("level", definition.get("tier", 0)) or 0))
+        lines.append("Cantrip" if spell_level == 0 else f"Spell level: {spell_level}")
         class_id = (spell_source_class(actor_data, spell_id)
                     if actor_data is not None and spell_id else None)
         ability = (definition.get("spellcasting_ability")
@@ -211,6 +218,9 @@ class SpellbookUI:
         self.page_rects = []
         self.tooltips_enabled = True
         self.hud_slot_rects = []
+        self.option_selector = None
+        self.option_choice_rects = []
+        self.option_confirm_rects = []
 
     def toggle(self):
         self.visible = not self.visible
@@ -226,6 +236,218 @@ class SpellbookUI:
             return
         later = [index for index in eligible if index > self.active_bar]
         self.active_bar = later[0] if later else eligible[0]
+
+    @staticmethod
+    def available_slot_options(actor_data, spell_id):
+        spell = SPELLS.get(spell_id, {})
+        spell_level = max(0, int(spell.get("level", spell.get("tier", 0)) or 0))
+        if spell_level == 0:
+            return []
+        current = actor_data.get("spell_slots", {}) or {}
+        maxima = spell_slot_maxima(actor_data)
+        options = [{"level": int(level), "pool": "spell_slots"}
+                   for level in maxima
+                   if int(level) >= spell_level
+                   and int(current.get(level, 0) or 0) > 0]
+        pact_count, pact_level = pact_slot_maxima(actor_data)
+        if (pact_count > 0 and int(actor_data.get("pact_slots", 0) or 0) > 0
+                and pact_level >= spell_level):
+            options.append({"level": pact_level, "pool": "pact_slots"})
+        return sorted(options, key=lambda option: (option["level"],
+                                                    option["pool"]))
+
+    def begin_option_selector(self, title, choices, bar_index, slot_index):
+        if len(choices) < 2:
+            return False
+        self.option_selector = {
+            "title": title, "choices": list(choices), "bar_index": bar_index,
+            "slot_index": slot_index, "stage": "choose",
+        }
+        self.option_choice_rects = []
+        self.option_confirm_rects = []
+        return True
+
+    def begin_spell_slot_selector(self, spell_id, target_id, options, bar_index,
+                                  slot_index):
+        spell = SPELLS.get(spell_id, {})
+        choices = [{
+            "label": (f"Pact {option['level']}" if option["pool"] == "pact_slots"
+                      else f"L{option['level']}"),
+            "width": 76 if option["pool"] == "pact_slots" else SLOT_WIDTH,
+            "confirm": (f"Cast {spell.get('name', spell_id)} using a level "
+                        f"{option['level']} "
+                        f"{'Pact Magic' if option['pool'] == 'pact_slots' else 'spell'} slot?"),
+            "action": {"type": "cast_spell", "spell": spell_id,
+                       "target": target_id, "slot_level": option["level"],
+                       "slot_pool": option["pool"]},
+        } for option in options]
+        return self.begin_option_selector(
+            f"Choose a slot for {spell.get('name', spell_id)}",
+            choices, bar_index, slot_index)
+
+    def begin_cunning_strike_selector(self, actor_data, bar_index, slot_index):
+        options = [item_id for item_id in actor_data.get("known_abilities", []) or []
+                   if item_id in ABILITIES
+                   and ABILITIES[item_id].get("cunning_strike_option")]
+        if not options:
+            options = [item_id for item_id in (
+                "rogue_cunning_withdraw", "rogue_cunning_trip",
+                "rogue_cunning_poison") if item_id in ABILITIES]
+        choices = [{
+            "label": ABILITIES[item_id].get(
+                "cunning_strike_option", item_id.rsplit("_", 1)[-1]).title(),
+            "width": 84,
+            "confirm": f"Queue {ABILITIES[item_id].get('name', item_id)}?",
+            "action": {"type": "use_ability", "ability": item_id,
+                       "target": None},
+        } for item_id in options]
+        return self.begin_option_selector(
+            "Choose a Cunning Strike", choices, bar_index, slot_index)
+
+    def begin_cunning_action_selector(self, bar_index, slot_index):
+        choices = [
+            {"label": "Dash", "width": 76,
+             "confirm": "Use Cunning Action to Dash?",
+             "action": {"type": "use_ability",
+                        "ability": "rogue_cunning_dash", "target": None}},
+            {"label": "Disengage", "width": 88,
+             "confirm": "Use Cunning Action to Disengage?",
+             "action": {"type": "use_ability",
+                        "ability": "rogue_cunning_disengage", "target": None}},
+            {"label": "Hide", "width": 76,
+             "confirm": "Use Cunning Action to Hide?",
+             "action": {"type": "hide"}},
+        ]
+        return self.begin_option_selector(
+            "Choose a Cunning Action", choices, bar_index, slot_index)
+
+    def cancel_option_selector(self):
+        self.option_selector = None
+        self.option_choice_rects = []
+        self.option_confirm_rects = []
+
+    def handle_option_selector_event(self, event):
+        """Handle number keys, option clicks, confirmation, and cancellation."""
+        selection = self.option_selector
+        if not selection:
+            return None
+        if event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_ESCAPE, pygame.K_n):
+                self.cancel_option_selector()
+                return None
+            if selection["stage"] == "choose":
+                if pygame.K_1 <= event.key <= pygame.K_9:
+                    index = event.key - pygame.K_1
+                elif event.key == pygame.K_0:
+                    index = 9
+                else:
+                    return None
+                if index < len(selection["choices"]):
+                    selection["selected_index"] = index
+                    selection["stage"] = "confirm"
+                return None
+            if event.key in (pygame.K_y, pygame.K_RETURN, pygame.K_KP_ENTER):
+                action = dict(selection["choices"][selection["selected_index"]]["action"])
+                self.cancel_option_selector()
+                return action
+            return None
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if selection["stage"] == "choose":
+                for rect, option_index in self.option_choice_rects:
+                    if rect.collidepoint(event.pos):
+                        selection["selected_index"] = option_index
+                        selection["stage"] = "confirm"
+                        return None
+            else:
+                for rect, confirmed in self.option_confirm_rects:
+                    if rect.collidepoint(event.pos):
+                        if not confirmed:
+                            self.cancel_option_selector()
+                            return None
+                        action = dict(selection["choices"][
+                            selection["selected_index"]]["action"])
+                        self.cancel_option_selector()
+                        return action
+        return None
+
+    def draw_option_selector(self, screen, actor_data):
+        selection = self.option_selector
+        self.option_choice_rects = []
+        self.option_confirm_rects = []
+        if not selection:
+            return
+        slot = next((rect for rect, action, bar_index, slot_index
+                     in self.hud_slot_rects
+                     if bar_index == selection["bar_index"]
+                     and slot_index == selection["slot_index"]), None)
+        if slot is None:
+            return
+        choices = selection["choices"]
+        option_widths = [max(38, int(choice.get("width", SLOT_WIDTH)))
+                         for choice in choices]
+        width = sum(option_widths) + max(0, len(choices) - 1) * SLOT_GAP
+        left = max(6, min(screen.get_width() - width - 6,
+                          slot.centerx - width // 2))
+        top = max(6, slot.y - SLOT_HEIGHT - 8)
+        font = pygame.font.Font(None, 20)
+        if selection["stage"] == "choose":
+            heading_width = min(screen.get_width() - 12, max(width, 260))
+            heading_left = max(6, min(screen.get_width() - heading_width - 6,
+                                      slot.centerx - heading_width // 2))
+            heading = font.render(
+                _fit_line(font, selection["title"], heading_width - 12),
+                True, (192, 224, 232))
+            screen.blit(heading, heading.get_rect(
+                center=(heading_left + heading_width // 2, max(10, top - 10))))
+            option_x = left
+            for index, choice in enumerate(choices):
+                rect = pygame.Rect(option_x, top, option_widths[index],
+                                   SLOT_HEIGHT)
+                pygame.draw.rect(screen, (35, 52, 66), rect, border_radius=4)
+                pygame.draw.rect(screen, (116, 204, 231), rect, 2,
+                                 border_radius=4)
+                screen.blit(font.render(str(index + 1), True, (255, 224, 150)),
+                            (rect.x + 4, rect.y + 3))
+                label = font.render(_fit_line(font, choice["label"],
+                                              rect.width - 8),
+                                    True, (238, 248, 252))
+                screen.blit(label, label.get_rect(center=(rect.centerx,
+                                                          rect.y + 25)))
+                self.option_choice_rects.append((rect, index))
+                option_x += option_widths[index] + SLOT_GAP
+            return
+        panel_width, panel_height = 310, 112
+        panel = pygame.Rect(0, 0, panel_width, panel_height)
+        panel.centerx = slot.centerx
+        panel.bottom = top - 8
+        if panel.top < 6:
+            panel.top = min(screen.get_height() - panel_height - 6,
+                            slot.bottom + 8)
+        panel.left = max(6, min(screen.get_width() - panel_width - 6,
+                                panel.left))
+        pygame.draw.rect(screen, (17, 22, 30), panel, border_radius=7)
+        pygame.draw.rect(screen, (116, 204, 231), panel, 2,
+                         border_radius=7)
+        choice = choices[selection["selected_index"]]
+        title = font.render(_fit_line(font, choice["confirm"],
+                                      panel_width - 24),
+                            True, (250, 239, 205))
+        screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 27)))
+        button_width, button_height = 112, 32
+        confirm = pygame.Rect(panel.centerx - button_width - 8,
+                              panel.y + 58, button_width, button_height)
+        cancel = pygame.Rect(panel.centerx + 8, panel.y + 58,
+                             button_width, button_height)
+        for rect, label, color, value in (
+                (confirm,
+                 ("Cast" if choice["action"].get("type") == "cast_spell"
+                  else "Confirm"),
+                 (65, 110, 76), True),
+                (cancel, "Cancel", (74, 78, 88), False)):
+            pygame.draw.rect(screen, color, rect, border_radius=4)
+            rendered = font.render(label, True, (248, 248, 242))
+            screen.blit(rendered, rendered.get_rect(center=rect.center))
+            self.option_confirm_rects.append((rect, value))
 
     def handle_event(self, event, actor_data):
         if event.type == pygame.MOUSEWHEEL and self.visible:
@@ -283,9 +505,24 @@ class SpellbookUI:
             return [(f"action:{action_id}", _actor_action_definition(
                 actor_data, f"action:{action_id}"))
                     for action_id in action_ids]
+        known = [item_id for item_id in actor_data.get("known_abilities", [])
+                 if item_id in ABILITIES]
+        cunning_actions = {"rogue_cunning_dash", "rogue_cunning_disengage"}
+        has_cunning_action = cunning_actions.issubset(set(known))
+        known = [item_id for item_id in known if item_id not in cunning_actions]
+        has_cunning_strike = any(
+            ABILITIES[item_id].get("cunning_strike_option")
+            or ABILITIES[item_id].get("cunning_strike_selector")
+            for item_id in known)
+        known = [item_id for item_id in known
+                 if not ABILITIES[item_id].get("cunning_strike_option")]
+        if has_cunning_strike and "rogue_cunning_strike" in ABILITIES:
+            known.append("rogue_cunning_strike")
         actions = [(f"ability:{item_id}", ABILITIES[item_id])
-                   for item_id in actor_data.get("known_abilities", [])
-                   if item_id in ABILITIES]
+                   for item_id in known]
+        if has_cunning_action:
+            actions.append(("action:rogue_cunning_action",
+                            SYSTEM_ACTIONS["rogue_cunning_action"]))
         return actions
 
     def draw_bar(self, screen, font, actor_data):
@@ -298,48 +535,65 @@ class SpellbookUI:
         hovered = None
         self.hud_slot_rects = []
         visible_bars = [index for index, bar in enumerate(bars) if any(bar)]
+        if self.active_bar not in visible_bars:
+            visible_bars.append(self.active_bar)
         if visible_bars:
             label = font.render(f"Active bar {self.active_bar + 1}/4 (`)", True,
                                 (255, 220, 130))
             label_y = (screen.get_height() - SLOT_HEIGHT - 12
                        - max(0, len(visible_bars) - 1) * (SLOT_HEIGHT + 6) - 20)
             screen.blit(label, (12, label_y))
-        for row, bar_index in enumerate(reversed(visible_bars)):
-            y = screen.get_height() - SLOT_HEIGHT - 12 - row * (SLOT_HEIGHT + 6)
+        bar_order = [self.active_bar]
+        bar_order.extend(index for index in reversed(visible_bars)
+                         if index != self.active_bar)
+        for row, bar_index in enumerate(bar_order):
+            y = (screen.get_height() - SLOT_HEIGHT - 12
+                 - (len(bar_order) - row - 1) * (SLOT_HEIGHT + 6))
             active = bar_index == self.active_bar
             tag = font.render(f"{bar_index + 1}{'*' if active else ''}", True,
                               (255, 220, 130) if active else (190, 202, 220))
             screen.blit(tag, (x0 - 15, y + 10))
             for slot_index, action in enumerate(bars[bar_index]):
-                if not action:
+                if not action and not active:
                     continue
                 rect = pygame.Rect(x0 + slot_index * (SLOT_WIDTH + SLOT_GAP), y,
                                    SLOT_WIDTH, SLOT_HEIGHT)
-                self.hud_slot_rects.append((rect, action))
+                self.hud_slot_rects.append((rect, action, bar_index, slot_index))
                 selected = rect.collidepoint(mouse)
-                pygame.draw.rect(screen, (48, 57, 75), rect, border_radius=4)
-                border = ((255, 218, 130) if active else (125, 145, 175))
+                pygame.draw.rect(screen, (48, 57, 75) if active else (34, 38, 46),
+                                 rect, border_radius=4)
+                border = ((255, 218, 130) if active else (76, 83, 96))
                 if selected:
                     border = (255, 245, 205)
                 pygame.draw.rect(screen, border, rect, 2, border_radius=4)
                 screen.blit(font.render(_slot_label(slot_index), True,
-                                        (255, 220, 130)), (rect.x + 4, rect.y + 3))
-                kind, action_id, _ = action_definition(action)
-                definition = _actor_action_definition(actor_data, action)
-                action_label = _fit_line(font, definition.get("name", action_id),
-                                         rect.width - 8)
-                screen.blit(font.render(action_label, True, (242, 244, 250)),
-                            (rect.x + 4, rect.y + 19))
+                                        (255, 220, 130) if active else (130, 136, 148)),
+                            (rect.x + 4, rect.y + 3))
+                if action:
+                    kind, action_id, _ = action_definition(action)
+                    definition = _actor_action_definition(actor_data, action)
+                    action_label = _fit_line(font, definition.get("name", action_id),
+                                             rect.width - 8)
+                    screen.blit(font.render(action_label, True,
+                                            (242, 244, 250) if active else (143, 149, 160)),
+                                (rect.x + 4, rect.y + 19))
                 if selected and self.tooltips_enabled:
-                    hovered = (definition, kind,
-                               action_id if kind == "spell" else None)
+                    if action:
+                        hovered = (definition, kind,
+                                   action_id if kind == "spell" else None)
         if hovered:
             _draw_tooltip(screen, font, hovered[0], mouse, hovered[1],
                           actor_data, hovered[2])
 
     def hud_action_at(self, position):
         """Return an assigned HUD action clicked by the player, if any."""
-        return next((action for rect, action in self.hud_slot_rects
+        return next((action for rect, action, _, _ in self.hud_slot_rects
+                     if rect.collidepoint(position)), None)
+
+    def hud_slot_at(self, position):
+        """Return the action and source slot for an assigned HUD slot."""
+        return next(((action, bar_index, slot_index)
+                     for rect, action, bar_index, slot_index in self.hud_slot_rects
                      if rect.collidepoint(position)), None)
 
     def draw_book(self, screen, font, actor_data):
@@ -483,3 +737,4 @@ class SpellbookUI:
     def draw(self, screen, font, actor_data):
         self.draw_bar(screen, font, actor_data)
         self.draw_book(screen, font, actor_data)
+        self.draw_option_selector(screen, actor_data)

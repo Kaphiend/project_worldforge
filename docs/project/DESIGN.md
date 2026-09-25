@@ -39,7 +39,7 @@ references are collected under `docs/`; JSON content and art remain under
 - `[x]` Perception automatically reveals an NPC's title in stages based on its information DCs; elite titles can add a further stage. This check does not require line of sight.
 - `[x]` Track downed players. They may wait for another player to revive them or release their spirit to the inn for a 10% unspent-XP loss. Being revived costs 2% XP. Revive healing is rolled as `2d4`.
 - `[~]` Inventory and equipment support item instances, equipment slots, weapon sets, dual wielding, equipment changes, consumable use, quick slots, and shared corpse loot. The character sheet shows abilities, skills, saves, proficiencies, resources, XP, class features, and gear. Inventory remains unlimited; broader acquisition and economy rules are open.
-- `[x]` Item details and supported effects are shown in the inventory UI. Pool counts are visible in play. Outdoor rest on `Z` transports the party to safe camp, where each member uses an assigned bedroll and pays their own XP cost. Inn rest requires each member to check in at the bed and pay 10 gold for the night. Both replenish spell and class pools after everyone is ready.
+- `[x]` Item details and supported effects are shown in the inventory UI. Pool counts are visible in play. Outdoor rest on `Z` transports the party to safe camp, where each member uses an assigned bedroll and pays their XP cost. Inn rest requires each member to check in at the bed and pay gold. Short and long rest recovery differs; long rests cost more through campaign tuning.
 - `[x]` Hovering race, subrace, class, and subclass choices in character creation shows a short content summary.
 - `[~]` A small original demo encounter and gray-box environment are present. Art, animation transitions, and variety are intentionally limited.
 - `[x]` NPCs have a simple pursuit-and-attack behavior. Spell use, tactics, cover, and healing are not supported; advanced AI is deferred.
@@ -61,35 +61,24 @@ The intended repeatable loop is:
    wait for corpse cleanup.
 5. Abilities default to one use per fight and can override that limit in data.
    Uses reset for a new fight.
-6. Spells have no ranks or rank-specific slots. Characters spend points from
-   one shared spell pool. Each class has a tuneable spell-point progression
-   curve; multiclass characters sum each class's curve at that class level.
-   Resting replenishes the pool. Spell effect scaling by character level is
-   not implemented. Individual spells may later cost multiple points or
-   require components, without introducing spell ranks. Configurable class
-   resources use separate pools and can be spent by abilities; named feature
-   implementations still need to be added.
-7. Resting is the recovery loop: replenish the spell pool and let eligible
-   characters recover before they apply earned levels at the trainer. An
-   outdoor rest costs XP: the
-   rate starts at 1% of unspent XP and increases with consecutive outdoor
-   rests, capped at 5%. Outdoor rest is allowed only when every party member is
-   more than 100 feet from every living enemy. Camp travel moves the party to a
-   separate safe stage without combat interruptions, where every character
-   checks in at an assigned bedroll. The cost has a 1 XP minimum
-   when the character has less than 100 unspent XP. Resting inside an inn costs
-   a flat 10 gold and resets the outdoor-rest rate to 1%. A character with no
-   unspent XP cannot rest outdoors and must reach an inn. XP thresholds for
-   leveling follow the fifth-edition curve. Recovery details beyond spell
-   points remain open. Rest reports XP and replenishes pools; level application
-   happens at the trainer.
+6. Leveled spells use class-defined SRD Spellcasting slots; Warlocks use Pact
+   Magic slots. Multiclass Spellcasting combines full and half caster levels.
+   Spell records define level and optional upcast effects. Some class features,
+   component requirements, and broader spell coverage remain incomplete.
+7. Short and long rests recover different resources. A short rest can spend
+   Hit Dice for healing; a long rest restores HP, half of spent Hit Dice,
+   standard spell slots, and long-rest resources. Warlock Pact Magic and
+   short-rest resources recover on short rests. Outdoor rests cost XP and rise with consecutive outdoor rests; inn rests cost
+   gold. The campaign applies a larger multiplier to long rests at either
+   location. Resting is available only with unspent XP.
+   Rested conditions remain unless a rule clears them. XP thresholds for
+   leveling follow the configured curve; level application remains at the trainer.
 
 The repeatable encounter loop is wired: a victory awards XP once, keeps the
 defeated mob in the world for looting, and adds a factory-created NPC at a
 random clear position. Corpse loot is shared; its three-second despawn timer
-starts when looting ends. Ability use limits, shared spell-point spending,
-configurable class resource pools, rest costs, and pool replenishment are
-implemented. Inn confirmation, camp travel, party check-in, and co-op rest
+starts when looting ends. Ability use limits, class spell slots, configurable class resource pools, rest
+costs, and recovery are implemented. Inn confirmation, camp travel, party check-in, and co-op rest
 application are wired. Applying earned levels remains open.
 
 ### Mob generation and loot
@@ -145,7 +134,7 @@ gold drops remain future work.
 ### 1. Make the demo slice easy to understand and extend
 
 - `[x]` Add a short in-game controls panel covering movement, target selection, attack, throw, spell/ability controls, inventory, and turn advance (toggle with F1).
-- `[~]` `F` is the shared nearby-interaction key. Inn beds open a confirmation prompt before charging 10 gold per character; defeated corpses open a shared loot panel within 5 feet; arena exits move the connected party between data-defined areas. Doors and chests still need interaction behavior.
+- `[~]` `F` is the shared nearby-interaction key. Inn beds open a confirmation prompt before charging XP per character; defeated corpses open a shared loot panel within 5 feet; arena exits move the connected party between data-defined areas. Doors and chests still need interaction behavior.
 - `[x]` Spell and ability selection uses four saved bars of ten numbered slots, stacked in the lower-left area when assigned; backtick selects the active bar for number-key use. The `-` key opens separate spell and ability pages; choose an available action and click a slot to assign it. F2 toggles hover tooltips.
 - `[x]` Q/E bind to consumables from Inventory and use one item per press. Stackable consumables share an inventory row, decrement on use, and remain bound until the stack is empty.
 - `[x]` Expand the play window to 1024x768 and the demo arena to 1600x1100 so the camera can scroll around a world larger than the viewport. Place action bars lower-left and combat log lower-right.
@@ -160,11 +149,10 @@ gold drops remain future work.
 ### 2. Rest system — design and implement
 
 - `[x]` Outdoor and inn rests require every connected party member to check in. Outdoor travel requires every member to be over 100 feet from each living enemy; the safe-camp stage has one assigned bedroll per character and suppresses encounters while the party rests.
-- `[~]` Rest duration is abstracted; health recovery and condition removal still need rules.
-- `[~]` Rest replenishes the shared spell pool and configured class resource pools. Health, conditions, and consumables are not recovered; define those effects separately before adding them.
-- `[x]` Outdoor rest requires each party member to be more than 100 feet from every living enemy, transports them to the safe camp, and charges each member 1% of unspent XP, increasing with consecutive outdoor rests to a 5% cap; apply a 1 XP minimum when unspent XP is below 100. With zero unspent XP, outdoor rest is unavailable and the character must reach an inn. Each party member checks in and pays 10 gold for an inn night; this resets the outdoor rate to 1%.
+- `[~]` Short and long rest types are supported; elapsed time, interruptions, and rest exhaustion are not modeled. Short rests may spend Hit Dice for healing. Long rests restore HP and half of spent Hit Dice. Conditions only clear when their own rule says so.
+- `[x]` Outdoor rest requires each party member to be more than 100 feet from every living enemy, transports them to the safe camp, and charges each member 1% of unspent XP, increasing with consecutive outdoor rests to a 5% cap; apply a 1 XP minimum when unspent XP is below 100. With zero unspent XP, outdoor rest is unavailable and the character must reach an inn. Each party member checks in and pays the configured inn gold price; short and long rest multipliers apply, and inn rests reset the outdoor streak.
 - `[x]` Downed players may wait for revival or return to the inn by releasing their spirit for a 10% unspent-XP penalty.
-- `[x]` Rest cost and pool replenishment rules are implemented in `worldforge/combat/resting.py`. Safe-camp travel and camp-bed check-in are connected to outdoor rests; inn rests require each member's confirmed check-in and payment. Health recovery and condition recovery remain unimplemented.
+- `[x]` Rest cost and recovery rules are implemented in `worldforge/combat/resting.py`. Safe-camp travel and camp-bed check-in are connected to outdoor rests; inn rests require each member's confirmed check-in and payment.
 - `[x]` Inn and outdoor rests complete only after every connected party member is ready. Rest requests are handled through the host and results synchronize to the party.
 
 ### 3. XP, levels, and character progression
@@ -191,8 +179,8 @@ gold drops remain future work.
 - `[~]` Basic duration, refresh, expiry, and recurring damage are implemented. Stacking and source attribution rules remain incomplete.
 - `[~]` Add more player and NPC actions to exercise the combat framework. Spell starter actions now exercise attacks, saves, healing, conditions, and timed effects; class-specific martial actions remain open.
 - `[x]` Abilities default to one use per combat (`uses_per_combat` can tune this); combat state resets the counter for a new fight.
-- `[x]` Spells use one shared, class-curve-driven spell-point pool; casts spend configurable points and rests refill it. Cantrip damage scaling by character level and broader spell coverage remain open.
-- `[x]` Represent configurable class resources as pools separate from spell points; class curves define maxima and abilities can spend them. Specific feature content and progression still need implementation.
+- `[~]` Leveled spells use class-defined Spellcasting slots or Warlock Pact Magic slots. Short and long rests recover the matching pools; slot selection and broader spell coverage need more UI/content work.
+- `[x]` Configurable class resources are separate pools with class-defined maxima and recovery cadence.
 - `[~]` Sneak reduces exploration speed and contests mob passive Perception. Hide uses the SRD 5.2.1 cover/line-of-sight gate and DC 15 Dexterity (Stealth) check. Flee and active Search remain open; arena obstacles currently stand in for full cover.
 - `[ ]` Improve target selection and combat feedback based on playtesting.
 - `[ ]` Add reactions only when the core attack-and-turn loop is stable; reactions were intentionally deferred.

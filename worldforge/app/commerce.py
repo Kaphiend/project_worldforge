@@ -55,14 +55,20 @@ def _vendor_action(actor, local_player_id, actor_id, action, remote_players,
         if not definition:
             return {"_action_error": "The vendor's item definition is missing."}
         price = max(0, int(stock.get("price", price) or 0))
-        if int(data.get("gold", 0) or 0) < price:
-            return {"_action_error": f"You need {price} gold to buy that item."}
+        quantity = int(action.get("quantity", 1) or 1)
+        if not 1 <= quantity <= 99:
+            return {"_action_error": "Purchase quantity must be between 1 and 99."}
+        if quantity > 1 and not definition.get("stackable"):
+            return {"_action_error": "Only stackable items can be purchased in multiples."}
+        total_price = price * quantity
+        if int(data.get("gold", 0) or 0) < total_price:
+            return {"_action_error": f"You need {total_price} gold to buy that item."}
         item = {"id": uuid.uuid4().hex[:12], "template_id": template_id,
-                "name": definition.get("name", template_id), "quantity": 1}
-        data["gold"] = int(data.get("gold", 0) or 0) - price
+                "name": definition.get("name", template_id), "quantity": quantity}
+        data["gold"] = int(data.get("gold", 0) or 0) - total_price
         inventory = data.setdefault("inventory", [])
         if definition.get("stackable"):
-            remaining = 1
+            remaining = quantity
             max_stack = max(1, int(definition.get("max_stack", 99) or 99))
             for stack in inventory:
                 if stack.get("template_id") != template_id:
@@ -82,7 +88,7 @@ def _vendor_action(actor, local_player_id, actor_id, action, remote_players,
                 remaining -= quantity
         else:
             inventory.append(item)
-        message = f"Bought {item['name']} for {price} gold."
+        message = f"Bought {quantity} {item['name']} for {total_price} gold."
     elif trade == "vendor_sell":
         item_id = action.get("item_id")
         item = next((item for item in data.get("inventory", [])
@@ -128,5 +134,3 @@ def _vendor_action(actor, local_player_id, actor_id, action, remote_players,
     snapshot["_action_notice"] = message
     snapshot["vendor_state_changed"] = True
     return snapshot
-
-

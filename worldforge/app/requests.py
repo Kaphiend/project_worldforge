@@ -76,7 +76,8 @@ def _handle_action_request(actor, local_player_id, actor_id, action,
                 _log(combat, f"{name} acts {emote}.")
         return combat
     if action.get("type") == "rest_outdoor":
-        return _start_camp(actor, local_player_id, remote_players, combat)
+        return _start_camp(actor, local_player_id, remote_players, combat,
+                           action.get("rest_type", "long_rest"))
     if action.get("type") == "travel_exit":
         return travel_party_through_exit(
             actor, local_player_id, actor_id, remote_players, combat,
@@ -84,20 +85,22 @@ def _handle_action_request(actor, local_player_id, actor_id, action,
     if action.get("type") == "rest_camp_checkin":
         return _camp_bed_checkin(
             actor, local_player_id, actor_id, remote_players, combat,
-            action.get("bed_id"))
+            action.get("bed_id"), action.get("hit_dice_spent"))
     if action.get("type") == "leave_camp":
         return _leave_camp(actor, local_player_id, actor_id,
                            remote_players, combat)
     if action.get("type") == "inn_book_bed":
         return _book_inn_bed(actor, local_player_id, actor_id,
-                             remote_players, combat)
+                             remote_players, combat,
+                             action.get("rest_type", "long_rest"))
     if action.get("type") in {"rest_inn", "rest_inn_checkin"}:
         arena = (combat or {}).get("arena") or ARENAS.get(
             SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {})
         bed_id = action.get("bed_id") or next(
             (item.get("id") for item in arena.get("inn_beds", [])), None)
         return _start_inn_checkin(actor, local_player_id, actor_id,
-                                  remote_players, combat, bed_id)
+                                  remote_players, combat, bed_id,
+                                  action.get("hit_dice_spent"))
     if not combat or not combat.get("active"):
         if action.get("type") == "flee":
             return {"_action_notice": "There is no combat to flee from."}
@@ -178,7 +181,8 @@ def _handle_action_request(actor, local_player_id, actor_id, action,
                                     "unarmed_strike": "unarmed"}.get(action_type, "primary"),
                        cunning_strike=action.get("cunning_strike"))
             if action_type in {"attack", "unarmed_strike", "ranged_attack", "offhand_attack", "throw"} else
-            _do_spell(combat, actor_id, action.get('spell'), action.get('target'))
+            _do_spell(combat, actor_id, action.get('spell'), action.get('target'),
+                      action.get('slot_level'), action.get('slot_pool'))
             if action_type == 'cast_spell' else
             _do_ability(combat, actor_id, action.get('ability'), action.get('target'))
             if action_type == 'use_ability' else

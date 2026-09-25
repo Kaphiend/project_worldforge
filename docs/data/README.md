@@ -49,11 +49,11 @@ explicitly throw a thrown-tagged main-hand weapon; pressing 1 never auto-throws.
 `spells.json` and `abilities.json` store original game effects. Spell attacks
 use the caster's class spellcasting modifier plus proficiency; spell save DC is
 8 plus those values. Burning deals 1d4 fire damage at the start of the affected
-actor's turn for two turns; reapplication refreshes its duration. Spell-point
-costs are charged from a shared class-curve pool; records set
-`spell_point_cost` (default 1, cantrips 0). Resting replenishes the pool and
-configured class resource pools. The game has no spell ranks, and implemented
-spell effects do not yet scale with character level. See
+actor's turn for two turns; reapplication refreshes its duration. Leveled casts
+spend SRD class Spellcasting or Pact Magic slots; cantrips spend none. Slot
+progression is stored in `classes.json`. Short rests restore Pact Magic slots;
+long rests restore standard slots and other long-rest resources. The game has no
+spell ranks, and implemented spell effects do not yet scale with character level. See
 [`modding/spells.md`](../modding/tables/spells.md) for supported effect records.
 
 NPC `perception.levels` is a list of `{dc, title}` records. A player's passive

@@ -1,8 +1,8 @@
 {
   "name": "rogue",
-  "id": "bcadfedf",
-  "max_hp": 31,
-  "current_hp": 31,
+  "id": "33df739f",
+  "max_hp": 32,
+  "current_hp": 1,
   "classes": [
     {
       "name": "rogue",
@@ -11,12 +11,13 @@
   ],
   "level": 4,
   "class_levels_initialized": true,
-  "xp_total": 2580,
+  "xp_total": 2381,
   "xp_earned_by_level": {
-    "3": 2700
+    "3": 3700
   },
   "xp_spent_by_level": {
-    "3": 120
+    "3": 335,
+    "4": 984
   },
   "xp_rest_spent_by_level": {},
   "class_spell_purchases": {},
@@ -33,10 +34,10 @@
   "spell_hotbars": [
     [
       "action:weapon_attack",
-      null,
-      null,
-      null,
-      null,
+      "action:offhand_attack",
+      "action:ranged_weapon_attack",
+      "ability:rogue_cunning_strike",
+      "action:rogue_cunning_action",
       null,
       null,
       null,
@@ -44,7 +45,7 @@
       null
     ],
     [
-      null,
+      "ability:rogue_steady_aim",
       null,
       null,
       null,
@@ -81,49 +82,62 @@
     ]
   ],
   "quick_items": {
-    "q": null,
-    "e": null
+    "q": "1dace6bf9525",
+    "e": "8d045bae258e"
   },
-  "known_abilities": [],
+  "known_abilities": [
+    "rogue_cunning_dash",
+    "rogue_cunning_disengage",
+    "rogue_steady_aim",
+    "rogue_cunning_withdraw",
+    "rogue_cunning_trip",
+    "rogue_cunning_poison"
+  ],
   "class_features": [
     "rogue_cunning_action",
+    "rogue_expertise_1",
     "rogue_sneak_attack",
-    "rogue_steady_aim",
-    "rogue_thief_fast_hands",
-    "rogue_thief_second_story_work",
     "rogue_thieves_cant",
-    "rogue_weapon_mastery",
-    "rogue_expertise_1"
+    "rogue_weapon_mastery"
   ],
   "expertise_skills": [
-    "stealth",
-    "sleight of hand"
+    "sleight of hand",
+    "stealth"
   ],
+  "fighting_styles": [],
   "weapon_masteries": {
     "dagger": "nick",
-    "longbow": "slow"
+    "shortsword": "vex"
   },
   "class_feature_purchases": {
     "rogue": [
-      "rogue_sneak_attack",
-      "rogue_thieves_cant",
       "rogue_weapon_mastery",
-      "rogue_cunning_action",
-      "rogue_thief_fast_hands",
-      "rogue_thief_second_story_work",
-      "rogue_steady_aim",
+      "rogue_thieves_cant",
       "rogue_expertise_1"
     ]
   },
   "class_skill_purchases": {
     "rogue": [
-      "sleight of hand",
+      "perception",
       "stealth",
-      "insight",
-      "perception"
+      "sleight of hand",
+      "persuasion"
     ]
   },
-  "spell_points": 0,
+  "spell_slots": {
+    "6": 0,
+    "1": 0,
+    "2": 0,
+    "9": 0,
+    "4": 0,
+    "7": 0,
+    "8": 0,
+    "3": 0,
+    "5": 0
+  },
+  "pact_slots": 0,
+  "pact_slot_level": 0,
+  "hit_dice_remaining": {},
   "class_resources": {},
   "attribute_points_spent": {
     "dexterity": 2
@@ -132,20 +146,20 @@
   "outdoor_rest_streak": 0,
   "avatar": "asset_pack/Rogue.png",
   "abilities": {
-    "dexterity": 16,
+    "dexterity": 17,
     "constitution": 14,
-    "intellect": 11,
-    "wisdom": 10,
-    "charisma": 9,
-    "strength": 9
+    "intellect": 14,
+    "wisdom": 13,
+    "charisma": 13,
+    "strength": 13
   },
   "unspent": [
-    13,
-    8,
     9,
     11,
-    14,
-    11
+    12,
+    10,
+    12,
+    9
   ],
   "saves": [
     "dexterity",
@@ -158,23 +172,23 @@
     "simple",
     "martial (finesse or light)"
   ],
-  "race": "elf",
-  "subrace": "wood_elf",
+  "race": "orc",
+  "subrace": "",
   "subclass": "rogue_thief",
   "parent_races": [],
   "char_class": "rogue",
   "skills": [
-    "insight",
     "perception",
+    "persuasion",
     "sleight of hand",
     "stealth"
   ],
   "controller": "player",
-  "x": 176,
-  "y": 523,
+  "x": 160,
+  "y": 195,
   "inventory": [
     {
-      "id": "411feb8f197a",
+      "id": "1dace6bf9525",
       "name": "Healing Potion",
       "slot": "consumable",
       "tags": [],
@@ -184,7 +198,7 @@
       "template_id": "healing_potion"
     },
     {
-      "id": "f4f49ad30695",
+      "id": "8d045bae258e",
       "name": "Revival Scroll",
       "slot": "consumable",
       "tags": [],
@@ -194,22 +208,7 @@
       "template_id": "revival_scroll"
     },
     {
-      "id": "7d9423033086",
-      "template_id": "axe_2h",
-      "name": "Forceful Axe (2H)",
-      "slot": "main_hand",
-      "tags": [
-        "2h",
-        "heavy"
-      ],
-      "rarity": "uncommon",
-      "item_level": 1,
-      "rolled_attributes": {
-        "weapon_damage_bonus": 3
-      }
-    },
-    {
-      "id": "229673ff6b26",
+      "id": "badd719fe6c6",
       "template_id": "leather",
       "name": "Leather Armor",
       "slot": "chest",
@@ -219,42 +218,81 @@
       "rolled_attributes": {}
     },
     {
-      "id": "3858d403738e",
-      "template_id": "axe_1h",
-      "name": "Axe",
-      "slot": "main_hand",
-      "tags": [],
-      "rarity": "common",
-      "item_level": 1,
-      "rolled_attributes": {}
-    },
-    {
-      "id": "06eb6da5eff5",
-      "name": "Leather Armor",
-      "slot": "chest",
-      "tags": [],
-      "rarity": null,
-      "rolled_attributes": {},
-      "template_id": "leather"
-    },
-    {
-      "id": "4c5e5f60ef5e",
+      "id": "3a9c1ae5cb14",
+      "template_id": "dagger",
       "name": "Dagger",
-      "slot": "hand",
+      "slot": "main_hand",
       "tags": [
         "finesse",
         "light",
         "thrown"
       ],
-      "rarity": null,
-      "rolled_attributes": {},
-      "template_id": "dagger"
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "894ddfdbe8f3",
+      "template_id": "dagger",
+      "name": "Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "5839afc21809",
+      "template_id": "dagger",
+      "name": "Dagger",
+      "slot": "main_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "c6539205da50",
+      "template_id": "leather",
+      "name": "Vital Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "maximum_hp_bonus": 7
+      }
+    },
+    {
+      "id": "0222f0fde39d",
+      "template_id": "dagger",
+      "name": "Forceful Accurate Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "rare",
+      "item_level": 1,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 3,
+        "weapon_attack_bonus": 1
+      }
     }
   ],
   "personal_storage": [],
   "equipment": {
     "head": {
-      "id": "ac9718926969",
+      "id": "b6038732a445",
       "name": "Leather Cap",
       "slot": "head",
       "tags": [],
@@ -263,20 +301,16 @@
       "template_id": "leather_cap"
     },
     "chest": {
-      "id": "7ddd7ec594fa",
-      "template_id": "leather",
-      "name": "Guarded Vital Leather Armor",
+      "id": "797118bd8a72",
+      "name": "Leather Armor",
       "slot": "chest",
       "tags": [],
-      "rarity": "rare",
-      "item_level": 1,
-      "rolled_attributes": {
-        "armor_class_bonus": 3,
-        "maximum_hp_bonus": 2
-      }
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather"
     },
     "hands": {
-      "id": "48d68858c46c",
+      "id": "ea15123ce6ca",
       "name": "Travel Gloves",
       "slot": "hands",
       "tags": [],
@@ -285,7 +319,7 @@
       "template_id": "travel_gloves"
     },
     "feet": {
-      "id": "d844212c3ca6",
+      "id": "eaded419451e",
       "name": "Trail Boots",
       "slot": "feet",
       "tags": [],
@@ -294,7 +328,7 @@
       "template_id": "trail_boots"
     },
     "belt": {
-      "id": "6bbecce47b4c",
+      "id": "5a9a98855fd6",
       "name": "Utility Belt",
       "slot": "belt",
       "tags": [],
@@ -303,7 +337,7 @@
       "template_id": "utility_belt"
     },
     "cape": {
-      "id": "eb6a1b0b4a2f",
+      "id": "63d4f9e9c0c9",
       "name": "Wool Cape",
       "slot": "cape",
       "tags": [],
@@ -312,7 +346,7 @@
       "template_id": "wool_cape"
     },
     "ring1": {
-      "id": "036034bc5d78",
+      "id": "fcde1768b1e5",
       "name": "Ring of Guarding",
       "slot": "ring",
       "tags": [],
@@ -321,7 +355,7 @@
       "template_id": "ring_guard"
     },
     "ring2": {
-      "id": "3b18dae6c58e",
+      "id": "b4638e8f2055",
       "name": "Ring of Focus",
       "slot": "ring",
       "tags": [],
@@ -330,7 +364,7 @@
       "template_id": "ring_focus"
     },
     "amulet": {
-      "id": "0e811f0afd52",
+      "id": "e10b774aadc3",
       "name": "Brass Amulet",
       "slot": "amulet",
       "tags": [],
@@ -339,23 +373,7 @@
       "template_id": "brass_amulet"
     },
     "main_hand": {
-      "id": "fec42f68cd2c",
-      "template_id": "dagger",
-      "name": "Forceful Dagger",
-      "slot": "off_hand",
-      "tags": [
-        "finesse",
-        "light",
-        "thrown"
-      ],
-      "rarity": "uncommon",
-      "item_level": 1,
-      "rolled_attributes": {
-        "weapon_damage_bonus": 3
-      }
-    },
-    "off_hand": {
-      "id": "294db90c6688",
+      "id": "f7dc39c1088a",
       "name": "Dagger",
       "slot": "hand",
       "tags": [
@@ -366,6 +384,18 @@
       "rarity": null,
       "rolled_attributes": {},
       "template_id": "dagger"
+    },
+    "off_hand": {
+      "id": "25afac3f94f0",
+      "name": "Handaxe",
+      "slot": "hand",
+      "tags": [
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "handaxe"
     },
     "ranged": null
   },

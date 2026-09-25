@@ -137,7 +137,7 @@
       "12": [
         {
           "id": "barbarian_12",
-          "name": "Warrior\u2019s Frame",
+          "name": "Warrior’s Frame",
           "summary": "Increase the physical limits your training can reach.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 12
@@ -147,7 +147,7 @@
         {
           "id": "barbarian_13",
           "name": "Driving Blows",
-          "summary": "Push through a foe\u2019s defenses with deliberate force.",
+          "summary": "Push through a foe’s defenses with deliberate force.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 13
         }
@@ -173,7 +173,7 @@
       "16": [
         {
           "id": "barbarian_16",
-          "name": "Titan\u2019s Endurance",
+          "name": "Titan’s Endurance",
           "summary": "Withstand punishment that would overwhelm most people.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 16
@@ -255,7 +255,7 @@
           6,
           6
         ],
-        "recovery": "rest"
+        "recovery": "long_rest"
       }
     }
   },
@@ -475,35 +475,281 @@
       "auto_grant": false
     },
     "spellcasting_ability": "charisma",
-    "spell_points_by_level": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
     "summary": "A versatile performer who supports allies and shapes magic through art.",
     "rules_source": "SRD 5.2.1",
     "subclass_level": 3,
     "starting_spells": [
       "vicious_mockery",
       "healing_word"
+    ],
+    "spellcasting_progression": "full",
+    "spell_slots_by_caster_level": [
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1
+      ]
+    ],
+    "prepared_spells_by_level": [
+      0,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      16,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    "cantrips_by_level": [
+      0,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
     ]
   },
   "cleric": {
@@ -728,35 +974,281 @@
       "auto_grant": false
     },
     "spellcasting_ability": "wisdom",
-    "spell_points_by_level": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
     "summary": "A divine spellcaster who protects allies and confronts threats with faith.",
     "rules_source": "SRD 5.2.1",
     "subclass_level": 3,
     "starting_spells": [
       "sacred_flame",
       "healing_word"
+    ],
+    "spellcasting_progression": "full",
+    "spell_slots_by_caster_level": [
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1
+      ]
+    ],
+    "prepared_spells_by_level": [
+      0,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      16,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    "cantrips_by_level": [
+      0,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
     ]
   },
   "druid": {
@@ -960,7 +1452,7 @@
       "19": [
         {
           "id": "druid_19",
-          "name": "World\u2019s Pulse",
+          "name": "World’s Pulse",
           "summary": "Sense major disturbances across a broad natural area.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 19
@@ -983,35 +1475,281 @@
       "auto_grant": false
     },
     "spellcasting_ability": "wisdom",
-    "spell_points_by_level": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
     "summary": "A nature-focused spellcaster who heals, controls the field, and adapts.",
     "rules_source": "SRD 5.2.1",
     "subclass_level": 3,
     "starting_spells": [
       "produce_flame",
       "entangle"
+    ],
+    "spellcasting_progression": "full",
+    "spell_slots_by_caster_level": [
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1
+      ]
+    ],
+    "prepared_spells_by_level": [
+      0,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      16,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    "cantrips_by_level": [
+      0,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
     ]
   },
   "fighter": {
@@ -1067,7 +1805,7 @@
         {
           "id": "fighter_fighting_style",
           "name": "Fighting Style",
-          "summary": "Choose a fighting style, including Two-Weapon Fighting.",
+          "summary": "Choose a fighting style: Archery, Defense, Dueling, Great Weapon Fighting, Protection, or Two-Weapon Fighting.",
           "effect": {
             "kind": "fighting_style_choice",
             "count": 1
@@ -1109,7 +1847,7 @@
         {
           "id": "fighter_04",
           "name": "Battle Read",
-          "summary": "Recognize a foe\u2019s likely next move from posture and reach.",
+          "summary": "Recognize a foe’s likely next move from posture and reach.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 4
         }
@@ -1117,8 +1855,8 @@
       "5": [
         {
           "id": "fighter_05",
-          "name": "Second Windup",
-          "summary": "After your first weapon strike, make a quick follow-up attack as part of the same action.",
+          "name": "Extra Attack",
+          "summary": "Attack twice, instead of once, whenever you take the Attack action. After using Second Wind, you can move up to half your Speed without provoking opportunity attacks.",
           "purchase": "trainer_xp",
           "auto_grant": false,
           "xp_purchase_cost": 10,
@@ -1222,7 +1960,7 @@
       "16": [
         {
           "id": "fighter_16",
-          "name": "Master\u2019s Reach",
+          "name": "Master’s Reach",
           "summary": "Attack effectively from a more controlled position.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 16
@@ -1249,7 +1987,7 @@
       "19": [
         {
           "id": "fighter_19",
-          "name": "Veteran\u2019s Choice",
+          "name": "Veteran’s Choice",
           "summary": "Refine one trained combat technique to its highest form.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 19
@@ -1283,16 +2021,9 @@
         "name": "Second Wind uses",
         "max_by_level": [
           0,
-          1,
-          1,
-          1,
           2,
           2,
           2,
-          2,
-          2,
-          2,
-          3,
           3,
           3,
           3,
@@ -1302,9 +2033,17 @@
           4,
           4,
           4,
-          4
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          5
         ],
-        "recovery": "rest"
+        "recovery": "long_rest",
+        "short_rest_recovery": 1
       },
       "action_surge_uses": {
         "name": "Action Surge uses",
@@ -1331,7 +2070,7 @@
           2,
           2
         ],
-        "recovery": "rest"
+        "recovery": "short_or_long_rest"
       }
     }
   },
@@ -1389,7 +2128,7 @@
         {
           "id": "monk_03",
           "name": "Open Palm",
-          "summary": "Disrupt a target\u2019s stance with an unarmed strike.",
+          "summary": "Disrupt a target’s stance with an unarmed strike.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 3
         }
@@ -1461,7 +2200,7 @@
         {
           "id": "monk_11",
           "name": "Weightless Turn",
-          "summary": "Pass through an enemy\u2019s reach without surrendering balance.",
+          "summary": "Pass through an enemy’s reach without surrendering balance.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 11
         }
@@ -1524,7 +2263,7 @@
         {
           "id": "monk_18",
           "name": "Far-Reaching Palm",
-          "summary": "Project a short burst of force beyond arm\u2019s reach.",
+          "summary": "Project a short burst of force beyond arm’s reach.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 18
         }
@@ -1587,7 +2326,7 @@
           19,
           20
         ],
-        "recovery": "rest"
+        "recovery": "short_or_long_rest"
       }
     }
   },
@@ -1693,7 +2432,7 @@
         {
           "id": "paladin_05",
           "name": "Guarding Challenge",
-          "summary": "Draw an enemy\u2019s attention away from a vulnerable ally.",
+          "summary": "Draw an enemy’s attention away from a vulnerable ally.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 5
         }
@@ -1818,7 +2557,7 @@
       "19": [
         {
           "id": "paladin_19",
-          "name": "Vow\u2019s Fulfillment",
+          "name": "Vow’s Fulfillment",
           "summary": "Strengthen one ability tied to your chosen principle.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 19
@@ -1841,35 +2580,258 @@
       "auto_grant": false
     },
     "spellcasting_ability": "charisma",
-    "spell_points_by_level": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
     "summary": "A durable champion who combines martial skill with sacred magic.",
     "rules_source": "SRD 5.2.1",
     "subclass_level": 3,
     "starting_spells": [
       "divine_favor",
       "cure_wounds"
+    ],
+    "spellcasting_progression": "half",
+    "spell_slots_by_caster_level": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "prepared_spells_by_level": [
+      0,
+      2,
+      3,
+      4,
+      5,
+      6,
+      6,
+      7,
+      7,
+      9,
+      9,
+      10,
+      10,
+      11,
+      11,
+      12,
+      12,
+      14,
+      14,
+      15,
+      15
     ]
   },
   "ranger": {
@@ -1933,7 +2895,7 @@
       "2": [
         {
           "id": "ranger_02",
-          "name": "Hunter\u2019s Mark",
+          "name": "Hunter’s Mark",
           "summary": "Focus attention on a target to aid pursuit and attacks.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 2
@@ -2026,7 +2988,7 @@
         {
           "id": "ranger_11",
           "name": "Long Pursuit",
-          "summary": "Maintain a target\u2019s trail across difficult ground.",
+          "summary": "Maintain a target’s trail across difficult ground.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 11
         }
@@ -2035,7 +2997,7 @@
         {
           "id": "ranger_12",
           "name": "Counter Hunter",
-          "summary": "Recognize and blunt another creature\u2019s tracking tactics.",
+          "summary": "Recognize and blunt another creature’s tracking tactics.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 12
         }
@@ -2061,7 +3023,7 @@
       "15": [
         {
           "id": "ranger_15",
-          "name": "Skirmisher\u2019s Route",
+          "name": "Skirmisher’s Route",
           "summary": "Move through danger after making a successful attack.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 15
@@ -2088,7 +3050,7 @@
       "18": [
         {
           "id": "ranger_18",
-          "name": "Companion\u2019s Guard",
+          "name": "Companion’s Guard",
           "summary": "Your companion helps shield an ally from an attack.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 18
@@ -2120,35 +3082,258 @@
       "auto_grant": false
     },
     "spellcasting_ability": "wisdom",
-    "spell_points_by_level": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
     "summary": "A scout and hunter who blends weapon attacks, survival, and nature magic.",
     "rules_source": "SRD 5.2.1",
     "subclass_level": 3,
     "starting_spells": [
       "entangle",
       "cure_wounds"
+    ],
+    "spellcasting_progression": "half",
+    "spell_slots_by_caster_level": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "prepared_spells_by_level": [
+      0,
+      2,
+      3,
+      4,
+      5,
+      6,
+      6,
+      7,
+      7,
+      9,
+      9,
+      10,
+      10,
+      11,
+      11,
+      12,
+      12,
+      14,
+      14,
+      15,
+      15
     ]
   },
   "rogue": {
@@ -2214,7 +3399,7 @@
         },
         {
           "id": "rogue_thieves_cant",
-          "name": "Thieves\u2019 Cant",
+          "name": "Thieves’ Cant",
           "summary": "Learn the coded slang used by the underworld.",
           "effect": {
             "kind": "proficiency_choice",
@@ -2376,9 +3561,11 @@
       "rogue_cunning_dash",
       "rogue_cunning_disengage",
       "rogue_steady_aim",
+      "rogue_sneak_attack",
       "rogue_cunning_withdraw",
       "rogue_cunning_trip",
-      "rogue_cunning_poison"
+      "rogue_cunning_poison",
+      "rogue_cunning_strike"
     ],
     "starting_features": [
       "rogue_sneak_attack",
@@ -2438,7 +3625,7 @@
         {
           "id": "sorcerer_03",
           "name": "Force Shaping",
-          "summary": "Alter a spell\u2019s reach, target, or outward form.",
+          "summary": "Alter a spell’s reach, target, or outward form.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 3
         }
@@ -2604,35 +3791,281 @@
       "auto_grant": false
     },
     "spellcasting_ability": "charisma",
-    "spell_points_by_level": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
     "summary": "A spellcaster whose innate magic offers potent, flexible offense.",
     "rules_source": "SRD 5.2.1",
     "subclass_level": 3,
     "starting_spells": [
       "fire_bolt",
       "magic_missile"
+    ],
+    "spellcasting_progression": "full",
+    "spell_slots_by_caster_level": [
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1
+      ]
+    ],
+    "prepared_spells_by_level": [
+      0,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      16,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    "cantrips_by_level": [
+      0,
+      4,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
     ]
   },
   "warlock": {
@@ -2789,7 +4222,7 @@
       "14": [
         {
           "id": "warlock_14",
-          "name": "Source\u2019s Counsel",
+          "name": "Source’s Counsel",
           "summary": "Ask your distant source for a narrow piece of insight.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 14
@@ -2857,9 +4290,61 @@
       "auto_grant": false
     },
     "spellcasting_ability": "charisma",
-    "spell_points_by_level": [
+    "summary": "A pact-bound caster who pairs repeatable magic with supernatural gifts.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3,
+    "starting_spells": [
+      "eldritch_blast"
+    ],
+    "spellcasting_progression": "pact",
+    "pact_slots_by_level": [
       0,
       1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4
+    ],
+    "pact_slot_level_by_level": [
+      0,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "prepared_spells_by_level": [
+      0,
       2,
       3,
       4,
@@ -2869,22 +4354,40 @@
       8,
       9,
       10,
+      10,
+      11,
       11,
       12,
+      12,
+      13,
       13,
       14,
+      14,
       15,
-      16,
-      17,
-      18,
-      19,
-      20
+      15
     ],
-    "summary": "A pact-bound caster who pairs repeatable magic with supernatural gifts.",
-    "rules_source": "SRD 5.2.1",
-    "subclass_level": 3,
-    "starting_spells": [
-      "eldritch_blast"
+    "cantrips_by_level": [
+      0,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
     ]
   },
   "wizard": {
@@ -3039,7 +4542,7 @@
         {
           "id": "wizard_14",
           "name": "Spell Reflection",
-          "summary": "Redirect a portion of a hostile spell\u2019s force.",
+          "summary": "Redirect a portion of a hostile spell’s force.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 14
         }
@@ -3106,35 +4609,281 @@
       "auto_grant": false
     },
     "spellcasting_ability": "intellect",
-    "spell_points_by_level": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
     "summary": "A learned spellcaster with a broad arcane toolkit and careful preparation.",
     "rules_source": "SRD 5.2.1",
     "subclass_level": 3,
     "starting_spells": [
       "fire_bolt",
       "magic_missile"
+    ],
+    "spellcasting_progression": "full",
+    "spell_slots_by_caster_level": [
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1
+      ]
+    ],
+    "prepared_spells_by_level": [
+      0,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      16,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    "cantrips_by_level": [
+      0,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
     ]
   }
 }

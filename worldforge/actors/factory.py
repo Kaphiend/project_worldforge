@@ -55,7 +55,10 @@ class Actor:
     weapon_masteries: dict = field(default_factory=dict)
     class_feature_purchases: dict = field(default_factory=dict)
     class_skill_purchases: dict = field(default_factory=dict)
-    spell_points: int = None
+    spell_slots: dict = field(default_factory=dict)
+    pact_slots: int = 0
+    pact_slot_level: int = 0
+    hit_dice_remaining: dict = field(default_factory=dict)
     class_resources: dict = field(default_factory=dict)
     attribute_points_spent: dict = field(default_factory=dict)
     # Class levels are selected when earned character levels are applied.

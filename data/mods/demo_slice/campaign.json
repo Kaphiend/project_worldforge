@@ -53,6 +53,8 @@
     "inn_rest_gold_cost": 10,
     "outdoor_rest_min_distance_feet": 100,
     "outdoor_rest_rate_min_percent": 1,
-    "outdoor_rest_rate_max_percent": 5
+    "outdoor_rest_rate_max_percent": 5,
+    "short_rest_cost_multiplier": 1.0,
+    "long_rest_cost_multiplier": 2.0
   }
 }

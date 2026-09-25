@@ -16,6 +16,14 @@ class VendorUI:
         self.tab_rects = {}
         self.row_rects = []
         self.close_rect = pygame.Rect(0, 0, 0, 0)
+        self.pending_purchase = None
+        self.quantity = 1
+        self.quantity_text = "1"
+        self.quantity_editing = False
+        self.confirm_rects = {}
+        self.quantity_slider = pygame.Rect(0, 0, 0, 0)
+        self.quantity_input = pygame.Rect(0, 0, 0, 0)
+        self.quantity_selectable = False
 
     def open(self, vendor_id):
         self.visible = True
@@ -26,9 +34,45 @@ class VendorUI:
     def close(self):
         self.visible = False
         self.vendor_id = None
+        self.pending_purchase = None
 
     def handle_event(self, event, vendor, actor_data, buyback):
         if not self.visible:
+            return None
+        if self.pending_purchase:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.pending_purchase = None
+                    return None
+                if self.quantity_editing and self.quantity_selectable:
+                    if event.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
+                        self.quantity_text = self.quantity_text[:-1] or "1"
+                    elif event.unicode.isdigit():
+                        self.quantity_text = (self.quantity_text + event.unicode)[-2:]
+                    self.quantity = max(1, min(99, int(self.quantity_text or 1)))
+                    self.quantity_text = str(self.quantity)
+                    return None
+            if event.type == pygame.MOUSEMOTION and event.buttons[0] and self.quantity_slider.collidepoint(event.pos):
+                self._set_quantity_from_slider(event.pos[0])
+                return None
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.confirm_rects.get("cancel", pygame.Rect(0, 0, 0, 0)).collidepoint(event.pos):
+                    self.pending_purchase = None
+                    return None
+                if self.confirm_rects.get("confirm", pygame.Rect(0, 0, 0, 0)).collidepoint(event.pos):
+                    action = dict(self.pending_purchase)
+                    if action.get("type") == "vendor_buy":
+                        action["quantity"] = self.quantity
+                    self.pending_purchase = None
+                    return action
+                if self.quantity_input.collidepoint(event.pos) and self.quantity_selectable:
+                    self.quantity_editing = True
+                    self.quantity_text = ""
+                    return None
+                if self.quantity_slider.collidepoint(event.pos) and self.quantity_selectable:
+                    self.quantity_editing = False
+                    self._set_quantity_from_slider(event.pos[0])
+                    return None
             return None
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.close()
@@ -47,8 +91,26 @@ class VendorUI:
                 return None
         for rect, action in self.row_rects:
             if rect.collidepoint(event.pos):
-                return action
+                if action.get("type") == "vendor_sell":
+                    return action
+                self.pending_purchase = action
+                self.quantity = 1
+                self.quantity_text = "1"
+                self.quantity_editing = False
+                stock = next((item for item in vendor.get("stock", []) or []
+                              if item.get("id") == action.get("stock_id")), {})
+                item_definition = EQUIPMENT_ITEMS.get(stock.get("item_id"), {})
+                self.quantity_selectable = (action.get("type") == "vendor_buy"
+                                            and bool(item_definition.get("stackable")))
+                return None
         return None
+
+    def _set_quantity_from_slider(self, x):
+        if self.quantity_slider.width <= 0:
+            return
+        ratio = (x - self.quantity_slider.x) / self.quantity_slider.width
+        self.quantity = max(1, min(99, round(1 + max(0.0, min(1.0, ratio)) * 98)))
+        self.quantity_text = str(self.quantity)
 
     @staticmethod
     def _name(item):
@@ -133,3 +195,59 @@ class VendorUI:
         screen.blit(small.render("Click an item to trade · Esc closes",
                                  True, (180, 190, 202)),
                     (self.panel.x + 18, self.panel.bottom - 22))
+        if self.pending_purchase:
+            veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+            veil.fill((0, 0, 0, 175))
+            screen.blit(veil, (0, 0))
+            modal = pygame.Rect(0, 0, min(460, screen.get_width() - 32), 250)
+            modal.center = screen.get_rect().center
+            pygame.draw.rect(screen, (35, 39, 45), modal, border_radius=8)
+            pygame.draw.rect(screen, (220, 194, 136), modal, 2, border_radius=8)
+            stock = next((item for item in vendor.get("stock", []) or []
+                          if item.get("id") == self.pending_purchase.get("stock_id")), {})
+            price = max(0, int(stock.get("price", 10) or 0))
+            buying = self.pending_purchase.get("type") == "vendor_buy"
+            name = (self._name(stock) if buying else
+                    self._name(next((item for item in buyback or []
+                                    if item.get("id") == self.pending_purchase.get("item_id")), {})))
+            screen.blit(small.render("Confirm purchase", True, (255, 226, 165)),
+                        (modal.x + 20, modal.y + 18))
+            screen.blit(small.render(name, True, (245, 245, 238)),
+                        (modal.x + 20, modal.y + 54))
+            stackable = buying and self.quantity_selectable
+            if stackable:
+                screen.blit(small.render(f"Quantity: {self.quantity}  ·  Total: {price * self.quantity} gold",
+                                         True, (225, 230, 230)),
+                            (modal.x + 20, modal.y + 88))
+                self.quantity_input = pygame.Rect(modal.right - 86, modal.y + 82, 62, 30)
+                pygame.draw.rect(screen, (55, 61, 68), self.quantity_input, border_radius=4)
+                value_font = pygame.font.Font(None, 22)
+                value_text = value_font.render(self.quantity_text, True, (255, 255, 245))
+                screen.blit(value_text, value_text.get_rect(center=self.quantity_input.center))
+                self.quantity_slider = pygame.Rect(modal.x + 22, modal.y + 134,
+                                                   modal.width - 44, 12)
+                pygame.draw.rect(screen, (73, 78, 86), self.quantity_slider, border_radius=6)
+                knob_x = self.quantity_slider.x + int((self.quantity - 1) / 98 * self.quantity_slider.width)
+                pygame.draw.circle(screen, (230, 202, 139), (knob_x, self.quantity_slider.centery), 9)
+                screen.blit(small.render("1", True, (210, 215, 220)),
+                            (self.quantity_slider.x, self.quantity_slider.y + 15))
+                screen.blit(small.render("99", True, (210, 215, 220)),
+                            (self.quantity_slider.right - 20, self.quantity_slider.y + 15))
+                screen.blit(small.render("Drag the slider or click the amount to type (1–99).",
+                                         True, (195, 205, 212)),
+                            (modal.x + 22, modal.y + 174))
+            else:
+                self.quantity_input = pygame.Rect(0, 0, 0, 0)
+                self.quantity_slider = pygame.Rect(0, 0, 0, 0)
+                total = price if buying else 10
+                screen.blit(small.render(f"Cost: {total} gold", True, (225, 230, 230)),
+                            (modal.x + 20, modal.y + 92))
+            cancel = pygame.Rect(modal.x + 112, modal.bottom - 46, 110, 30)
+            confirm = pygame.Rect(modal.x + 238, modal.bottom - 46, 150, 30)
+            pygame.draw.rect(screen, (74, 76, 80), cancel, border_radius=4)
+            pygame.draw.rect(screen, (73, 119, 78), confirm, border_radius=4)
+            cancel_text = small.render("Cancel", True, (250, 250, 245))
+            confirm_text = small.render("Confirm purchase", True, (250, 250, 245))
+            screen.blit(cancel_text, cancel_text.get_rect(center=cancel.center))
+            screen.blit(confirm_text, confirm_text.get_rect(center=confirm.center))
+            self.confirm_rects = {"cancel": cancel, "confirm": confirm}

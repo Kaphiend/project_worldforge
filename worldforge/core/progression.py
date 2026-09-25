@@ -303,20 +303,16 @@ def is_cantrip(spell):
 def prepared_spell_limit(actor_data, class_id=None):
     """Return the prepared leveled-spell limit for the actor's casting class.
 
-    This first playable rule uses class level plus the class's casting ability
-    modifier, with a minimum of one. Keeping the formula here makes the limit
-    easy to replace or move into content data as Worldforge's progression
-    rules are tuned.
+    SRD class tables define the selection count. Mods can tune the table in
+    each class definition without changing the preparation UI.
     """
     class_id = class_id or actor_data.get("char_class")
     class_data = CLASSES.get(class_id, {})
     casting_ability = class_data.get("spellcasting_ability")
     if not casting_ability:
         return 0
-    scores = actor_data.get("abilities", {}) or {}
-    ability_mod = ability_modifier(scores.get(casting_ability, 10) or 10)
     level = class_levels(actor_data).get(class_id, 0)
-    return max(1, level + ability_mod)
+    return max(0, _curve_value(class_data, "prepared_spells_by_level", level))
 
 
 def spell_source_class(actor_data, spell_id):
@@ -452,13 +448,47 @@ def _curve_value(class_data, field_name, level):
     return max(0, int(curve[-1])) if curve else 0
 
 
-def spell_point_max(actor_data):
-    """Sum class-level contributions to the character's shared spell pool."""
-    total = 0
+def spell_slot_maxima(actor_data):
+    """Return SRD-style shared Spellcasting slots by spell level."""
+    full_caster_levels = 0
+    half_caster_levels = 0
+    table = None
     for class_id, level in class_levels(actor_data).items():
         class_data = CLASSES.get(class_id, {})
-        total += _curve_value(class_data, "spell_points_by_level", level)
-    return total
+        progression = class_data.get("spellcasting_progression")
+        if progression == "full":
+            full_caster_levels += level
+            table = class_data.get("spell_slots_by_caster_level", table)
+        elif progression == "half":
+            half_caster_levels += level
+            table = class_data.get("spell_slots_by_caster_level", table)
+    caster_level = full_caster_levels + half_caster_levels // 2
+    if caster_level <= 0 or not table:
+        return {}
+    row = table[min(caster_level, len(table)) - 1]
+    return {str(level): int(count) for level, count in enumerate(row, start=1)
+            if int(count) > 0}
+
+
+def pact_slot_maxima(actor_data):
+    """Return the Warlock Pact Magic slot count and shared slot level."""
+    level = class_levels(actor_data).get("warlock", 0)
+    data = CLASSES.get("warlock", {})
+    return (max(0, _curve_value(data, "pact_slots_by_level", level)),
+            max(0, _curve_value(data, "pact_slot_level_by_level", level)))
+
+
+def spell_slot_summary(actor_data):
+    """Compact display of current leveled and Pact Magic slots."""
+    maxima = spell_slot_maxima(actor_data)
+    current = actor_data.get("spell_slots", {}) or {}
+    rows = [f"L{level} {int(current.get(level, 0) or 0)}/{count}"
+            for level, count in maxima.items()]
+    pact_count, pact_level = pact_slot_maxima(actor_data)
+    if pact_count:
+        rows.append(f"Pact L{pact_level} "
+                    f"{int(actor_data.get('pact_slots', 0) or 0)}/{pact_count}")
+    return " · ".join(rows) if rows else "No spell slots"
 
 
 def class_resource_maxima(actor_data):
@@ -474,27 +504,49 @@ def class_resource_maxima(actor_data):
                 "name": resource.get("name", resource_id.replace("_", " ").title()),
                 "maximum": _curve_value(resource, "max_by_level", level),
                 "recovery": resource.get("recovery", "rest"),
+                "short_rest_recovery": max(
+                    0, int(resource.get("short_rest_recovery", 0) or 0)),
             }
     return maxima
 
 
-def initialize_resources(actor_data, *, refill=False):
-    """Fill missing pools for a new/legacy actor and clamp current values."""
-    spell_max = spell_point_max(actor_data)
-    if refill or actor_data.get("spell_points") is None:
-        actor_data["spell_points"] = spell_max
+def initialize_resources(actor_data, *, refill=False, recovery=None):
+    """Initialize or recover spell slots and class resource pools."""
+    slot_maxima = spell_slot_maxima(actor_data)
+    current_slots = actor_data.setdefault("spell_slots", {})
+    for level in {str(i) for i in range(1, 10)}:
+        maximum = slot_maxima.get(level, 0)
+        if refill or recovery == "long_rest" or level not in current_slots:
+            current_slots[level] = maximum
+        else:
+            current_slots[level] = max(0, min(maximum,
+                                              int(current_slots[level] or 0)))
+    pact_max, pact_level = pact_slot_maxima(actor_data)
+    if refill or recovery in {"short_rest", "long_rest"} or "pact_slots" not in actor_data:
+        actor_data["pact_slots"] = pact_max
     else:
-        actor_data["spell_points"] = max(0, min(spell_max, int(actor_data["spell_points"])))
-
+        actor_data["pact_slots"] = max(0, min(
+            pact_max, int(actor_data.get("pact_slots", 0) or 0)))
+    actor_data["pact_slot_level"] = pact_level
     current = actor_data.setdefault("class_resources", {})
     maxima = class_resource_maxima(actor_data)
     for key, definition in maxima.items():
         maximum = definition["maximum"]
-        if refill or key not in current:
+        rest_recovery = str(definition.get("recovery", "long_rest"))
+        recover_pool = (recovery == rest_recovery
+                        or recovery in {"short_rest", "long_rest"}
+                        and rest_recovery == "short_or_long_rest")
+        short_recovery = max(0, int(definition.get("short_rest_recovery", 0) or 0))
+        if (not refill and recovery == "short_rest" and short_recovery
+                and key in current):
+            current[key] = min(maximum, max(0, int(current[key])) + short_recovery)
+        elif refill or key not in current or recover_pool:
             current[key] = maximum
         else:
             current[key] = max(0, min(maximum, int(current[key])))
     for key in list(current):
         if key not in maxima:
             current.pop(key)
-    return {"spell_points": spell_max, "class_resources": maxima}
+    return {"spell_slots": slot_maxima,
+            "pact_slots": pact_max, "pact_slot_level": pact_level,
+            "class_resources": maxima}

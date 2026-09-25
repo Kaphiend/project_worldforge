@@ -53,7 +53,6 @@
     ],
     "casting_time": "action",
     "cantrip": true,
-    "spell_point_cost": 0,
     "targeting": {
       "mode": "one_target",
       "range_feet": 60,
@@ -88,7 +87,6 @@
     ],
     "casting_time": "action",
     "cantrip": true,
-    "spell_point_cost": 0,
     "targeting": {
       "mode": "one_target",
       "range_feet": 60,
@@ -119,7 +117,6 @@
     ],
     "casting_time": "action",
     "cantrip": true,
-    "spell_point_cost": 0,
     "targeting": {
       "mode": "one_target",
       "range_feet": 60,
@@ -150,7 +147,6 @@
     ],
     "casting_time": "action",
     "cantrip": true,
-    "spell_point_cost": 0,
     "targeting": {
       "mode": "one_target",
       "range_feet": 120,
@@ -180,7 +176,6 @@
     ],
     "casting_time": "action",
     "cantrip": true,
-    "spell_point_cost": 0,
     "targeting": {
       "mode": "one_target",
       "range_feet": 120,
@@ -210,7 +205,6 @@
       "wizard"
     ],
     "casting_time": "action",
-    "spell_point_cost": 1,
     "targeting": {
       "mode": "one_target",
       "range_feet": 120,
@@ -223,7 +217,12 @@
       {
         "kind": "damage",
         "formula": "3d4+3",
-        "damage_type": "force"
+        "damage_type": "force",
+        "upcast": {
+          "formula": "1d4+1",
+          "count": 1,
+          "every_slots": 1
+        }
       }
     ],
     "acquisition": "trainer_purchase",
@@ -240,7 +239,6 @@
       "druid"
     ],
     "casting_time": "bonus_action",
-    "spell_point_cost": 1,
     "targeting": {
       "mode": "one_ally",
       "range_feet": 60,
@@ -254,7 +252,12 @@
         "kind": "healing",
         "formula": "2d4",
         "add_spellcasting_modifier": true,
-        "can_revive": false
+        "can_revive": false,
+        "upcast": {
+          "formula": "1d4",
+          "count": 1,
+          "every_slots": 1
+        }
       }
     ],
     "acquisition": "trainer_purchase",
@@ -273,7 +276,6 @@
       "ranger"
     ],
     "casting_time": "action",
-    "spell_point_cost": 1,
     "targeting": {
       "mode": "one_ally",
       "range_feet": 5,
@@ -287,7 +289,12 @@
         "kind": "healing",
         "formula": "2d8",
         "add_spellcasting_modifier": true,
-        "can_revive": false
+        "can_revive": false,
+        "upcast": {
+          "formula": "1d8",
+          "count": 1,
+          "every_slots": 1
+        }
       }
     ],
     "acquisition": "trainer_purchase",
@@ -303,7 +310,6 @@
       "paladin"
     ],
     "casting_time": "bonus_action",
-    "spell_point_cost": 1,
     "targeting": {
       "mode": "one_ally",
       "range_feet": 60,
@@ -332,7 +338,6 @@
       "ranger"
     ],
     "casting_time": "action",
-    "spell_point_cost": 1,
     "targeting": {
       "mode": "small_area",
       "range_feet": 90,
@@ -365,7 +370,6 @@
       "paladin"
     ],
     "casting_time": "bonus_action",
-    "spell_point_cost": 1,
     "targeting": {
       "mode": "self"
     },

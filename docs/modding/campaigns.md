@@ -76,7 +76,9 @@ routes the runtime accepts.
     "inn_rest_gold_cost": 10,
     "outdoor_rest_min_distance_feet": 100,
     "outdoor_rest_rate_min_percent": 1,
-    "outdoor_rest_rate_max_percent": 5
+    "outdoor_rest_rate_max_percent": 5,
+    "short_rest_cost_multiplier": 1.0,
+    "long_rest_cost_multiplier": 2.0
   }
 }
 ```
@@ -104,10 +106,11 @@ weapon's `ranges` or an object's `interaction_range_feet`.
 | `death_release_xp_penalty_percent`, `revival_xp_penalty_percent` | Worldforge death/revival wallet adjustments | 10, 2 |
 | `corpse_despawn_seconds`, `interaction_range_feet` | Fallback corpse lifetime and nearby interaction range | 3, 5 |
 | `mob_patrol_speed_feet_per_second`, `mob_patrol_waypoints_feet` | Default idle patrol speed and loop offsets from each NPC's patrol origin | 6, square loop |
-| `inn_rest_gold_cost`, `outdoor_rest_min_distance_feet`, `outdoor_rest_rate_min_percent`, `outdoor_rest_rate_max_percent` | Worldforge rest-economy settings | 10, 100, 1, 5 |
+| `inn_rest_gold_cost` | Base inn price before rest-type multiplier | 10 gold |
+| `outdoor_rest_min_distance_feet`, `outdoor_rest_rate_min_percent`, `outdoor_rest_rate_max_percent` | Outdoor safety gate and escalating XP base rate | 100, 1, 5 |
+| `short_rest_cost_multiplier`, `long_rest_cost_multiplier` | Multipliers applied to both rest prices | 1.0, 2.0 |
 
-The XP penalties, paid trainer purchases, and outdoor-rest wallet costs are
-Worldforge behavior, not SRD rules. The demo may raise `xp_debug_multiplier`
+Outdoor XP rest prices and paid trainer purchases are Worldforge behavior, not SRD rules. Inns retain their gold price; long rests use the larger configured multiplier for both currencies. The demo may raise `xp_debug_multiplier`
 for faster iteration; a standard ruleset uses `1.0`. See
 [`experience.md`](tables/experience.md) for per-creature CR rewards.
 

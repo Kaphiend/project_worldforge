@@ -29,6 +29,16 @@ def _animate_hp_changes(combat, before):
 def _log(combat, message):
     combat.setdefault("log", []).append(message)
     combat["log"] = combat["log"][-8:]
+    history = combat.setdefault("verbose_log", [])
+    history.append(str(message))
+    combat["verbose_log"] = history[-1000:]
+
+
+def _debug_log(combat, message):
+    """Append a rules breakdown to the expanded log without crowding the HUD."""
+    history = combat.setdefault("verbose_log", [])
+    history.append(f"[DEBUG] {message}")
+    combat["verbose_log"] = history[-1000:]
 
 def _award_combat_xp(combat, amount=None):
     """Award defeated-creature XP, divided among participants.
@@ -122,6 +132,12 @@ def _advance_turn(combat):
         if budget.pop("skip_next", False):
             _log(combat, f"{actor['data'].get('name', actor_id)} skips their first turn.")
             continue
+        for key in list(budget):
+            if key.startswith("ability_") and key.endswith("_used_this_turn"):
+                budget.pop(key, None)
+            elif key.startswith("spell_") or key == "bonus_action_spell_cast_this_turn":
+                budget.pop(key, None)
+        budget.pop("additional_action_forbids_magic", None)
         budget.update(movement=_movement_allowance(actor["data"]), action=True,
                       bonus_action=True, reaction=True, condition_tick_done=False,
                       movement_used=0, light_attack_available=False,
@@ -192,6 +208,9 @@ def _process_turn_start(combat):
     entry = combat["actors"][actor_id]
     hp_before = _capture_hp(combat)
     for event in tick_conditions(entry["data"], "start"):
+        _debug_log(combat, (f"{event['condition'].replace('_', ' ').title()} damage: "
+                            f"dice {event.get('dice', [])} = {event.get('damage', 0)} "
+                            f"{event.get('damage_type', 'damage')}."))
         _log(combat, (f"{entry['data'].get('name', actor_id)} takes {event['damage']} "
                       f"{event.get('damage_type', 'untyped')} damage from "
                       f"{event['condition'].replace('_', ' ')}."))
@@ -211,7 +230,14 @@ def _process_turn_start(combat):
         if combat.get("active"):
             next_id = _active_actor_id(combat)
             next_entry = combat["actors"][next_id]
-            combat["budgets"][next_id].update(
+            next_budget = combat["budgets"][next_id]
+            for key in list(next_budget):
+                if key.startswith("ability_") and key.endswith("_used_this_turn"):
+                    next_budget.pop(key, None)
+                elif key.startswith("spell_") or key == "bonus_action_spell_cast_this_turn":
+                    next_budget.pop(key, None)
+            next_budget.pop("additional_action_forbids_magic", None)
+            next_budget.update(
                 movement=_movement_allowance(next_entry["data"]), action=True,
                 bonus_action=True, reaction=True, condition_tick_done=False,
                 movement_used=0)

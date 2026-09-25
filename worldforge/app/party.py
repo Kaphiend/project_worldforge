@@ -1,7 +1,7 @@
 """Party membership, connection lifecycle, and position helpers."""
 from copy import deepcopy
 
-from worldforge.app.combat_flow import _active_actor_id, _log
+from worldforge.app.combat_flow import _active_actor_id, _debug_log, _log
 from worldforge.app.encounters import _combat_snapshot
 from worldforge.app.rendering import _player_id
 from worldforge.app.world import _movement_allowance
@@ -35,6 +35,11 @@ def add_joined_players(combat, remote_players):
     for actor_id in additions:
         if actor_id in eligible:
             rolls[actor_id] = initiative_for(eligible[actor_id]['data'])
+            roll = rolls[actor_id]
+            name = eligible[actor_id]['data'].get('name', actor_id)
+            _debug_log(combat, (f"Initiative: {name}: d20 [{roll['natural']}] -> "
+                                f"{roll['natural']} + Dexterity "
+                                f"{roll['dexterity']:+} = {roll['total']}."))
     combat['order'] = [
         {'id': actor_id, **roll}
         for actor_id, roll in sorted(

@@ -24,15 +24,18 @@ one can invalidate existing saves and references.
   SRD 5.2.1 classes use level 3.
 - `spellcasting_ability`: ability ID used for this class's spell attack and
   save DC, if it can cast.
-- `spell_points_by_level`: optional level-indexed curve for this class's
-  contribution to the character's shared spell-point pool. Index `0` is unused;
-  index `N` is the contribution at class level `N`. Multiclass characters add
-  the values for each class at its own class level. The demo baseline is one
-  point per caster class level; tune the numbers directly for balance.
-- `class_resources`: optional named pools separate from spell points, such as
+- `spellcasting_progression`: `full`, `half`, or `pact`; determines which
+  slot table applies. `spell_slots_by_caster_level` stores the SRD Spellcasting
+  slot row for each combined caster level (one-based rows). Full and half
+  casters share Spellcasting slots; half-caster levels combine and round down.
+  Warlocks use `pact_slots_by_level` and `pact_slot_level_by_level`.
+- `prepared_spells_by_level`, `cantrips_by_level`: level-indexed class limits;
+  index zero is unused.
+- `class_resources`: optional named pools separate from spell slots, such as
   `lay_on_hands`. Each entry may define `name`, `max_by_level` (same indexing
-  rule), and `recovery` (currently descriptive; defaults to `rest`). Runtime
-  saves store current amounts by `class_id.resource_id`. Abilities can spend
+  rule), `recovery` (`short_rest`, `long_rest`, or `short_or_long_rest`), and
+  optional `short_rest_recovery`. Runtime saves store current amounts by
+  `class_id.resource_id`. Abilities can spend
   these pools with their `resource_cost` field. Add class data only when the
   rules and recovery cadence are defined; this project does not assume
   fifth-edition values for special pools.
@@ -50,9 +53,12 @@ one can invalidate existing saves and references.
   skill lists and subclass choices follow SRD 5.2.1; purchased skills and
   features still require XP. Former Worldforge subclasses remain nonselectable
   for old saves. Hide, Sneak Attack, Rage, Reckless Attack, Second Wind, Action
-  Surge, Monk Flurry/Patient Defense, Cunning Action: Dash, and
-  `extra_weapon_attack` currently have combat behavior; most other feature
-  effects are descriptive until their resolver is implemented. Rogue combat
+  Surge, Fighter Extra Attack/Tactical Shift, Champion critical range, Monk
+  Flurry/Patient Defense, Cunning Action: Dash, and `extra_weapon_attack`
+  currently have combat behavior; most other feature effects are descriptive
+  until their resolver is implemented. Fighter Fighting Styles Archery,
+  Defense, Dueling, Great Weapon Fighting, and Two-Weapon Fighting have combat
+  behavior; Protection awaits its reaction choice flow. Rogue combat
   supports Sneak Attack scaling, Cunning Action, Steady Aim, Cunning Strike
   Trip/Poison/Withdraw, Expertise, Evasion, Reliable Talent, Slippery Mind,
   Elusive, opportunity attacks, Expertise selection, and automatic Uncanny

@@ -135,6 +135,10 @@ def advance_host_world(actor, player_id, remote_players, combat,
             combat = _new_combat(
                 actor, player_id, remote_players, scenario_id=scenario_id,
                 world_mobs=world_mobs)
+            # Carry the creature that caused the encounter into the client
+            # target-selection state, so the first attack input has a target.
+            combat["aggro_target_id"] = enemy_id
+            combat["aggro_player_id"] = spotted_player
             combat["world_areas"] = deepcopy(area_state.get("world_areas", {}))
             combat["world_area_items"] = deepcopy(
                 area_state.get("world_area_items", {}))

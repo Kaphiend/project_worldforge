@@ -7,7 +7,7 @@ from worldforge.content.classes import (ALL_SKILLS, CLASSES, ITEM_ATTRIBUTES, SP
                                         SUBCLASSES, subclass_feature_items)
 from worldforge.combat.rules import armor_class, proficiency_bonus, speed_feet
 from worldforge.core.progression import (attribute_points_available, class_resource_maxima,
-                         spell_point_max, unspent_xp)
+                         spell_slot_summary, unspent_xp)
 
 
 class InventoryScreen:
@@ -372,11 +372,7 @@ class InventoryScreen:
         add_row("Armor", ", ".join(str(value).title() for value in actor_data.get("armor_prof", []) or []) or "None")
         add_row("Weapons", ", ".join(str(value).title() for value in actor_data.get("weapon_prof", []) or []) or "None")
         add_section("Resources and Status")
-        try:
-            max_spell_points = spell_point_max(actor_data)
-        except (KeyError, TypeError, ValueError):
-            max_spell_points = int(actor_data.get("spell_points", 0) or 0)
-        add_row("Spell Points", f"{actor_data.get('spell_points', 0)} / {max_spell_points}")
+        add_row("Spell Slots", spell_slot_summary(actor_data))
         resource_maxima = class_resource_maxima(actor_data)
         for resource_id, amount in (actor_data.get("class_resources", {}) or {}).items():
             current = amount

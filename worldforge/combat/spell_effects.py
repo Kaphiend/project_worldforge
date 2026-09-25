@@ -35,10 +35,19 @@ def _damage(target, amount):
 
 
 def _apply(effect, caster, target, source_id, *, critical=False,
-           casting_class=None, damage_multiplier=1.0):
+           casting_class=None, damage_multiplier=1.0,
+           cast_level=None, base_level=0):
     kind = effect.get("kind")
     if kind == "damage":
         rolled_amount, rolls = roll_dice(effect["formula"], critical=critical)
+        upcast = effect.get("upcast") or {}
+        step = max(1, int(upcast.get("every_slots", 1) or 1))
+        extra_count = max(0, int((cast_level or base_level) - base_level)) // step
+        for _ in range(extra_count * max(0, int(upcast.get("count", 1) or 1))):
+            extra_amount, extra_rolls = roll_dice(upcast.get("formula", "1d6"),
+                                                  critical=critical)
+            rolled_amount += extra_amount
+            rolls.extend(extra_rolls)
         amount = floor(rolled_amount * effect.get("multiplier", 1))
         resisted = effect.get("damage_type", "untyped") in damage_resistances(target)
         if resisted:
@@ -46,11 +55,22 @@ def _apply(effect, caster, target, source_id, *, critical=False,
         amount = max(0, floor(amount * max(0.0, damage_multiplier)))
         _damage(target, amount)
         return {"kind": kind, "amount": amount, "rolled_amount": rolled_amount,
-                "rolls": rolls,
+                "formula": effect["formula"], "rolls": rolls,
+                "cast_level": cast_level,
                 "damage_type": effect.get("damage_type", "untyped"),
                 "resisted": resisted}
     if kind == "healing":
         amount, rolls = roll_dice(effect["formula"])
+        upcast = effect.get("upcast") or {}
+        step = max(1, int(upcast.get("every_slots", 1) or 1))
+        extra_count = max(0, int((cast_level or base_level) - base_level)) // step
+        for _ in range(extra_count * max(0, int(upcast.get("count", 1) or 1))):
+            extra_amount, extra_rolls = roll_dice(upcast.get("formula", "1d4"))
+            amount += extra_amount
+            rolls.extend(extra_rolls)
+        rolled_amount = amount
+        spell_modifier = 0
+        class_level_bonus = 0
         if effect.get("add_spellcasting_modifier") and caster is not None:
             from worldforge.content.classes import CLASSES
 
@@ -60,16 +80,22 @@ def _apply(effect, caster, target, source_id, *, critical=False,
                  and CLASSES[class_id].get("spellcasting_ability")), None)
             if casting_class:
                 spell_mod, _ = _spellcasting_modifier(caster, casting_class)
-                amount = max(0, amount + spell_mod)
+                spell_modifier = spell_mod
+                amount = max(0, amount + spell_modifier)
         class_id = effect.get("add_class_level")
         if class_id and caster is not None:
             levels = {entry.get("name"): int(entry.get("level", 0) or 0)
                       for entry in caster.get("classes", []) or []}
             class_level = levels.get(class_id, caster.get("level", 1)
                                      if caster.get("char_class") == class_id else 0)
-            amount += max(0, int(class_level))
+            class_level_bonus = max(0, int(class_level))
+            amount += class_level_bonus
         restored = resolve_healing_effect(target, effect, amount)
-        return {"kind": kind, "amount": restored, "rolls": rolls,
+        return {"kind": kind, "amount": restored, "rolled_amount": rolled_amount,
+                "formula": effect["formula"], "rolls": rolls,
+                "cast_level": cast_level,
+                "spell_modifier": spell_modifier,
+                "class_level_bonus": class_level_bonus, "calculated_amount": amount,
                 "revived": bool(effect.get("can_revive") and restored > 0)}
     if kind == "condition":
         instance = apply_condition(target, effect["condition_id"], source_id=source_id)
@@ -79,7 +105,8 @@ def _apply(effect, caster, target, source_id, *, critical=False,
         amount, rolls = roll_dice(effect["formula"])
         restored = resolve_healing_effect(
             caster, {"kind": "healing", "can_revive": False}, amount)
-        return {"kind": "healing", "amount": restored, "rolls": rolls}
+        return {"kind": "healing", "amount": restored,
+                "rolled_amount": amount, "rolls": rolls}
     if kind in {"next_weapon_hit_bonus", "weapon_damage_bonus", "armor_bonus",
                 "movement_bonus", "damage_resistance",
                 "attack_disadvantage_against_target", "next_attack_advantage",
@@ -98,7 +125,8 @@ def _apply(effect, caster, target, source_id, *, critical=False,
 
 
 def apply_spell_effects(spell_id, caster, target, *, outcome=None, critical=False,
-                        casting_class=None, damage_multiplier=1.0):
+                        casting_class=None, damage_multiplier=1.0,
+                        cast_level=None):
     """Apply a spell's selected outcome; attack/save rolls are resolved separately."""
     definition = SPELLS[spell_id]
     if target is None:
@@ -107,7 +135,9 @@ def apply_spell_effects(spell_id, caster, target, *, outcome=None, critical=Fals
     for effect in _effects_for(definition, outcome):
         applied.append(_apply(effect, caster, target, spell_id, critical=critical,
                               casting_class=casting_class,
-                              damage_multiplier=damage_multiplier))
+                              damage_multiplier=damage_multiplier,
+                              cast_level=cast_level,
+                              base_level=int(definition.get("level", definition.get("tier", 0)) or 0)))
     return applied
 
 
@@ -154,10 +184,11 @@ def _target_save_modifier(target, ability):
 
 
 def resolve_spell(spell_id, caster, targets=None, *, casting_class=None,
-                  line_of_sight=True, target_position=None, from_consumable=False):
+                  line_of_sight=True, target_position=None, from_consumable=False,
+                  cast_level=None):
     """Resolve an attack/save spell, then apply its data-driven effects.
 
-    Casting actions and spell-point expenditure are handled by the caller.
+    Casting actions and spell-slot expenditure are handled by the caller.
     Targets can be one actor or a list. For area spells, the caller supplies
     ``target_position`` for range validation and the actors in the area.
     """
@@ -208,24 +239,31 @@ def resolve_spell(spell_id, caster, targets=None, *, casting_class=None,
         roll_data = None
         if kind == "spell_attack":
             spell_mod, ability = _spellcasting_modifier(caster, casting_class)
+            proficiency = proficiency_bonus(caster)
             natural, dice = roll_d20()
-            total = natural + spell_mod + proficiency_bonus(caster)
+            total = natural + spell_mod + proficiency
             hit = natural == 20 or (natural != 1 and total >= armor_class(target))
             critical = natural == 20
             outcome = "hit" if hit else "miss"
             roll_data = {"natural": natural, "dice": dice, "total": total,
-                         "ability": ability, "target_ac": armor_class(target),
+                         "ability": ability, "modifier": spell_mod,
+                         "proficiency": proficiency,
+                         "target_ac": armor_class(target),
                          "critical": critical}
         elif kind == "saving_throw":
             ability = resolution["ability"]
             spell_mod, casting_ability = _spellcasting_modifier(caster, casting_class)
             dc = 8 + spell_mod + proficiency_bonus(caster)
             natural, dice = roll_d20()
-            total = natural + _target_save_modifier(target, ability)
+            save_modifier = _target_save_modifier(target, ability)
+            total = natural + save_modifier
+            proficiency = proficiency_bonus(caster)
             outcome = "successful_save" if total >= dc else "failed_save"
             roll_data = {"natural": natural, "dice": dice, "total": total,
                          "ability": ability, "casting_ability": casting_ability,
-                         "dc": dc}
+                         "modifier": save_modifier, "dc": dc,
+                         "spell_modifier": spell_mod,
+                         "proficiency": proficiency}
         elif kind in {"healing", "self_enchantment", "utility", "automatic"}:
             outcome = None
         else:
@@ -238,7 +276,8 @@ def resolve_spell(spell_id, caster, targets=None, *, casting_class=None,
             damage_multiplier = 0.0 if outcome == "successful_save" else 0.5
         applied = apply_spell_effects(
             spell_id, caster, target, outcome=outcome, critical=critical,
-            casting_class=casting_class, damage_multiplier=damage_multiplier)
+            casting_class=casting_class, damage_multiplier=damage_multiplier,
+            cast_level=cast_level)
         results.append({"target": target.get("name", "Target"),
                         "outcome": outcome, "roll": roll_data, "effects": applied})
     return {"success": True, "spell": spell_id, "results": results}

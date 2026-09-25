@@ -359,6 +359,12 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
     order = _initiative_order({
         key: entry for key, entry in actors.items() if not entry["downed"]
     })
+    verbose_log = [
+        (f"[DEBUG] Initiative: {actors[item['id']]['data'].get('name', item['id'])}: "
+         f"d20 [{item['natural']}] -> {item['natural']} + Dexterity "
+         f"{item['dexterity']:+} = {item['total']}.")
+        for item in order
+    ]
     return {
         "active": True, "round": 1, "order": order, "turn_index": 0,
         "removed_order": {},
@@ -371,7 +377,7 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
                   "condition_tick_done": False, "movement_used": 0}
             for key, entry in actors.items()
         },
-        "log": [], "scenario_id": scenario_id,
+        "log": [], "verbose_log": verbose_log, "scenario_id": scenario_id,
         "scenario": deepcopy(scenario),
         "arena": deepcopy(ARENAS.get(scenario.get("arena"), {})),
         "chests": deepcopy(ARENAS.get(scenario.get("arena"), {}).get("chests", [])),

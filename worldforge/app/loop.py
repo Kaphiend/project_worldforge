@@ -125,7 +125,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     interact_prompt = None
     exit_to_menu = False
     from worldforge.ui.inventory import InventoryScreen
-    from worldforge.ui.spellbook import SpellbookUI, normalize_action_hotbars
+    from worldforge.ui.spellbook import (SpellbookUI, action_definition,
+                                         normalize_action_hotbars)
     from worldforge.ui.trainer import TrainerUI
     from worldforge.ui.loot import LootUI
     from worldforge.ui.personal_storage import PersonalStorageUI
@@ -133,6 +134,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     from worldforge.ui.character_sheet import CharacterSheetUI
     from worldforge.ui.keybindings import KeyBindings
     from worldforge.ui.pause_menu import PauseMenuUI, open_overlay, pop_overlay
+    from worldforge.ui.prompt_dialog import interaction_prompt_rects
     inventory_ui = InventoryScreen()
     spellbook_ui = SpellbookUI()
     trainer_ui = TrainerUI()
@@ -151,6 +153,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     }
     combat_log_rect = pygame.Rect(0, 0, 0, 0)
     combat_log_scroll = 0
+    verbose_combat_log = False
     chat_mode = False
     chat_text = ""
     local_speech = None
@@ -267,8 +270,33 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
         else:
             combat_transport["submit"](action)
 
-    def use_bar_action(assigned_action):
+    def use_bar_action(assigned_action, bar_index=None, slot_index=None):
         nonlocal action_notice, action_notice_until
+        kind, action_id, definition = action_definition(assigned_action)
+        if (kind == "action" and action_id == "rogue_cunning_action"
+                and bar_index is not None and slot_index is not None):
+            spellbook_ui.begin_cunning_action_selector(bar_index, slot_index)
+            return True
+        if (kind == "ability" and definition
+                and (definition.get("cunning_strike_selector")
+                     or definition.get("cunning_strike_option"))):
+            if bar_index is not None and slot_index is not None:
+                spellbook_ui.begin_cunning_strike_selector(
+                    vars(actor), bar_index, slot_index)
+                return True
+        if (kind == "spell" and bar_index is not None
+                and slot_index is not None):
+            targeting = definition.get("targeting", {}) if definition else {}
+            if targeting.get("mode") != "self" and not selected_target:
+                action_notice = "Select a target first."
+                action_notice_until = pygame.time.get_ticks() + 1800
+                return True
+            slot_options = spellbook_ui.available_slot_options(
+                vars(actor), action_id)
+            if spellbook_ui.begin_spell_slot_selector(
+                    action_id, selected_target, slot_options,
+                    bar_index, slot_index):
+                return True
         consumed, notice = dispatch_hotbar_action(
             assigned_action, selected_target, submit, toggle_sneaking,
             notify_missing_target=True)
@@ -276,6 +304,22 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             action_notice = "Select a target first."
             action_notice_until = pygame.time.get_ticks() + 1800
         return consumed
+
+    def resolve_interaction_prompt(confirmed):
+        nonlocal interact_prompt
+        if confirmed and interact_prompt:
+            kind = interact_prompt.get("type")
+            if kind == "inn_bed":
+                submit({"type": "rest_inn_checkin",
+                        "bed_id": interact_prompt.get("bed_id")})
+            elif kind == "innkeeper":
+                submit({"type": "inn_book_bed"})
+            elif kind == "camp_exit":
+                submit({"type": "leave_camp"})
+            elif kind == "area_exit":
+                submit({"type": "travel_exit",
+                        "exit_id": interact_prompt.get("exit_id")})
+        interact_prompt = None
 
     def toggle_sneaking():
         nonlocal action_notice, action_notice_until
@@ -337,6 +381,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         and (target_entry.get("downed")
                              or target_entry.get("data", {}).get("current_hp", 1) <= 0)):
                     selected_target = None
+        if (selected_target is None and combat and combat.get("active")
+                and combat.get("aggro_target_id") in combat.get("actors", {})):
+            selected_target = combat["aggro_target_id"]
 
         action_feedback = (combat or {}).get("action_feedback", {})
         if action_feedback.get("id") and action_feedback["id"] != feedback_seen_id:
@@ -345,6 +392,10 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             feedback_flash_until = pygame.time.get_ticks() + 700
 
         active_id = _active_actor_id(combat)
+        local_entry = (combat or {}).get("actors", {}).get(player_id)
+        local_withdrawn = bool(
+            local_entry.get("data", {}).get("withdrawn", False)
+            if local_entry else actor.withdrawn)
         local_can_act = (not combat or not combat.get("active") or
                          active_id == player_id)
         current_frames = sprite_frames.get(actor.avatar, default_frames)
@@ -355,9 +406,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
         scenario_changed = (render_scenario_id is not None
                             and render_scenario != render_scenario_id)
         render_scenario_id = render_scenario
-        combat_render_positions = _smooth_combat_positions(
+        combat_draw_positions = _smooth_combat_positions(
             combat, combat_render_positions, dt, reset=scenario_changed)
-        local_draw_position = combat_render_positions.get(
+        local_draw_position = combat_draw_positions.get(
             player_id, (actor.x, actor.y))
         camera = _camera_offset_position(
             *local_draw_position, current_arena, screen.get_size())
@@ -389,6 +440,47 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
                     chat_mode = False
             elif chat_mode:
+                continue
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_F9:
+                verbose_combat_log = not verbose_combat_log
+                combat_log_scroll = 0
+            elif spellbook_ui.option_selector:
+                selector_action = spellbook_ui.handle_option_selector_event(event)
+                if selector_action:
+                    submit(selector_action)
+                continue
+            elif verbose_combat_log:
+                if event.type == pygame.MOUSEWHEEL:
+                    verbose_messages = (combat or {}).get(
+                        "verbose_log", (combat or {}).get("log", []))
+                    line_count = sum(max(1, math.ceil(
+                        font.size(str(message))[0] / 700))
+                        for message in verbose_messages)
+                    combat_log_scroll = max(0, min(
+                        max(0, line_count - 8), combat_log_scroll + event.y))
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    verbose_combat_log = False
+                    combat_log_scroll = 0
+                continue
+            elif trainer_ui.visible and trainer_ui.confirmation:
+                trainer_data = ((combat or {}).get("actors", {}).get(player_id, {})
+                                .get("data", vars(actor)))
+                trainer_action = trainer_ui.handle_event(event, trainer_data)
+                if trainer_action:
+                    submit(trainer_action)
+                continue
+            elif vendor_ui.visible and vendor_ui.pending_purchase:
+                vendor = next((item for item in current_arena.get("vendors", [])
+                               if item.get("id") == vendor_ui.vendor_id), None)
+                vendor_data = ((combat or {}).get("actors", {}).get(player_id, {})
+                               .get("data", vars(actor)))
+                buyback_by_actor = (combat or {}).get(
+                    "vendor_buyback", vendor_state["buyback"])
+                vendor_action = vendor_ui.handle_event(
+                    event, vendor, vendor_data,
+                    buyback_by_actor.get(player_id, []))
+                if vendor_action:
+                    submit(vendor_action)
                 continue
             elif handle_screen_navigation(event):
                 continue
@@ -435,9 +527,13 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     loot_ui.handle_event(
                         event, container.get("loot", []) if container else [])
                 elif combat_log_rect.collidepoint(pygame.mouse.get_pos()):
+                    log_source = ((combat or {}).get("verbose_log", [])
+                                  if verbose_combat_log else
+                                  (combat or {}).get("log", []))
+                    log_width = 700 if verbose_combat_log else 370
                     log_count = sum(max(1, math.ceil(
-                        font.size(str(message))[0] / 370))
-                        for message in (combat or {}).get("log", []))
+                        font.size(str(message))[0] / log_width))
+                        for message in log_source)
                     combat_log_scroll = max(0, min(max(0, log_count - 5),
                                                   combat_log_scroll + event.y))
             elif keybindings.matches(event, "controls"):
@@ -480,21 +576,20 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 if trainer_action:
                     submit(trainer_action)
             elif interact_prompt:
-                if (event.type == pygame.KEYDOWN and event.key == pygame.K_y
-                        or keybindings.matches(event, "chat")):
-                    if interact_prompt.get("type") == "inn_bed":
-                        submit({"type": "rest_inn_checkin",
-                                "bed_id": interact_prompt.get("bed_id")})
-                    elif interact_prompt.get("type") == "innkeeper":
-                        submit({"type": "inn_book_bed"})
-                    elif interact_prompt.get("type") == "camp_exit":
-                        submit({"type": "leave_camp"})
-                    elif interact_prompt.get("type") == "area_exit":
-                        submit({"type": "travel_exit",
-                                "exit_id": interact_prompt.get("exit_id")})
-                    interact_prompt = None
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
-                    interact_prompt = None
+                _, yes_rect, no_rect = interaction_prompt_rects(screen.get_size())
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if yes_rect.collidepoint(event.pos):
+                        resolve_interaction_prompt(True)
+                    elif no_rect.collidepoint(event.pos):
+                        resolve_interaction_prompt(False)
+                elif event.type == pygame.KEYDOWN and event.key in (
+                        pygame.K_y, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    resolve_interaction_prompt(True)
+                elif event.type == pygame.KEYDOWN and event.key in (
+                        pygame.K_n, pygame.K_ESCAPE):
+                    resolve_interaction_prompt(False)
+                elif keybindings.matches(event, "chat"):
+                    resolve_interaction_prompt(True)
             elif loot_ui.visible:
                 container = ((combat or {}).get("actors", {}).get(
                     loot_ui.corpse_id) or next((item for item in
@@ -630,15 +725,17 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     push_screen("character_sheet", replace=True)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 clicked = False
-                assigned_action = spellbook_ui.hud_action_at(event.pos)
-                if assigned_action and not spellbook_ui.visible:
-                    use_bar_action(assigned_action)
+                hud_slot = spellbook_ui.hud_slot_at(event.pos)
+                if hud_slot and not spellbook_ui.visible:
                     clicked = True
+                    if hud_slot[0]:
+                        assigned_action, bar_index, slot_index = hud_slot
+                        use_bar_action(assigned_action, bar_index, slot_index)
                 if not clicked:
                     selected_target, clicked = target_at_screen_position(
                         event.pos, actor, player_id, combat, remote_players,
                         drawn_positions, camera, local_draw_position,
-                        combat_render_positions)
+                        combat_draw_positions)
                 if not clicked and combat and combat.get("active") and local_can_act:
                     submit({"type": "move",
                             "x": event.pos[0] + camera[0] - ACTOR_SIZE / 2,
@@ -662,9 +759,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 bars = normalize_action_hotbars(vars(actor).get("spell_hotbars"))
                 hotbar_action = bars[spellbook_ui.active_bar][slot_index]
                 if hotbar_action:
-                    dispatch_hotbar_action(
-                        hotbar_action, selected_target, submit, toggle_sneaking,
-                        notify_missing_target=False)
+                    use_bar_action(hotbar_action, spellbook_ui.active_bar,
+                                   slot_index)
             elif keybindings.matches(event, "throw"):
                 if selected_target:
                     submit({"type": "throw", "target": selected_target})
@@ -703,7 +799,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         "y": current_y + key_dy / length * step})
                 last_combat_key_move = now
         if (not screen_stack and not chat_mode and not actor.downed and
-                (not combat or not combat.get("active") or actor.withdrawn)):
+                (not combat or not combat.get("active") or local_withdrawn)):
             occupied = []
             for remote in remote_players:
                 occupied.append(_actor_hitbox(remote.get("x", 0),
@@ -757,7 +853,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                      "right": keybindings.key("move_right")})
                 moving = moving or key_moving
         local_entry = (combat or {}).get("actors", {}).get(player_id)
-        if actor.withdrawn and local_entry:
+        if (local_entry and local_entry.get("data", {}).get("withdrawn")):
             local_entry["x"], local_entry["y"] = actor.x, actor.y
             local_entry["data"]["x"], local_entry["data"]["y"] = actor.x, actor.y
         local_requested = ("dead" if actor.downed or
@@ -825,8 +921,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             "chat_text": chat_text,
             "combat": combat,
             "combat_log_scroll": combat_log_scroll,
+            "verbose_combat_log": verbose_combat_log,
             "controls_visible": controls_visible,
-            "combat_positions": combat_render_positions,
+            "combat_positions": combat_draw_positions,
             "current_arena": current_arena,
             "drawn_positions": drawn_positions,
             "dt": dt,

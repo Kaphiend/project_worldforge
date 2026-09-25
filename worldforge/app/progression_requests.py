@@ -1,13 +1,18 @@
 """Character progression, trainer purchases, and downed character requests."""
 from copy import deepcopy
+import pygame
 
 from worldforge.app.combat_flow import _log, _remove_downed_from_order
-from worldforge.app.encounters import DEFAULT_SCENARIO, _progression_sync_state
+from worldforge.app.encounters import (DEFAULT_SCENARIO,
+                                       _progression_sync_state,
+                                       _scenario_world_mobs,
+                                       combat_world_mobs)
+from worldforge.app.party import set_remote_position
 from worldforge.app.rendering import _player_id
 from worldforge.content.classes import (ABILITIES, ARENAS, CLASSES, SCENARIOS,
                                         SPELLS, SUBCLASSES, skill_options,
                                         subclass_feature_items)
-from worldforge.content.campaign import campaign_rule
+from worldforge.content.campaign import ACTIVE_CAMPAIGN, campaign_rule
 from worldforge.combat.rules import (ROGUE_WEAPON_MASTERY,
                                      FIGHTING_STYLE_OPTIONS,
                                      weapon_mastery_eligible)
@@ -16,6 +21,97 @@ from worldforge.core.progression import (adjusted_purchase_cost, apply_level_up,
     class_unlocked_level, initialize_resources, qualified_level,
     set_spell_prepared, spend_attribute_point, spend_xp, sync_progression_levels,
     unspent_xp, unlocked_classes, class_feature_choice_slots)
+
+
+def _transport_party_to_inn(actor, local_player_id, remote_players, combat,
+                            released_actor_id):
+    """Move the whole party to the campaign inn when a spirit is released."""
+    inn_scenario_id = next((scenario_id
+                           for scenario_id in ACTIVE_CAMPAIGN["scenarios"]
+                           if (ARENAS.get(SCENARIOS.get(
+                               scenario_id, {}).get("arena"), {})
+                               .get("innkeepers"))), None)
+    if inn_scenario_id is None:
+        return combat
+    scenario = SCENARIOS[inn_scenario_id]
+    arena = ARENAS.get(scenario.get("arena"), {})
+    innkeeper = arena.get("innkeepers", [{}])[0]
+    state = combat or _progression_sync_state(
+        actor, local_player_id, remote_players)
+    source_id = state.get("scenario_id", DEFAULT_SCENARIO)
+    world_areas = state.setdefault("world_areas", {})
+    if source_id != inn_scenario_id and source_id not in world_areas:
+        world_areas[source_id] = combat_world_mobs(state)
+        state.setdefault("world_area_items", {})[source_id] = deepcopy(
+            state.get("ground_items", []))
+        state.setdefault("world_area_chests", {})[source_id] = deepcopy(
+            state.get("chests", []))
+    world_areas.setdefault(inn_scenario_id, _scenario_world_mobs(inn_scenario_id))
+
+    players = {player_id: entry for player_id, entry in
+               state.get("actors", {}).items()
+               if entry.get("team") == "players"}
+    players.setdefault(local_player_id, {
+        "id": local_player_id, "team": "players", "data": vars(actor),
+        "downed": bool(actor.downed), "x": actor.x, "y": actor.y,
+    })
+    for remote in remote_players:
+        if remote.get("actor"):
+            player_id = _player_id(remote)
+            players.setdefault(player_id, {
+                "id": player_id, "team": "players",
+                "data": remote["actor"] if isinstance(remote["actor"], dict)
+                else vars(remote["actor"]),
+                "downed": bool((remote["actor"].get("downed", False)
+                                if isinstance(remote["actor"], dict)
+                                else remote["actor"].downed)),
+                "x": remote.get("x", 0), "y": remote.get("y", 0),
+            })
+
+    spawns = scenario.get("player_spawns", [])
+    destination_mobs = world_areas[inn_scenario_id]
+    state["actors"] = players
+    for index, (player_id, entry) in enumerate(players.items()):
+        if player_id == released_actor_id:
+            x = int(innkeeper.get("x", 0) + innkeeper.get("width", 0) + 12)
+            y = int(innkeeper.get("y", 0))
+        else:
+            x, y = spawns[index % len(spawns)] if spawns else (130, 170)
+        entry["x"], entry["y"] = int(x), int(y)
+        entry["data"]["x"], entry["data"]["y"] = int(x), int(y)
+        entry["data"]["withdrawn"] = False
+        entry["data"]["_force_position_sync"] = True
+        if player_id == local_player_id:
+            actor.x, actor.y = int(x), int(y)
+            actor.withdrawn = False
+        else:
+            remote = next((item for item in remote_players
+                           if _player_id(item) == player_id), None)
+            if remote:
+                set_remote_position(remote, int(x), int(y))
+                remote_actor = remote.get("actor")
+                if isinstance(remote_actor, dict):
+                    remote_actor["withdrawn"] = False
+                elif remote_actor is not None:
+                    remote_actor.withdrawn = False
+    for mob in destination_mobs:
+        state["actors"][mob["id"]] = deepcopy(mob)
+    state["inactive_world_mobs"] = []
+    state["scenario_id"] = inn_scenario_id
+    state["scenario"] = deepcopy(scenario)
+    state["arena"] = deepcopy(arena)
+    state.update(active=False, sync_only=True, order=[], budgets={}, turn_index=0,
+                 result=None, victory_settled=False, rest_session=None,
+                 rest_position_sync=True, area_changed=True)
+    state["ground_items"] = deepcopy(state.get(
+        "world_area_items", {}).get(inn_scenario_id, []))
+    state["chests"] = deepcopy(state.get(
+        "world_area_chests", {}).get(inn_scenario_id,
+        arena.get("chests", [])))
+    state["aggro_target_id"] = None
+    state["aggro_player_id"] = None
+    state["aggro_immune_until"] = pygame.time.get_ticks() + 3000
+    return state
 
 
 def handle_progression_action(actor, local_player_id, actor_id, action,
@@ -279,15 +375,17 @@ def handle_progression_action(actor, local_player_id, actor_id, action,
         data["withdrawn"] = True
         arena = (combat or {}).get("arena") or ARENAS.get(
             SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {})
-        bed = next(iter(arena.get("inn_beds", [])), None)
+        innkeeper = next(iter(arena.get("innkeepers", [])), None)
         respawn = SCENARIOS.get(
             (combat or {}).get("scenario_id", DEFAULT_SCENARIO), {}).get(
                 "respawn_point", [130, 170])
-        if bed:
-            data["x"] = int(bed.get(
-                "respawn_x", bed.get("x", 130) + bed.get("width", 100) + 12))
-            data["y"] = int(bed.get(
-                "respawn_y", bed.get("y", 170) + bed.get("height", 60) + 12))
+        if innkeeper:
+            # Place the respawn beside the keeper so the character can
+            # immediately interact with them, without landing inside their
+            # footprint.
+            data["x"] = int(innkeeper.get("x", 0)
+                            + innkeeper.get("width", 0) + 12)
+            data["y"] = int(innkeeper.get("y", 0))
         else:
             data["x"], data["y"] = map(int, respawn)
         if not isinstance(owner, dict):
@@ -299,7 +397,29 @@ def handle_progression_action(actor, local_player_id, actor_id, action,
                 actor.x, actor.y = data["x"], data["y"]
                 actor.current_hp, actor.downed, actor.withdrawn = data["current_hp"], False, True
             _remove_downed_from_order(combat)
-            destination = "the inn" if bed else "a safe place nearby"
-            _log(combat, f"{data.get('name', 'Actor')} releases their spirit and returns to {destination}, losing {penalty} XP.")
+            # Releasing a spirit ends the current encounter for the party.
+            # Keep enemy snapshots as world mobs, but clear their combat
+            # target and briefly suppress an immediate re-aggro at the bed.
+            combat["active"] = False
+            combat["result"] = None
+            combat["order"] = []
+            combat["budgets"] = {}
+            combat["turn_index"] = 0
+            combat["aggro_target_id"] = None
+            combat["aggro_player_id"] = None
+            combat["aggro_immune_until"] = pygame.time.get_ticks() + 3000
+            for enemy in combat.get("actors", {}).values():
+                if enemy.get("team") == "enemies":
+                    enemy.get("data", {}).pop("hidden", None)
+            # The next encounter snapshot clears withdrawn for all players.
+            # Keep the respawned player available for its trigger check too.
+            data["withdrawn"] = False
+            if actor_id == local_player_id:
+                actor.withdrawn = False
+        combat = _transport_party_to_inn(
+            actor, local_player_id, remote_players, combat, actor_id)
+        if combat:
+            _log(combat, (f"{data.get('name', 'Actor')} releases their spirit. "
+                          f"The party returns to the inn, losing {penalty} XP."))
         return combat or _progression_sync_state(
             actor, local_player_id, remote_players)

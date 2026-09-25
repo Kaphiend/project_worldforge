@@ -27,6 +27,45 @@ class TrainerUI:
         self.section_by_class = {}
         self._section_rects = {}
         self._attribute_rects = {}
+        self.confirmation = None
+        self._confirmation_rects = {}
+
+    def _ask_confirmation(self, action, title, cost):
+        self.confirmation = {"action": action, "title": title, "cost": cost}
+
+    def _draw_confirmation(self, screen, font):
+        if not self.confirmation:
+            self._confirmation_rects = {}
+            return
+        veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        veil.fill((0, 0, 0, 175))
+        screen.blit(veil, (0, 0))
+        rect = pygame.Rect(0, 0, min(460, screen.get_width() - 32), 190)
+        rect.center = screen.get_rect().center
+        pygame.draw.rect(screen, (35, 39, 45), rect, border_radius=8)
+        pygame.draw.rect(screen, (220, 194, 136), rect, 2, border_radius=8)
+        small = pygame.font.Font(None, 22)
+        action_type = self.confirmation.get("action", {}).get("type")
+        heading = ("Confirm purchase" if action_type in {
+            "trainer_purchase", "unlock_class"} else
+            "Confirm point spend" if action_type == "increase_ability" else
+            "Confirm level up")
+        screen.blit(small.render(heading, True, (255, 226, 165)),
+                    (rect.x + 20, rect.y + 20))
+        title = self._fit(self.confirmation["title"], small, rect.width - 40)
+        screen.blit(small.render(title, True, (245, 245, 238)),
+                    (rect.x + 20, rect.y + 60))
+        screen.blit(small.render(self.confirmation["cost"], True, (220, 225, 226)),
+                    (rect.x + 20, rect.y + 92))
+        cancel = pygame.Rect(rect.x + 150, rect.bottom - 48, 110, 32)
+        confirm = pygame.Rect(rect.x + 278, rect.bottom - 48, 140, 32)
+        pygame.draw.rect(screen, (74, 76, 80), cancel, border_radius=4)
+        pygame.draw.rect(screen, (73, 119, 78), confirm, border_radius=4)
+        screen.blit(small.render("Cancel", True, (250, 250, 245)),
+                    small.render("Cancel", True, (250, 250, 245)).get_rect(center=cancel.center))
+        screen.blit(small.render("Confirm", True, (250, 250, 245)),
+                    small.render("Confirm", True, (250, 250, 245)).get_rect(center=confirm.center))
+        self._confirmation_rects = {"cancel": cancel, "confirm": confirm}
 
     @staticmethod
     def _panel_rect(width, height):
@@ -203,6 +242,23 @@ class TrainerUI:
     def handle_event(self, event, data):
         if not self.visible:
             return None
+        if self.confirmation:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.confirmation = None
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    action = self.confirmation["action"]
+                    self.confirmation = None
+                    return action
+                return None
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self._confirmation_rects.get("cancel", pygame.Rect(0, 0, 0, 0)).collidepoint(event.pos):
+                    self.confirmation = None
+                elif self._confirmation_rects.get("confirm", pygame.Rect(0, 0, 0, 0)).collidepoint(event.pos):
+                    action = self.confirmation["action"]
+                    self.confirmation = None
+                    return action
+            return None
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_ESCAPE, pygame.K_f):
                 self.visible = False
@@ -227,7 +283,10 @@ class TrainerUI:
         level_up_rect = pygame.Rect(panel.right - 190, panel.y + 14, 164, 32)
         if (level_up_rect.collidepoint(x, y) and levels_to_apply(data) > 0
                 and self.class_id in unlocked_classes(data)):
-            return {"type": "level_up", "class_id": self.class_id}
+            self._ask_confirmation({"type": "level_up", "class_id": self.class_id},
+                                   f"Apply level to {self.class_id.title()}?",
+                                   "No XP or gold cost")
+            return None
         for index, class_id in enumerate(CLASSES):
             rect = self._class_tab_rect(panel, index, len(CLASSES))
             if rect.collidepoint(x, y):
@@ -239,7 +298,11 @@ class TrainerUI:
             unlock_rect = pygame.Rect(panel.right - 190, panel.y + 96,
                                       168, 30)
             if unlock_rect.collidepoint(x, y):
-                return {"type": "unlock_class", "class_id": self.class_id}
+                cost = class_unlock_cost(data, self.class_id)
+                self._ask_confirmation({"type": "unlock_class", "class_id": self.class_id},
+                                       f"Unlock {self.class_id.title()}?",
+                                       f"Cost: {cost} XP")
+                return None
         for section, rect in self._section_rects.items():
             if rect.collidepoint(x, y):
                 self.section = section
@@ -249,7 +312,11 @@ class TrainerUI:
         if self.section == "ability_scores":
             for ability, rect in self._attribute_rects.items():
                 if rect.collidepoint(x, y) and attribute_points_available(data) > 0:
-                    return {"type": "increase_ability", "ability": ability}
+                    current = int((data.get("abilities", {}) or {}).get(ability, 10))
+                    self._ask_confirmation({"type": "increase_ability", "ability": ability},
+                                           f"Increase {ability.title()} to {current + 1}?",
+                                           "Cost: 1 ability point")
+                    return None
             return None
         visible_count = self._visible_row_count(panel)
         if y >= panel.y + 222:
@@ -261,7 +328,7 @@ class TrainerUI:
                 buy_rect = pygame.Rect(panel.right - 120, row_rect.y + 2,
                                        82, 30)
                 if buy_rect.collidepoint(x, y) and not row[5]:
-                    _tier, _name, kind, item_id, definition, _owned = row
+                    _tier, name, kind, item_id, definition, _owned = row
                     if kind == "expertise_choice":
                         return {"type": "choose_expertise", "class_id": self.class_id,
                                 "skill": item_id}
@@ -271,10 +338,12 @@ class TrainerUI:
                     if kind == "fighting_style_choice":
                         return {"type": "choose_fighting_style",
                                 "class_id": self.class_id, "style_id": item_id}
-                    return {"type": "trainer_purchase", "class_id": self.class_id,
-                            "kind": kind, "item_id": item_id,
-                            "xp_purchase_cost": adjusted_purchase_cost(
-                                data, self.class_id, definition)}
+                    cost = adjusted_purchase_cost(data, self.class_id, definition)
+                    self._ask_confirmation(
+                        {"type": "trainer_purchase", "class_id": self.class_id,
+                         "kind": kind, "item_id": item_id},
+                        f"Purchase {name}?", f"Cost: {cost} XP")
+                    return None
         return None
 
     def draw(self, screen, data, font):
@@ -417,6 +486,7 @@ class TrainerUI:
             footer = self._fit(footer, hint_font, panel.width - 52)
             screen.blit(hint_font.render(footer, True, (205, 210, 210)),
                         (panel.x + 26, panel.bottom - 26))
+            self._draw_confirmation(screen, font)
             self._draw_tooltip(screen, hover_title, hover_detail, mouse_pos)
             return
         rows = self._items(data)
@@ -467,9 +537,10 @@ class TrainerUI:
                 hover_title = name
                 details = [definition.get("description", "No description available.")]
                 if kind == "spell":
-                    cast_cost = int(definition.get("spell_point_cost", 1) or 0)
-                    details.append("Cast cost: " + ("no spell points" if cast_cost == 0
-                                                    else f"{cast_cost} spell point(s)"))
+                    spell_level = int(definition.get(
+                        "level", definition.get("tier", 0)) or 0)
+                    details.append("Cantrip; no spell slot required." if spell_level == 0
+                                   else f"Uses one level {spell_level} or higher spell slot.")
                 else:
                     uses = definition.get("uses_per_combat", 1)
                     details.append("Uses: " + ("resource-limited" if uses is None
@@ -491,4 +562,5 @@ class TrainerUI:
         footer = self._fit(footer, footer_font, panel.width - 52)
         screen.blit(footer_font.render(footer, True, (205, 210, 210)),
                     (panel.x + 26, panel.bottom - 26))
+        self._draw_confirmation(screen, font)
         self._draw_tooltip(screen, hover_title, hover_detail, mouse_pos)
