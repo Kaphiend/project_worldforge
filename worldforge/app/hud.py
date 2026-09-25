@@ -4,14 +4,15 @@ import pygame
 from worldforge.content.classes import NPCS, SCENARIOS
 from worldforge.ui.sprite_sheet import load_spritesheet
 from worldforge.actors.factory import effective_max_hp
-from worldforge.core.progression import spell_point_max
-from worldforge.app.actions import _active_actor_id
+from worldforge.core.progression import (spell_point_max, total_earned_xp,
+                                         XP_THRESHOLDS, levels_to_apply)
+from worldforge.app.combat_flow import _active_actor_id
 from worldforge.app.encounters import DEFAULT_SCENARIO
 from worldforge.app.world import ACTOR_HITBOX_HEIGHT, ACTOR_HITBOX_WIDTH, ACTOR_SIZE, _attack_readiness_text, _perceived_title
 from worldforge.app.rendering import _advance_character_animation, _fit_ui_text, _player_id, _wrap_ui_lines
 
 def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0):
-    if not combat or combat.get("sync_only"):
+    if not combat:
         return pygame.Rect(0, 0, 0, 0)
     panel_width, panel_height = 390, 142
     panel_x = screen.get_width() - panel_width - 10
@@ -100,14 +101,32 @@ def draw_game_frame(context):
     spellbook_ui = context["spellbook_ui"]
     sprite_frames = context["sprite_frames"]
     trainer_ui = context["trainer_ui"]
+    vendor_ui = context.get("vendor_ui")
+    vendor_buyback = context.get("vendor_buyback", []) or []
 
     screen_spell_data = (combat.get("actors", {}).get(player_id, {}).get("data", {})
                          if combat and combat.get("active") else vars(actor))
-    scenario = (combat or {}).get("scenario") or SCENARIOS.get(DEFAULT_SCENARIO, {})
+    scenario = ((combat or {}).get("scenario")
+                or SCENARIOS.get(DEFAULT_SCENARIO, {}))
     hud_font = pygame.font.Font(None, 18)
     hud_rows = [(scenario.get("name", "Worldforge"), (245, 245, 230), font)]
     if scenario.get("objective"):
         hud_rows.append((scenario["objective"], (230, 230, 205), hud_font))
+    rest_session = (combat or {}).get("rest_session")
+    if rest_session:
+        ready_count = len(rest_session.get("ready", []))
+        party_count = len(rest_session.get("participants", []))
+        if rest_session.get("location") == "outdoor":
+            bed_id = rest_session.get("bed_by_actor", {}).get(player_id)
+            bed = next((item for item in current_arena.get("camp_beds", [])
+                        if item.get("id") == bed_id), {})
+            cost = rest_session.get("costs", {}).get(player_id, 0)
+            text = (f"Safe camp · {bed.get('name', 'assigned bed')} · "
+                    f"your cost {cost} XP · {ready_count}/{party_count} checked in · F to rest")
+        else:
+            text = (f"Inn check-in · {ready_count}/{party_count} guests ready · "
+                    "each guest pays 10 gold at the bed")
+        hud_rows.append((text, (255, 220, 150), hud_font))
     if multiplayer:
         count = party_status() if party_status else 1 + len(remote_players)
         hud_rows.append((f"Party: {count}/8", (195, 220, 195), hud_font))
@@ -130,6 +149,34 @@ def draw_game_frame(context):
         for line in _wrap_ui_lines(row_font, text, screen.get_width() - 24):
             screen.blit(row_font.render(line, True, color), (12, hud_y))
             hud_y += row_font.get_linesize() + 1
+    # A compact top-right XP meter stays visible in exploration and combat.
+    level = max(1, int(screen_spell_data.get("level", 1) or 1))
+    xp = total_earned_xp(screen_spell_data)
+    threshold = XP_THRESHOLDS[level] if level < len(XP_THRESHOLDS) else None
+    meter_width, meter_height = min(270, max(190, screen.get_width() // 4)), 38
+    meter_x, meter_y = screen.get_width() - meter_width - 12, hud_y + 3
+    meter = pygame.Rect(meter_x, meter_y, meter_width, meter_height)
+    pygame.draw.rect(screen, (12, 16, 23), meter, border_radius=5)
+    pygame.draw.rect(screen, (100, 117, 143), meter, 1, border_radius=5)
+    pending_levels = levels_to_apply(screen_spell_data)
+    if pending_levels:
+        progress = 1.0
+        xp_label = f"Level {level + pending_levels} ready · visit trainer"
+    elif threshold is not None:
+        previous = XP_THRESHOLDS[level - 1]
+        progress = max(0.0, min(1.0, (xp - previous) / max(1, threshold - previous)))
+        xp_label = f"Level {level}  ·  {xp:,} / {threshold:,} XP"
+    else:
+        progress, xp_label = 1.0, f"Level {level}  ·  MAX LEVEL"
+    label_font = pygame.font.Font(None, 17)
+    screen.blit(label_font.render(_fit_ui_text(label_font, xp_label, meter_width - 16),
+                                  True, (238, 240, 246)), (meter_x + 8, meter_y + 5))
+    track = pygame.Rect(meter_x + 8, meter_y + 25, meter_width - 16, 7)
+    pygame.draw.rect(screen, (45, 51, 62), track, border_radius=3)
+    fill = pygame.Rect(track.x, track.y, round(track.width * progress), track.height)
+    if fill.width:
+        pygame.draw.rect(screen, (220, 174, 77), fill, border_radius=3)
+    hud_y = meter.bottom + 5
     live_combat = bool(combat and combat.get("active"))
     status_actor = ((combat or {}).get("actors", {}).get(player_id)
                     if live_combat else None)
@@ -187,7 +234,7 @@ def draw_game_frame(context):
                         (12, hud_y))
             hud_y += hud_font.get_linesize() + 1
     enemy_entries = list((combat or {}).get("actors", {}).values())
-    if not combat or combat.get("sync_only"):
+    if not combat:
         for index, spawn in enumerate(scenario.get("enemies", [])):
             definition = NPCS.get(spawn.get("npc"), {})
             enemy_entries.append({
@@ -229,6 +276,19 @@ def draw_game_frame(context):
             title_x = max(8, min(screen.get_width() - title_surface.get_width() - 8,
                                  rect.x - 10))
             screen.blit(title_surface, (title_x, max(4, rect.y - 18)))
+    if combat and not combat.get("rest_session"):
+        for ground_item in combat.get("ground_items", []):
+            x, y = ground_item.get("x", 0), ground_item.get("y", 0)
+            width = int(ground_item.get("width", 24))
+            height = int(ground_item.get("height", 24))
+            center = (round(x + width / 2 - camera[0]),
+                      round(y + height / 2 - camera[1]))
+            pygame.draw.circle(screen, (235, 196, 96), center, 14, 2)
+            dropped_item_sprite = pygame.transform.rotate(arrow_sprite, 45)
+            dropped_item_sprite = pygame.transform.smoothscale(
+                dropped_item_sprite, (width + 12, height + 12))
+            screen.blit(dropped_item_sprite,
+                        dropped_item_sprite.get_rect(center=center))
     projectile = (combat or {}).get("projectile_event")
     if projectile:
         if projectile_runtime["id"] != projectile.get("id"):
@@ -359,15 +419,21 @@ def draw_game_frame(context):
         dialog_y = (screen.get_height() - dialog.get_height()) // 2
         screen.blit(dialog, (dialog_x, dialog_y))
         dialog_font = pygame.font.Font(None, 18)
+        if interact_prompt.get("type") == "area_exit":
+            prompt_text = (f"Travel through {interact_prompt['name']}? "
+                           "The connected party travels together.")
+            confirm_text = "Y / Enter: travel     N / Esc: cancel"
+        else:
+            prompt_text = (f"Stay at {interact_prompt['name']}? Each party member "
+                           "must check in and pay 10 gold for the night.")
+            confirm_text = "Y / Enter: check in and pay     N / Esc: cancel"
         dialog_lines = _wrap_ui_lines(
-            dialog_font,
-            f"Rest at {interact_prompt['name']}? It costs 10 gold per character.",
-            dialog.get_width() - 36)
+            dialog_font, prompt_text, dialog.get_width() - 36)
         for line_index, line in enumerate(dialog_lines[:3]):
             screen.blit(dialog_font.render(line, True, (245, 235, 205)),
                         (dialog_x + 18, dialog_y + 18 + line_index * 20))
         screen.blit(dialog_font.render(
-            "Y / Enter: pay and rest     N / Esc: cancel", True,
+            confirm_text, True,
             (210, 220, 220)), (dialog_x + 18, dialog_y + 92))
     inventory_data = (combat.get("actors", {}).get(player_id, {}).get("data", {})
                       if combat else vars(actor))
@@ -382,6 +448,12 @@ def draw_game_frame(context):
             loot_ui.draw(screen, loot_corpse, font)
         else:
             loot_ui.close()
+    if vendor_ui and vendor_ui.visible:
+        vendor = next((item for item in current_arena.get("vendors", [])
+                       if item.get("id") == vendor_ui.vendor_id), None)
+        vendor_data = ((combat or {}).get("actors", {}).get(player_id, {})
+                       .get("data", vars(actor)))
+        vendor_ui.draw(screen, font, vendor, vendor_data, vendor_buyback)
     if actor.downed:
         death_box = pygame.Surface((520, 160), pygame.SRCALPHA)
         death_box.fill((18, 8, 10, 238))
@@ -409,16 +481,19 @@ def draw_game_frame(context):
         help_lines = [
             ("CONTROLS", None),
             ("During combat, WASD or click an open spot to move; your remaining feet are shown below.", None),
-            ("Left Shift ends your turn and restores movement next turn.", None),
-            ("Z: camp outdoors when more than 100 ft from enemies; costs unspent XP.", None),
-            ("F: interact. At the trainer, open class purchases; at the inn bed, confirm a 10-gold rest.", None),
+            ("Tab ends your turn and restores movement next turn.", None),
+            ("Z: travel to a safe camp beyond 100 ft from enemies; each party member pays XP and checks in at their bed.", None),
+            ("F: use a nearby trainer, vendor, bed, corpse, dropped item, or area exit.", None),
             ("F2: toggle tooltips    -: spells and abilities    `: switch bars", None),
             ("Enter: chat    /act <emote>: show an emote and add it to combat log", None),
-            ("Click a character to select a target. Right-click a player for details.", None),
+            ("Click a character to target it. Right-click a character or mob to inspect its debug data.", None),
             ("1-0: use assigned action; empty 1 uses primary weapon. R: ranged    T: throw", None),
+            ("G: Thief Fast Hands Sleight of Hand check during combat.", None),
             ("WASD or click an open spot to move. Click an assigned bar slot or use its 1-0 hotkey.", None),
+            ("K toggles slower sneaking outside combat. Hide needs cover and a DC 15 Stealth check.", None),
             ("Q / E: use bound consumables. In Inventory, select an item and click Q or E to bind it.", None),
-            ("I: inventory    Left Shift: end your turn    F5: save character", None),
+            ("I: inventory    Tab: end your turn    F5: save character", None),
+            ("F11: toggle fullscreen and windowed mode", None),
             ("M: return to menu    Esc: quit game    F1: close this panel", None),
             ("When downed, wait for a revival or press R to return to the inn for a 10% XP loss.", None),
             ("Hover action-bar or spellbook entries for details when tooltips are on:", None),

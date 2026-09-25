@@ -13,9 +13,8 @@ known spells at creation; consumables can refer to the same record through
   progression curve. `spell_point_cost` is the number of points charged
   for a successful cast (defaults to `1`; set it to `0` for a cantrip, or use a
   larger integer for a more expensive spell). A zero-cost spell still uses the
-  normal spell action and targeting flow. Records with `cantrip: true` and
-  `acquisition: "starting_cantrip"` are granted at character creation to
-  matching classes and migrated onto older saves. The spellbook can prepare
+  normal spell action and targeting flow. Cantrips are purchased from the
+  trainer with XP like other spells. The spellbook can prepare
   known spells. Leveled preparations are limited to character level plus the
   casting ability modifier (minimum one); cantrips do not count against this
   limit. Buying a trainer-purchase spell adds it to the spellbook but does not

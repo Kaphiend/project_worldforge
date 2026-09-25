@@ -1,6 +1,6 @@
 """Pygame character rendering, animation, and shared text helpers."""
 import time
-
+import math
 import pygame
 
 from worldforge.app.world import ACTOR_SIZE, _arena_obstacles
@@ -135,11 +135,19 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
     screen.fill(tuple(arena.get("ground_color", [64, 91, 67])),
                 bounds.move(-camera_x, -camera_y))
     for decoration in arena.get("decorations", []):
-        if decoration.get("kind") == "rect":
-            pygame.draw.rect(screen, tuple(decoration.get("color", [80, 80, 80])),
-                             pygame.Rect(decoration["x"] - camera_x,
-                                         decoration["y"] - camera_y,
-                                         decoration["width"], decoration["height"]))
+        kind = decoration.get("kind")
+        rect = pygame.Rect(decoration["x"] - camera_x,
+                           decoration["y"] - camera_y,
+                           decoration["width"], decoration["height"])
+        color = tuple(decoration.get("color", [80, 80, 80]))
+        if kind == "rect":
+            pygame.draw.rect(screen, color, rect)
+        elif kind == "ellipse":
+            pygame.draw.ellipse(screen, color, rect)
+            if decoration.get("outline"):
+                pygame.draw.ellipse(screen, tuple(decoration["outline"]),
+                                    rect, max(1, int(decoration.get(
+                                        "outline_width", 3))))
     for obstacle in _arena_obstacles(arena):
         visible_obstacle = obstacle.move(-camera_x, -camera_y)
         pygame.draw.rect(screen, (67, 70, 58), visible_obstacle)
@@ -155,6 +163,14 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
         screen.blit(pygame.font.Font(None, 17).render(
             bed.get("name", "Inn Bed"), True, (255, 255, 255)),
             (rect.x, rect.y - 18))
+    for bed in arena.get("camp_beds", []):
+        rect = pygame.Rect(bed["x"] - camera_x, bed["y"] - camera_y,
+                           bed["width"], bed["height"])
+        pygame.draw.rect(screen, (118, 91, 62), rect, border_radius=5)
+        pygame.draw.rect(screen, (221, 195, 147), rect, 2, border_radius=5)
+        screen.blit(pygame.font.Font(None, 16).render(
+            bed.get("name", "Bedroll"), True, (245, 231, 202)),
+            (rect.x - 3, rect.y - 16))
     for trainer in arena.get("trainers", []):
         rect = pygame.Rect(trainer["x"] - camera_x, trainer["y"] - camera_y,
                            trainer["width"], trainer["height"])
@@ -162,6 +178,23 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
         pygame.draw.rect(screen, (210, 180, 125), rect, 3, border_radius=4)
         screen.blit(pygame.font.Font(None, 17).render(
             trainer.get("name", "Trainer"), True, (255, 245, 220)),
+            (rect.x - 3, rect.y - 18))
+    for vendor in arena.get("vendors", []):
+        rect = pygame.Rect(vendor["x"] - camera_x, vendor["y"] - camera_y,
+                           vendor["width"], vendor["height"])
+        pygame.draw.rect(screen, (83, 105, 72), rect, border_radius=4)
+        pygame.draw.rect(screen, (224, 197, 119), rect, 3, border_radius=4)
+        screen.blit(pygame.font.Font(None, 17).render(
+            vendor.get("name", "Vendor"), True, (255, 245, 220)),
+            (rect.x - 3, rect.y - 18))
+    for exit_record in arena.get("exits", []):
+        rect = pygame.Rect(exit_record["x"] - camera_x,
+                           exit_record["y"] - camera_y,
+                           exit_record["width"], exit_record["height"])
+        pygame.draw.rect(screen, (48, 112, 135), rect, border_radius=5)
+        pygame.draw.rect(screen, (134, 221, 230), rect, 3, border_radius=5)
+        screen.blit(pygame.font.Font(None, 17).render(
+            exit_record.get("name", "Exit"), True, (225, 248, 250)),
             (rect.x - 3, rect.y - 18))
     screen.blit(local_sprite, (round(actor.x - camera_x), round(actor.y - camera_y)))
     font = font or pygame.font.Font(None, 18)

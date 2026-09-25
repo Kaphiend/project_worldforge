@@ -6,6 +6,7 @@ import pygame
 from worldforge.actors.factory import item_definition, modifier
 from worldforge.combat.rules import (edge_distance_feet, proficiency_bonus,
                                      selected_weapon, speed_feet)
+from worldforge.combat.species import species_traits
 
 def _arena_bounds(arena):
     data = (arena or {}).get("bounds", {"x": 0, "y": 0, "width": 800, "height": 600})
@@ -16,6 +17,8 @@ def _arena_obstacles(arena):
     obstacles = list(arena.get("obstacles", []))
     obstacles.extend(arena.get("inn_beds", []))
     obstacles.extend(arena.get("trainers", []))
+    obstacles.extend(arena.get("vendors", []))
+    obstacles.extend(arena.get("camp_beds", []))
     return [pygame.Rect(item["x"], item["y"], item["width"], item["height"])
             for item in obstacles]
 
@@ -105,7 +108,7 @@ def _walk_destination(x, y, dx, dy, arena, occupied=()):
 
 PIXELS_PER_FOOT = 4
 
-SCREEN_SIZE = (1024, 768)
+SCREEN_SIZE = (1280, 800)
 
 ACTOR_SIZE = 100
 
@@ -133,9 +136,43 @@ def _perception_score(actor_data):
         return int(explicit)
     wisdom = actor_data.get("abilities", {}).get("wisdom", 10)
     score = 10 + modifier(wisdom)
-    if "perception" in {skill.casefold() for skill in actor_data.get("skills", [])}:
+    skills = {str(skill).casefold() for skill in actor_data.get("skills", []) or []}
+    if "keen_senses" in species_traits(actor_data):
+        skills.add("perception")
+    if "perception" in skills:
         score += proficiency_bonus(actor_data)
     return score
+
+
+def _stealth_check(actor_data):
+    """Roll Dexterity (Stealth) using the actor's trained skill bonus."""
+    import random
+    abilities = actor_data.get("abilities", {}) or {}
+    bonus = modifier(abilities.get("dexterity", 10))
+    if "stealth" in {str(skill).casefold() for skill in
+                      actor_data.get("skills", []) or []}:
+        bonus += proficiency_bonus(actor_data)
+    roll = random.randint(1, 20)
+    return {"natural": roll, "bonus": bonus, "total": roll + bonus}
+
+
+def _hidden_from(observer_entry, target_entry, arena):
+    """Whether an observer has found a hidden target by sight or Perception."""
+    hidden = target_entry.get("data", {}).get("hidden")
+    if not isinstance(hidden, dict):
+        return False
+    if observer_entry.get("id") in hidden.get("detected_by", []):
+        return False
+    if not _line_of_sight(observer_entry, target_entry, arena):
+        return True
+    if _perception_score(observer_entry.get("data", {})) < int(
+            hidden.get("stealth_total", 0)):
+        return True
+    detected_by = hidden.setdefault("detected_by", [])
+    observer_id = observer_entry.get("id")
+    if observer_id is not None and observer_id not in detected_by:
+        detected_by.append(observer_id)
+    return False
 
 def _perceived_title(observer_data, perception_data):
     score = _perception_score(observer_data)

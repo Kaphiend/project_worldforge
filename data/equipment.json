@@ -370,5 +370,14 @@
     "consumable": true,
     "stackable": true,
     "max_stack": 20
+  },
+  "revival_scroll": {
+    "name": "Revival Scroll",
+    "category": "consumable",
+    "slot": "consumable",
+    "effect_id": "restorative_revival",
+    "consumable": true,
+    "stackable": true,
+    "max_stack": 20
   }
 }

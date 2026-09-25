@@ -2,7 +2,7 @@
 import atexit
 
 from worldforge.content.classes import SCENARIOS
-from worldforge.ui.creation_screen import run_creation
+from worldforge.ui.creation_screen import BACK_TO_MODE, run_creation
 from worldforge.app.game import DEFAULT_SCENARIO, run_game
 from worldforge.ui.menu import connect_session, select_mode
 from worldforge.network.networking import MAX_PLAYERS, client_callbacks
@@ -57,6 +57,9 @@ def main():
                 continue
 
         actor = run_creation()
+        if actor == BACK_TO_MODE:
+            _close_session(session, mode)
+            continue
         if actor is None:
             _close_session(session, mode)
             break

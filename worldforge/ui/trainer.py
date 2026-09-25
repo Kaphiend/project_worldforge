@@ -5,10 +5,12 @@ without changing this screen. Purchase checks remain authoritative in game.py.
 """
 import pygame
 
-from worldforge.content.classes import ABILITIES, CLASSES, SPELLS
+from worldforge.content.classes import (ABILITIES, CLASSES, SPELLS, SUBCLASSES,
+                                        skill_options, subclass_feature_items)
 from worldforge.core.progression import (adjusted_purchase_cost, class_unlock_cost,
                          class_unlocked_level, qualified_level,
-                         unlocked_classes, unspent_xp)
+                         unlocked_classes, unspent_xp, levels_to_apply,
+                         class_feature_definition)
 
 
 class TrainerUI:
@@ -40,6 +42,45 @@ class TrainerUI:
                 tier = int(definition.get("prerequisite_class_level", 1))
                 rows.append((tier, definition.get("name", item_id), kind,
                              item_id, definition, item_id in owned))
+        owned_features = set(data.get("class_feature_purchases", {}).get(
+            self.class_id, [])) | set(data.get("class_features", []) or [])
+        progression = CLASSES[self.class_id].get("progression", {}) or {}
+        for tier_key, features in progression.items():
+            for feature in features or []:
+                feature_id = feature.get("id")
+                if not feature_id:
+                    continue
+                definition = class_feature_definition(self.class_id, feature)
+                rows.append((int(feature.get("prerequisite_class_level", tier_key)),
+                             definition.get("name", feature_id), "feature",
+                             feature_id, definition, feature_id in owned_features))
+        subclass_id = data.get("subclass")
+        subclass = SUBCLASSES.get(subclass_id, {})
+        if subclass.get("class") == self.class_id:
+            for tier_key, feature_id, feature in subclass_feature_items(subclass_id):
+                definition = {
+                    **feature, "classes": [self.class_id],
+                    "prerequisite_class_level": int(tier_key),
+                    "acquisition": "trainer_purchase", "xp_purchase_cost": 10,
+                }
+                rows.append((int(tier_key), definition.get("name", feature_id),
+                             "subclass feature", feature_id, definition,
+                             feature_id in owned_features))
+        skill_purchases = data.get("class_skill_purchases", {}).get(self.class_id, [])
+        skill_limit = max(0, int(CLASSES[self.class_id].get("skill_choices", 0) or 0))
+        known_skills = set(str(skill).casefold() for skill in data.get("skills", []) or [])
+        for skill in skill_options(self.class_id):
+            skill_id = str(skill).casefold()
+            owned = skill_id in known_skills
+            if not owned and len(skill_purchases) >= skill_limit:
+                continue
+            definition = {
+                "name": skill.title(), "description": f"Train in {skill.title()}.",
+                "classes": [self.class_id], "prerequisite_class_level": 1,
+                "acquisition": "trainer_purchase", "xp_purchase_cost": 10,
+            }
+            rows.append((1, definition["name"], "skill", skill_id,
+                         definition, owned))
         return sorted(rows, key=lambda row: (row[0], row[1].lower()))
 
     @staticmethod
@@ -55,6 +96,13 @@ class TrainerUI:
         if current:
             lines.append(current)
         return lines
+
+    @staticmethod
+    def _fit(text, font, width):
+        text = str(text)
+        while text and font.size(text + "…")[0] > width:
+            text = text[:-1]
+        return text + ("…" if text else "")
 
     def _draw_tooltip(self, screen, title, detail, mouse_pos):
         if not title:
@@ -107,6 +155,10 @@ class TrainerUI:
         x, y = event.pos
         surface = pygame.display.get_surface()
         screen_width = surface.get_width() if surface else 800
+        level_up_rect = pygame.Rect(screen_width - 190, 42, 164, 32)
+        if (level_up_rect.collidepoint(x, y) and levels_to_apply(data) > 0
+                and self.class_id in unlocked_classes(data)):
+            return {"type": "level_up", "class_id": self.class_id}
         for index, class_id in enumerate(CLASSES):
             rect = pygame.Rect(24 + index * 80, 86, 76, 32)
             if rect.collidepoint(x, y):
@@ -145,10 +197,18 @@ class TrainerUI:
         screen.blit(title.render("Trainer", True, (250, 235, 190)), (26, 42))
         selected_title = self.class_id.title() if self.class_id else "No class"
         selected_tier = class_unlocked_level(data, self.class_id) if self.class_id else 0
-        status = (f"Qualified level {qualified_level(data)}   XP {unspent_xp(data)}"
-                  f"   {selected_title} tier {selected_tier}")
+        status = (f"Applied level {data.get('level', 1)}"
+                  f"   Ready {levels_to_apply(data)}   XP {unspent_xp(data)}")
         screen.blit(font.render(status, True, (215, 225, 220)), (180, 48))
         hint_font = pygame.font.Font(None, 17)
+        pending = levels_to_apply(data)
+        level_up_rect = pygame.Rect(screen.get_width() - 190, 42, 164, 32)
+        can_level = (pending > 0 and self.class_id in unlocked_classes(data))
+        pygame.draw.rect(screen, (76, 120, 78) if can_level else (67, 70, 75),
+                         level_up_rect, border_radius=4)
+        level_label = f"Level Up · {pending}" if pending else "No Level Ready"
+        screen.blit(hint_font.render(level_label, True, (250, 250, 245)),
+                    (level_up_rect.x + 8, level_up_rect.y + 9))
         hover_title, hover_detail = "", ""
         mouse_pos = pygame.mouse.get_pos()
         acquired_classes = set(unlocked_classes(data))
@@ -183,8 +243,25 @@ class TrainerUI:
                 True, (205, 215, 200)), (26, 128))
         else:
             screen.blit(hint_font.render(
-                "This class is unlocked. Spell and ability prices rise by class order.",
+                "Unlocked. Spells, cantrips, skills, features, and abilities cost XP.",
                 True, (205, 215, 200)), (26, 128))
+        current_features = set(data.get("class_features", []) or [])
+        granted = [feature.get("name", feature.get("id", "Feature"))
+                   for features in (CLASSES.get(self.class_id, {}).get(
+                       "progression", {}) or {}).values()
+                   for feature in (features or [])
+                   if feature.get("id") in current_features]
+        subclass = SUBCLASSES.get(data.get("subclass"), {})
+        if subclass.get("class") == self.class_id:
+            granted.extend(
+                feature.get("name", f"Level {tier}")
+                for tier, feature_id, feature in subclass_feature_items(data.get("subclass"))
+                if feature_id in current_features)
+        if granted:
+            status_text = self._fit("Purchased features: " + ", ".join(granted), hint_font,
+                                    screen.get_width() - 52)
+            screen.blit(hint_font.render(status_text, True, (255, 220, 145)),
+                        (26, 146))
         rows = self._items(data)
         self.scroll = min(self.scroll, max(0, len(rows) - 10))
         frontier = class_unlocked_level(data, self.class_id)
@@ -232,7 +309,7 @@ class TrainerUI:
                     details.append(f"Available to learn for {cost} XP.")
                 hover_detail = "  ".join(details)
         footer = ("Click an available price to learn it. Tiers unlock in order. "
-                  "Feat choices at levels 4, 8, 12, 16, and 19 are not implemented. Esc closes.")
+                  f"Level Up assigns a pending level to {selected_title}. Esc closes.")
         screen.blit(pygame.font.Font(None, 17).render(footer, True, (205, 210, 210)),
                     (26, panel.bottom - 26))
         if self.notice:

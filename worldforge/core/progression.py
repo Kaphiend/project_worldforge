@@ -20,18 +20,15 @@ XP_THRESHOLDS = (
     85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000,
     305000, 355000,
 )
-MAX_LEVEL = len(XP_THRESHOLDS)
-
-
 def class_levels(actor_data):
-    """Return each learned class's current unlocked tier for resource curves."""
-    names = {entry.get("name") for entry in actor_data.get("classes", []) or []
-             if entry.get("name")}
-    if actor_data.get("char_class"):
-        names.add(actor_data["char_class"])
-    names.update(actor_data.get("class_spell_purchases", {}).keys())
-    names.update(actor_data.get("class_ability_purchases", {}).keys())
-    return {name: class_unlocked_level(actor_data, name) for name in names}
+    """Return levels actually assigned to each class for resource curves."""
+    levels = {entry.get("name"): max(0, int(entry.get("level", 0) or 0))
+              for entry in actor_data.get("classes", []) or []
+              if entry.get("name")}
+    primary = actor_data.get("char_class")
+    if primary and primary not in levels:
+        levels[primary] = max(1, int(actor_data.get("level", 1) or 1))
+    return {name: level for name, level in levels.items() if level > 0}
 
 
 def character_level_for_xp(xp_total):
@@ -66,8 +63,8 @@ def qualified_level(actor_data):
     return character_level_for_xp(unspent_xp(actor_data))
 
 
-def attribute_points_earned(actor_data):
-    """Return permanent attribute points granted by gross earned XP level."""
+def earned_level(actor_data):
+    """Return the highest level earned from gross XP."""
     earned_xp = sum(max(0, int(value or 0))
                     for value in actor_data.get("xp_earned_by_level", {}).values())
     if earned_xp == 0:
@@ -76,12 +73,75 @@ def attribute_points_earned(actor_data):
         spent_xp += sum(max(0, int(value or 0)) for value in
                         (actor_data.get("xp_rest_spent_by_level", {}) or {}).values())
         earned_xp = max(0, int(actor_data.get("xp_total", 0) or 0)) + spent_xp
-    earned_level = character_level_for_xp(earned_xp)
+    return character_level_for_xp(earned_xp)
+
+
+def total_earned_xp(actor_data):
+    """Return gross XP earned, including any XP later spent."""
+    earned = sum(max(0, int(value or 0))
+                 for value in (actor_data.get("xp_earned_by_level", {}) or {}).values())
+    if earned:
+        return earned
+    spent = sum(max(0, int(value or 0)) for value in
+                (actor_data.get("xp_spent_by_level", {}) or {}).values())
+    spent += sum(max(0, int(value or 0)) for value in
+                 (actor_data.get("xp_rest_spent_by_level", {}) or {}).values())
+    return max(0, int(actor_data.get("xp_total", 0) or 0)) + spent
+
+
+def levels_to_apply(actor_data):
+    """Return earned levels not yet applied at the trainer."""
+    applied = max(1, int(actor_data.get("level", 1) or 1))
+    return max(0, earned_level(actor_data) - applied)
+
+
+def class_feature_definition(class_id, feature):
+    """Normalize progression data into a purchasable trainer option."""
+    return {
+        **feature,
+        "classes": [class_id],
+        "acquisition": "trainer_purchase",
+        "xp_purchase_cost": max(0, int(feature.get("xp_purchase_cost", 10) or 0)),
+    }
+
+
+def apply_level_up(actor_data, class_id):
+    """Apply one earned level to an unlocked class and grant fixed-average HP."""
+    if actor_data.get("downed"):
+        return False, "You cannot apply a level while downed."
+    if class_id not in unlocked_classes(actor_data):
+        return False, "Unlock that class before assigning a level."
+    if levels_to_apply(actor_data) < 1:
+        return False, "No earned levels are waiting to be applied."
+    entry = next((item for item in actor_data.get("classes", []) or []
+                  if item.get("name") == class_id), None)
+    if entry is None:
+        entry = {"name": class_id, "level": 0}
+        actor_data.setdefault("classes", []).append(entry)
+    from worldforge.content.classes import CLASSES
+    class_data = CLASSES.get(class_id, {})
+    hit_die = max(1, int(class_data.get("hit_die", 8) or 8))
+    con = int((actor_data.get("abilities", {}) or {}).get("constitution", 10) or 10)
+    con_modifier = ability_modifier(min(30, con))
+    hp_gain = max(1, hit_die // 2 + 1 + con_modifier)
+    entry["level"] = max(0, int(entry.get("level", 0) or 0)) + 1
+    actor_data["max_hp"] = max(1, int(actor_data.get("max_hp", 1) or 1) + hp_gain)
+    actor_data["current_hp"] = min(
+        actor_data["max_hp"], max(0, int(actor_data.get("current_hp", 0) or 0)) + hp_gain)
+    actor_data["level"] = max(1, int(actor_data.get("level", 1) or 1)) + 1
+    initialize_resources(actor_data)
+    message = f"{class_id.title()} level applied. Maximum HP +{hp_gain}."
+    return True, message
+
+
+def attribute_points_earned(actor_data):
+    """Return permanent attribute points granted by applied character level."""
+    level = max(1, int(actor_data.get("level", 1) or 1))
     rules = PROGRESSION_RULES.get("attribute_points", {})
     per_milestone = max(0, int(rules.get("points_per_milestone", 2)))
     milestones = rules.get("milestones", [4, 8, 12, 16, 20])
-    return sum(per_milestone for level in milestones
-               if earned_level >= int(level))
+    return sum(per_milestone for milestone in milestones
+               if level >= int(milestone))
 
 
 def attribute_points_available(actor_data):
@@ -108,29 +168,40 @@ def spend_attribute_point(actor_data, ability):
 def class_unlocked_level(actor_data, class_id):
     """Return a class's sequential tier frontier, capped by character level.
 
-    Spell classes advance after at least one spell at the prior tier is owned.
-    Classes with no purchase spells at that tier use a purchased class ability
-    as the progression key, so martial classes can advance too.
+    Classes advance after buying at least one prior-tier spell, ability, or
+    class feature. This also provides a progression path for martial classes.
     """
-    ceiling = qualified_level(actor_data)
+    assigned_class_level = class_levels(actor_data).get(class_id, 0)
+    # A class unlock grants its first level; later tiers require both that
+    # class level and the character's XP-qualified level.
+    ceiling = min(qualified_level(actor_data), assigned_class_level)
     frontier = 1
     spell_purchases = actor_data.get("class_spell_purchases", {}).get(class_id, [])
     ability_purchases = actor_data.get("class_ability_purchases", {}).get(class_id, [])
+    feature_purchases = actor_data.get("class_feature_purchases", {}).get(class_id, [])
     for prior_tier in range(1, ceiling):
         tier_spells = [spell_id for spell_id, spell in SPELLS.items()
                        if class_id in spell.get("classes", [])
                        and spell.get("acquisition") == "trainer_purchase"
                        and not spell.get("cantrip")
                        and int(spell.get("prerequisite_class_level", 1)) == prior_tier]
-        if tier_spells:
-            advanced = any(spell_id in spell_purchases for spell_id in tier_spells)
-        else:
-            tier_abilities = [ability_id for ability_id, ability in ABILITIES.items()
-                              if class_id in ability.get("classes", [])
-                              and ability.get("acquisition") == "trainer_purchase"
-                              and int(ability.get("prerequisite_class_level", 1)) == prior_tier]
-            advanced = any(ability_id in ability_purchases
-                           for ability_id in tier_abilities)
+        tier_abilities = [ability_id for ability_id, ability in ABILITIES.items()
+                          if class_id in ability.get("classes", [])
+                          and ability.get("acquisition") == "trainer_purchase"
+                          and int(ability.get("prerequisite_class_level", 1)) == prior_tier]
+        tier_features = [feature.get("id")
+                         for feature in (CLASSES.get(class_id, {}).get(
+                             "progression", {}) or {}).get(str(prior_tier), [])
+                         if feature.get("id")]
+        # SRD class tables do not provide a purchasable feature at every
+        # level. Worldforge's custom XP rule requires a purchase when a tier
+        # offers one, but empty tiers must remain traversable.
+        if not (tier_spells or tier_abilities or tier_features):
+            frontier = prior_tier + 1
+            continue
+        advanced = (any(spell_id in spell_purchases for spell_id in tier_spells)
+                    or any(ability_id in ability_purchases for ability_id in tier_abilities)
+                    or any(feature_id in feature_purchases for feature_id in tier_features))
         if not advanced:
             break
         frontier = prior_tier + 1
@@ -152,7 +223,8 @@ def unlocked_classes(actor_data):
     primary = actor_data.get("char_class")
     if primary in CLASSES:
         entries = [primary] + [class_id for class_id in entries if class_id != primary]
-    for key in ("class_spell_purchases", "class_ability_purchases"):
+    for key in ("class_spell_purchases", "class_ability_purchases",
+                "class_feature_purchases", "class_skill_purchases"):
         for class_id, purchases in (actor_data.get(key, {}) or {}).items():
             if purchases and class_id in CLASSES and class_id not in entries:
                 entries.append(class_id)
@@ -196,7 +268,8 @@ def adjusted_purchase_cost(actor_data, class_id, definition):
 def is_cantrip(spell):
     """Cantrips are always available and do not use prepared-spell slots."""
     return (spell.get("acquisition") == "starting_cantrip"
-            or int(spell.get("level", 1) or 0) == 0)
+            or bool(spell.get("cantrip"))
+            or int(spell.get("level", spell.get("tier", 1)) or 0) == 0)
 
 
 def prepared_spell_limit(actor_data, class_id=None):
@@ -214,17 +287,7 @@ def prepared_spell_limit(actor_data, class_id=None):
         return 0
     scores = actor_data.get("abilities", {}) or {}
     ability_mod = ability_modifier(scores.get(casting_ability, 10) or 10)
-    # The primary class uses earned character level. A secondary class starts
-    # from its own class level, recorded when a purchase opens that class.
-    if class_id == actor_data.get("char_class"):
-        earned = sum(max(0, int(value or 0))
-                     for value in actor_data.get("xp_earned_by_level", {}).values())
-        level = (character_level_for_xp(earned) if earned else
-                 max(1, int(actor_data.get("level", 1) or 1)))
-    else:
-        entry = next((item for item in actor_data.get("classes", []) or []
-                      if item.get("name") == class_id), {})
-        level = max(1, int(entry.get("level", 1) or 1))
+    level = class_levels(actor_data).get(class_id, 0)
     return max(1, level + ability_mod)
 
 
@@ -311,25 +374,44 @@ def charge_xp_penalty(actor_data, percentage):
 
 
 def sync_progression_levels(actor_data):
-    """Keep legacy level fields aligned with current XP and class frontiers."""
-    actor_data["level"] = qualified_level(actor_data)
+    """Keep the permanently applied character level across XP transactions."""
+    actor_data["level"] = max(1, int(actor_data.get("level", 1) or 1))
     entries = actor_data.get("classes", []) or []
-    known_classes = {entry.get("name") for entry in entries if entry.get("name")}
-    known_classes.update(actor_data.get("class_spell_purchases", {}).keys())
-    known_classes.update(actor_data.get("class_ability_purchases", {}).keys())
-    for class_id in known_classes:
-        entry = next((item for item in entries if item.get("name") == class_id), None)
-        if entry is None:
-            entry = {"name": class_id, "level": 1}
-            entries.append(entry)
-        entry["level"] = class_unlocked_level(actor_data, class_id)
-    actor_data["classes"] = entries
-
-
-def next_level_xp(level):
-    """Return the cumulative XP threshold for the next level, or None at 20."""
-    index = max(1, int(level or 1))
-    return XP_THRESHOLDS[index] if index < MAX_LEVEL else None
+    if not actor_data.get("class_levels_initialized", False):
+        primary = actor_data.get("char_class")
+        old_primary = next((entry for entry in entries
+                            if entry.get("name") == primary), None)
+        starting_class_level = max(
+            1, int((old_primary or {}).get("level", 1) or 1))
+        actor_data["level"] = min(actor_data["level"], starting_class_level)
+        known = {entry.get("name") for entry in entries if entry.get("name")}
+        for key in ("class_spell_purchases", "class_ability_purchases",
+                    "class_feature_purchases", "class_skill_purchases"):
+            known.update(class_id for class_id, owned in
+                         (actor_data.get(key, {}) or {}).items()
+                         if owned and class_id in CLASSES)
+        if primary in CLASSES:
+            known.add(primary)
+        normalized = []
+        class_order = ([primary] if primary in CLASSES else [])
+        class_order.extend(class_id for class_id in CLASSES
+                           if class_id in known and class_id != primary)
+        for class_id in class_order:
+            if class_id not in known:
+                continue
+            normalized.append({"name": class_id,
+                               "level": actor_data["level"] if class_id == primary else 1})
+        actor_data["classes"] = normalized
+        actor_data["class_levels_initialized"] = True
+    else:
+        actor_data["classes"] = entries
+        # Before class unlock granted a level, unlocked secondary classes
+        # were persisted at zero. Treat those existing unlocks as level one.
+        for entry in entries:
+            if (entry.get("name") != actor_data.get("char_class")
+                    and entry.get("name") in CLASSES
+                    and int(entry.get("level", 0) or 0) < 1):
+                entry["level"] = 1
 
 
 def _curve_value(class_data, field_name, level):
@@ -388,26 +470,3 @@ def initialize_resources(actor_data, *, refill=False):
         if key not in maxima:
             current.pop(key)
     return {"spell_points": spell_max, "class_resources": maxima}
-
-
-def xp_cost_for_next_level(level, xp_total):
-    """Return the additional cumulative XP needed for the next level."""
-    threshold = next_level_xp(level)
-    return None if threshold is None else max(0, threshold - int(xp_total or 0))
-
-
-def trainer_xp_cost(current_class_level):
-    """XP spent at a class trainer to buy that class's next level.
-
-    Costs use the incremental gaps in the shared fifth-edition XP threshold
-    curve. Current trainer spell and ability purchases use per-item
-    `xp_purchase_cost` data instead; this helper remains for later class-level
-    purchase rules.
-    """
-    current = max(0, int(current_class_level or 0))
-    next_level = current + 1
-    if next_level > MAX_LEVEL:
-        return None
-    prior_threshold = XP_THRESHOLDS[max(0, current - 1)]
-    next_threshold = XP_THRESHOLDS[next_level - 1]
-    return next_threshold - prior_threshold

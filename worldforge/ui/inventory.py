@@ -2,7 +2,9 @@
 import pygame
 
 from worldforge.actors.factory import effective_max_hp, equipment_slots, item_definition, modifier
-from worldforge.content.classes import ALL_SKILLS, ITEM_ATTRIBUTES, SPELLS
+from worldforge.combat.species import species_traits
+from worldforge.content.classes import (ALL_SKILLS, CLASSES, ITEM_ATTRIBUTES, SPELLS,
+                                        SUBCLASSES, subclass_feature_items)
 from worldforge.combat.rules import armor_class, proficiency_bonus, speed_feet
 from worldforge.core.progression import (attribute_points_available, class_resource_maxima,
                          spell_point_max, unspent_xp)
@@ -21,6 +23,9 @@ class InventoryScreen:
         self._use_rect = pygame.Rect(500, 492, 120, 34)
         self._quick_rects = {}
         self._ability_rects = {}
+        self.attribute_screen = False
+        self._attribute_button_rect = pygame.Rect(0, 0, 0, 0)
+        self._attribute_back_rect = pygame.Rect(0, 0, 0, 0)
 
     @staticmethod
     def _fit_text(text, font, max_width):
@@ -34,12 +39,18 @@ class InventoryScreen:
     def toggle(self):
         self.visible = not self.visible
         self.selected_id = None
+        if not self.visible:
+            self.attribute_screen = False
 
     def handle_event(self, event, actor_data):
         if not self.visible:
             return None
         if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_i):
-            self.visible = False
+            if self.attribute_screen and event.key == pygame.K_ESCAPE:
+                self.attribute_screen = False
+            else:
+                self.visible = False
+                self.attribute_screen = False
             return None
         if event.type == pygame.MOUSEWHEEL:
             mouse = pygame.mouse.get_pos()
@@ -63,10 +74,17 @@ class InventoryScreen:
             return None
         if event.button != 1:
             return None
-        if attribute_points_available(actor_data):
+        if self.attribute_screen:
+            if self._attribute_back_rect.collidepoint(event.pos):
+                self.attribute_screen = False
+                return None
             for ability, rect in self._ability_rects.items():
                 if rect.collidepoint(event.pos):
                     return {"type": "increase_ability", "ability": ability}
+            return None
+        if self._attribute_button_rect.collidepoint(event.pos):
+            self.attribute_screen = True
+            return None
         for slot, rect in self._slot_rects.items():
             if rect.collidepoint(event.pos):
                 equipped = actor_data.get("equipment", {}).get(slot)
@@ -192,6 +210,9 @@ class InventoryScreen:
         pygame.draw.rect(screen, (175, 180, 190), self.rect, 2, border_radius=8)
         screen.blit(font.render("Inventory and Equipment  |  I or Esc to close", True,
                                 (245, 235, 195)), (self.rect.x + 16, self.rect.y + 12))
+        if self.attribute_screen:
+            self._draw_attribute_screen(screen, actor_data, font)
+            return
         gold_label = font.render(f"Gold: {actor_data.get('gold', 0)}", True,
                                  (245, 220, 150))
         screen.blit(gold_label, (self.rect.right - gold_label.get_width() - 18,
@@ -265,23 +286,33 @@ class InventoryScreen:
                          ("wisdom", "WIS"), ("charisma", "CHA"))
         ability_y = summary_y + 126
         available_points = attribute_points_available(actor_data)
+        button_width = 116
         if any(int(value or 0) > 30 for value in abilities.values()):
-            ability_hint = "Scores can exceed 30; calculations cap at 30"
+            ability_hint = "Stored score > 30"
         elif available_points:
-            ability_hint = f"{available_points} points · click a score to add +1"
+            ability_hint = f"{available_points} points ready"
         else:
-            ability_hint = "Effective ability score cap: 30"
+            ability_hint = "Ability scores"
         screen.blit(label_font.render(self._fit_text(
-            ability_hint, label_font, sheet_width), True, (255, 220, 145)),
+            ability_hint, label_font, sheet_width - button_width - 8), True,
+            (255, 220, 145)),
             (sheet_x, ability_y - 15))
+        self._attribute_button_rect = pygame.Rect(
+            sheet_x + sheet_width - button_width, ability_y - 23,
+            button_width, 24)
+        pygame.draw.rect(screen, (76, 105, 82) if available_points else (66, 70, 76),
+                         self._attribute_button_rect, border_radius=4)
+        button_label = f"Spend Points · {available_points}"
+        screen.blit(label_font.render(button_label, True, (245, 245, 238)),
+                    (self._attribute_button_rect.x + 5,
+                     self._attribute_button_rect.y + 5))
         self._ability_rects = {}
         for index, (key, short_name) in enumerate(ability_names):
             col, row = index % 2, index // 2
             card = pygame.Rect(sheet_x + col * 122, ability_y + row * 49, 116, 42)
             self._ability_rects[key] = card
             pygame.draw.rect(screen, (47, 52, 61), card, border_radius=4)
-            hovered = available_points > 0 and card.collidepoint(pygame.mouse.get_pos())
-            pygame.draw.rect(screen, (240, 204, 120) if hovered else (92, 101, 116),
+            pygame.draw.rect(screen, (92, 101, 116),
                              card, 1, border_radius=4)
             score = int(abilities.get(key, 10) or 10)
             value = label_font.render(f"{short_name}  {score}", True,
@@ -291,9 +322,6 @@ class InventoryScreen:
             mod_surface = label_font.render(mod_label, True, (255, 220, 145))
             screen.blit(value, (card.x + 7, card.y + 6))
             screen.blit(mod_surface, (card.x + 7, card.y + 23))
-            if available_points:
-                plus = label_font.render("+1", True, (180, 230, 190))
-                screen.blit(plus, (card.right - plus.get_width() - 7, card.y + 23))
 
         # Detailed character statistics scroll independently from inventory.
         detail_top = ability_y + 3 * 49 + 2
@@ -301,6 +329,8 @@ class InventoryScreen:
         self._sheet_viewport = pygame.Rect(
             sheet_x, detail_top, sheet_width, max(1, detail_bottom - detail_top))
         skills = {str(value).casefold() for value in actor_data.get("skills", []) or []}
+        if "keen_senses" in species_traits(actor_data):
+            skills.add("perception")
         saves = {str(value).casefold() for value in actor_data.get("saves", []) or []}
         abilities = actor_data.get("abilities", {}) or {}
         prof = proficiency_bonus(actor_data)
@@ -360,6 +390,24 @@ class InventoryScreen:
                            if isinstance(item, dict) else str(item)
                            for item in conditions]
         add_row("Conditions", ", ".join(condition_names) or "None")
+        granted_features = set(actor_data.get("class_features", []) or [])
+        feature_rows = []
+        for class_id, class_data in CLASSES.items():
+            for level_key, features in (class_data.get("progression", {}) or {}).items():
+                for feature in features or []:
+                    if feature.get("id") in granted_features:
+                        feature_rows.append((class_id, level_key, feature))
+        subclass_id = actor_data.get("subclass")
+        subclass = SUBCLASSES.get(subclass_id, {})
+        for level_key, feature_id, feature in subclass_feature_items(subclass_id):
+            if feature_id in granted_features:
+                feature_rows.append((subclass.get("class", "subclass"), level_key,
+                                     feature))
+        if feature_rows:
+            add_section("Class Features")
+            for class_id, level_key, feature in feature_rows:
+                add_row(f"{class_id.title()} {level_key}",
+                        feature.get("name", feature.get("id", "Feature")), True)
         add_section("Character Details")
         add_row("Subclass", str(actor_data.get("subclass") or "None").replace("_", " ").title())
         add_row("XP", f"{actor_data.get('xp_total', 0)} total · {unspent_xp(actor_data)} unspent")
@@ -483,3 +531,53 @@ class InventoryScreen:
                             for entry in items if entry.get("id") == quick_items.get(key)), None)
         if hovered and tooltips_enabled:
             self._draw_tooltip(screen, font, hovered, mouse)
+
+    def _draw_attribute_screen(self, screen, actor_data, font):
+        """Render attribute spending as a focused character-sheet sub-screen."""
+        available = attribute_points_available(actor_data)
+        title_font = pygame.font.Font(None, 30)
+        body_font = pygame.font.Font(None, 22)
+        screen.blit(title_font.render("Spend Attribute Points", True,
+                                      (250, 235, 190)),
+                    (self.rect.x + 24, self.rect.y + 64))
+        screen.blit(body_font.render(
+            f"Available points: {available}  ·  Each point adds +1 to one score.",
+            True, (220, 225, 232)), (self.rect.x + 24, self.rect.y + 108))
+        screen.blit(body_font.render(
+            "Scores may exceed 30; calculations stop increasing at 30.",
+            True, (255, 220, 145)), (self.rect.x + 24, self.rect.y + 138))
+        abilities = actor_data.get("abilities", {}) or {}
+        ability_names = (("strength", "Strength"), ("dexterity", "Dexterity"),
+                         ("constitution", "Constitution"), ("intellect", "Intellect"),
+                         ("wisdom", "Wisdom"), ("charisma", "Charisma"))
+        col_width = min(310, (self.rect.width - 60) // 2)
+        card_height = 76
+        start_y = self.rect.y + 190
+        self._ability_rects = {}
+        for index, (key, name) in enumerate(ability_names):
+            col, row = index % 2, index // 2
+            rect = pygame.Rect(self.rect.x + 24 + col * (col_width + 12),
+                               start_y + row * (card_height + 12),
+                               col_width, card_height)
+            self._ability_rects[key] = rect
+            pygame.draw.rect(screen, (48, 54, 64), rect, border_radius=6)
+            pygame.draw.rect(screen, (105, 116, 132), rect, 1, border_radius=6)
+            score = int(abilities.get(key, 10) or 10)
+            screen.blit(body_font.render(name, True, (230, 235, 242)),
+                        (rect.x + 14, rect.y + 11))
+            score_text = f"{score}  ({modifier(score):+d})"
+            screen.blit(title_font.render(score_text, True, (255, 220, 145)),
+                        (rect.x + 14, rect.y + 37))
+            add_rect = pygame.Rect(rect.right - 64, rect.y + 18, 48, 40)
+            pygame.draw.rect(screen, (74, 112, 82) if available else (65, 69, 76),
+                             add_rect, border_radius=5)
+            label = "+1" if available else "—"
+            screen.blit(body_font.render(label, True, (245, 245, 240)),
+                        body_font.render(label, True, (245, 245, 240)).get_rect(center=add_rect.center))
+            self._ability_rects[key] = add_rect
+        self._attribute_back_rect = pygame.Rect(
+            self.rect.x + 24, self.rect.bottom - 58, 112, 34)
+        pygame.draw.rect(screen, (73, 79, 88), self._attribute_back_rect,
+                         border_radius=4)
+        screen.blit(body_font.render("Back to sheet", True, (245, 245, 240)),
+                    (self._attribute_back_rect.x + 5, self._attribute_back_rect.y + 7))

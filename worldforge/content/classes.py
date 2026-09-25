@@ -55,19 +55,32 @@ ALL_SKILLS = [
 
 
 def skill_options(class_name):
-    """Return the pickable skill list for a class.
+    """Return the skill list offered for XP purchase by a class trainer.
 
     classes.json lets a class use the sentinel ``["any"]`` (bard) to mean
     "choose from every skill in the game" instead of a fixed short list.
     Without this, callers were treating ``["any"]`` as a literal one-item
-    skill list, which made ``skill_choices: 3`` impossible to satisfy and
-    soft-locked bard creation. Expand the sentinel here so every caller
-    (creation_flow, creation_screen) gets the real option list.
+    skill list, which made ``skill_choices: 3`` impossible to satisfy. Expand
+    the sentinel here so the trainer receives the full option list.
     """
     listed = CLASSES[class_name].get('skills', [])
     if listed == ['any']:
         return ALL_SKILLS
     return listed
+
+
+def subclass_feature_items(subclass_id):
+    """Yield (level, purchase_id, feature) for both old and list-shaped data."""
+    subclass = SUBCLASSES.get(subclass_id, {})
+    for level, value in (subclass.get("features", {}) or {}).items():
+        features = value if isinstance(value, list) else [value]
+        for feature in features:
+            if not isinstance(feature, dict):
+                continue
+            feature_id = feature.get("id")
+            purchase_id = (f"{subclass_id}_{feature_id}" if feature_id
+                           else f"{subclass_id}_{level}")
+            yield str(level), purchase_id, feature
 
 EQUIPMENT_ITEMS = _load_table("equipment.json")
 SPELLS = _load_table("spells.json")

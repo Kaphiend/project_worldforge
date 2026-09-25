@@ -11,16 +11,21 @@ alphabetically and later definitions replace matching IDs.
 ## Characters
 
 `classes.json` defines twelve archetypes, proficiencies, selectable skills,
-starting gear, and original level progression. `subclasses.json` defines
-three original paths per class, with feature names and short summaries at
-levels 3, 6, 10, and 14. Subclass choice and trained skills are selected during
-character creation. These progression entries are descriptive data; class and
-subclass feature effects are not yet implemented.
+starting gear, and level progression. Selectable class skills and subclass
+identities follow SRD 5.2.1; former original subclasses remain as nonselectable
+legacy records. Skills, class features, spells, and subclass features are
+purchased from the trainer with XP. Rogue Hide, Cunning Action's bonus-action
+Hide, Sneak Attack, and Thief Fast Hands' bonus-action Sleight of Hand check
+are implemented; other class and subclass features are mostly descriptive.
 
-`races.json` contains ancestry and trait reference data, including a
-Two-Parent Half-Breed choice. Ability bonuses are not automatically applied.
+`races.json` contains SRD 5.2.1 species and lineage reference data, plus a
+Worldforge Two-Parent Half-Breed extension. Species ability bonuses are not
+used. Passive Perception, selected species speeds, Dwarven Toughness, damage
+resistance, and Halfling Lucky attack rerolls have runtime support. See
+[`project/SRD-5.2.1.md`](../project/SRD-5.2.1.md) for the content
+baseline, implementation limits, and required Creative Commons attribution.
 `progression.json` contains tuneable multiclass unlock prices and class-order
-price multipliers for trained spells and abilities.
+price multipliers for trainer purchases.
 
 ## Combat and items
 
@@ -56,6 +61,13 @@ perception is 10 plus Wisdom modifier and proficiency bonus when trained in
 Perception. Nameplates show the highest title whose DC is met. This information
 is automatic and ignores distance and line of sight. Arena obstacle rectangles
 block attack and spell line of sight when a resolution requires it.
+
+The exploration `K` toggle fixes a Dexterity (Stealth) result and halves
+movement speed. Mobs with line of sight notice a sneaking character when their
+passive Perception meets or beats the result. In combat, the Hide action requires
+cover from every living enemy and a DC 15 Stealth check; a hidden Rogue can
+apply purchased Sneak Attack damage under the SRD's advantage/adjacent-ally
+conditions. Current arenas treat solid obstacles as full cover.
 
 ## Demo world and co-op
 

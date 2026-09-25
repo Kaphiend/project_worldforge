@@ -1,18 +1,21 @@
 """Encounter setup, mob lifecycle, and combat snapshot helpers."""
 from copy import deepcopy
 import random
-import uuid
+import pygame
 
 from worldforge.actors.factory import create_npc_instance
 from worldforge.app.rendering import _player_id
 from worldforge.app.world import (ACTOR_HITBOX_HEIGHT, ACTOR_HITBOX_WIDTH,
                                   ACTOR_SIZE, PIXELS_PER_FOOT, _actor_hitbox,
                                   _arena_bounds, _arena_obstacles,
-                                  _line_of_sight, _movement_allowance)
+                                  _line_of_sight, _movement_allowance,
+                                  _perception_score)
 from worldforge.combat.rules import edge_distance_feet, initiative_for
 from worldforge.content.classes import (ARENAS, MOB_GENERATION_RULES, NPCS,
                                         SCENARIOS)
 from worldforge.core.progression import initialize_resources
+
+DEFAULT_SCENARIO = "first_contact"
 
 def _actor_data(actor):
     return deepcopy(vars(actor)) if not isinstance(actor, dict) else deepcopy(actor)
@@ -20,6 +23,11 @@ def _actor_data(actor):
 def _combat_snapshot(actor_id, data, team="players"):
     data = _actor_data(data)
     initialize_resources(data)
+    if data.get("sneaking") and data.get("stealth_check_total") is not None:
+        data.setdefault("hidden", {
+            "stealth_total": int(data["stealth_check_total"]),
+            "detected_by": [],
+        })
     hitbox = {"offset_x": (ACTOR_SIZE - ACTOR_HITBOX_WIDTH) / 2,
               "offset_y": (ACTOR_SIZE - ACTOR_HITBOX_HEIGHT) / 2,
               "width": ACTOR_HITBOX_WIDTH, "height": ACTOR_HITBOX_HEIGHT}
@@ -43,6 +51,41 @@ def _progression_sync_state(actor, local_player_id, remote_players):
             "arena": deepcopy(ARENAS.get(
                 SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {}))}
 
+
+def _scenario_world_mobs(scenario_id):
+    """Build the initial persistent enemy set authored for one area."""
+    scenario = SCENARIOS.get(scenario_id, {})
+    mobs = []
+    for index, spawn in enumerate(scenario.get("enemies", [])):
+        npc_id = spawn.get("npc")
+        if npc_id not in NPCS:
+            continue
+        mob_id = spawn.get("id", f"{npc_id}-{index + 1}")
+        npc = create_npc_instance(
+            npc_id, spawn.get("x", NPCS[npc_id].get("x", 0)),
+            spawn.get("y", NPCS[npc_id].get("y", 0)))
+        npc["id"] = mob_id
+        entry = _combat_snapshot(mob_id, npc, "enemies")
+        entry["perception_info"] = _mob_perception_info(NPCS[npc_id], npc)
+        mobs.append(entry)
+    return mobs
+
+
+def _new_world_state(actor, local_player_id, remote_players,
+                     scenario_id=DEFAULT_SCENARIO):
+    """Create an exploration snapshot with this area's data and enemies."""
+    scenario = SCENARIOS.get(scenario_id)
+    if not scenario:
+        raise ValueError(f"Unknown area scenario: {scenario_id}")
+    state = _progression_sync_state(actor, local_player_id, remote_players)
+    state.update(
+        scenario_id=scenario_id, scenario=deepcopy(scenario),
+        arena=deepcopy(ARENAS.get(scenario.get("arena"), {})),
+        world_areas={}, world_area_items={}, ground_items=[], sync_only=True)
+    state["actors"].update({entry["id"]: entry
+                             for entry in _scenario_world_mobs(scenario_id)})
+    return state
+
 def _initiative_order(actors):
     rolls = {actor_id: initiative_for(entry["data"])
              for actor_id, entry in actors.items()}
@@ -63,8 +106,6 @@ def _initiative_order(actors):
         for actor_id in set(tied):
             reroll = initiative_for(actors[actor_id]["data"])
             rolls[actor_id] = reroll
-
-DEFAULT_SCENARIO = "first_contact"
 
 COMBAT_TRIGGER_RANGE_FEET = 20
 
@@ -113,7 +154,7 @@ def _mob_perception_info(template, npc):
     })
     return perception
 
-def _random_mob_entry(arena, existing=(), players=()):
+def _random_mob_entry(arena, existing=(), players=(), mob_pool=None):
     """Create a fresh, equipped instance of a randomly selected NPC template."""
     if not NPCS:
         return None
@@ -125,7 +166,15 @@ def _random_mob_entry(arena, existing=(), players=()):
         for bed in (arena or {}).get("inn_beds", []))
     occupied = [_actor_hitbox(item["x"], item["y"]) for item in existing]
     occupied.extend(_actor_hitbox(item["x"], item["y"]) for item in players)
-    templates = list(NPCS.items())
+    corpses = [item for item in existing
+               if item.get("team") == "enemies" and item.get("downed")]
+    if mob_pool is None:
+        templates = list(NPCS.items())
+    else:
+        templates = [(npc_id, NPCS[npc_id]) for npc_id in mob_pool
+                     if npc_id in NPCS]
+    if not templates:
+        return None
     random.shuffle(templates)
     spot = None
     for _ in range(80):
@@ -133,6 +182,23 @@ def _random_mob_entry(arena, existing=(), players=()):
         y = random.randint(bounds.top, max(bounds.top, bounds.bottom - ACTOR_SIZE))
         box = _actor_hitbox(x, y)
         if not any(box.colliderect(rect) for rect in obstacles + occupied):
+            # Keep the post-victory replacement mob outside the encounter
+            # trigger radius so players can loot and move away before combat
+            # starts again.
+            candidate = {"x": x, "y": y, "width": ACTOR_SIZE,
+                         "height": ACTOR_SIZE}
+            safety_distance = COMBAT_TRIGGER_RANGE_FEET + 10
+            if any(edge_distance_feet(candidate, player,
+                                      PIXELS_PER_FOOT, ACTOR_SIZE)
+                   <= safety_distance for player in players):
+                continue
+            # A replacement enemy must also stay clear of the corpses. A
+            # player may need to cross the trigger radius while approaching
+            # a body, especially after a ranged kill.
+            if any(edge_distance_feet(candidate, corpse,
+                                      PIXELS_PER_FOOT, ACTOR_SIZE)
+                   <= safety_distance for corpse in corpses):
+                continue
             spot = (x, y)
             break
     if spot is None:
@@ -260,5 +326,13 @@ def _combat_trigger(actor, local_player_id, remote_players,
             if (edge_distance_feet(player, enemy, PIXELS_PER_FOOT, ACTOR_SIZE)
                     <= COMBAT_TRIGGER_RANGE_FEET
                     and _line_of_sight(player, enemy, arena)):
+                stealth_total = (player["data"].get("stealth_check_total")
+                                 if player["data"].get("sneaking") else None)
+                hidden = player["data"].get("hidden")
+                if isinstance(hidden, dict):
+                    stealth_total = hidden.get("stealth_total")
+                if (stealth_total is not None
+                        and _perception_score(enemy["data"]) < int(stealth_total)):
+                    continue
                 return player_id, enemy["id"]
     return None

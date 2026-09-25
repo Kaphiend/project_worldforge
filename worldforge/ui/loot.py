@@ -33,6 +33,12 @@ class LootUI:
     def handle_event(self, event, loot):
         if not self.visible:
             return None
+        if (event.type == pygame.KEYDOWN and event.key in (
+                pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d,
+                pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)):
+            # Treat an attempted move as an explicit close so the modal loot
+            # panel never makes the character feel stuck.
+            return {"type": "loot_finish", "target": self.corpse_id}
         if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE,
                                                            pygame.K_n):
             return {"type": "loot_finish", "target": self.corpse_id}

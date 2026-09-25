@@ -10,6 +10,9 @@ from worldforge.actors.creation_flow import CharacterCreationFlow
 from worldforge.core.storage import delete_actor, list_actors, unlock_actor
 
 
+BACK_TO_MODE = "__back_to_mode__"
+
+
 def run_creation(available_avatars=None):
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -164,10 +167,10 @@ def run_creation(available_avatars=None):
                 return None
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if flow.actor:
-                    unlock_actor(flow.actor.id)
-                pygame.quit()
-                return None
+                if flow.stage == 'menu':
+                    pygame.quit()
+                    return BACK_TO_MODE
+                flow.go_back()
 
             if event.type == pygame.KEYDOWN and flow.stage in ('name', 'quick_name'):
                 if event.key == pygame.K_BACKSPACE:
@@ -184,7 +187,10 @@ def run_creation(available_avatars=None):
                     name_text += event.unicode
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if flow.stage != 'menu' and back_rect.collidepoint(event.pos):
+                if back_rect.collidepoint(event.pos):
+                    if flow.stage == 'menu':
+                        pygame.quit()
+                        return BACK_TO_MODE
                     flow.go_back()
                     continue
                 if flow.stage == 'menu':
@@ -286,6 +292,8 @@ def run_creation(available_avatars=None):
         screen.fill((20, 20, 20))
 
         if flow.stage == 'menu':
+            screen.blit(font.render("Choose or create a character", True,
+                                    (255, 255, 255)), (220, 35))
             for load_rect, delete_rect, save_id, name in menu_buttons():
                 pygame.draw.rect(screen, (60, 60, 60), load_rect)
                 text = font.render(fit_label(name.title(), font,
@@ -366,12 +374,13 @@ def run_creation(available_avatars=None):
             for rect, subrace in make_buttons(RACES[flow.actor.race].get('subraces', {}).keys()):
                 color = (90, 140, 90) if subrace == flow.actor.subrace else (60, 60, 60)
                 pygame.draw.rect(screen, color, rect)
-                screen.blit(font.render(fit_label(subrace.title(), font,
+                subrace_label = subrace.replace("_", " ").title()
+                screen.blit(font.render(fit_label(subrace_label, font,
                                                  rect.width - 20),
                                         True, (255, 255, 255)),
                             (rect.x + 10, rect.y + 10))
                 if rect.collidepoint(pygame.mouse.get_pos()):
-                    choice_tooltip = (subrace.title(), RACES[flow.actor.race]
+                    choice_tooltip = (subrace_label, RACES[flow.actor.race]
                                       .get('subraces', {}).get(subrace, {})
                                       .get('summary', ''))
             if flow.actor.subrace:
@@ -485,7 +494,7 @@ def run_creation(available_avatars=None):
             actor = flow.actor
             ancestry = actor.race.title()
             if actor.subrace:
-                ancestry += f" ({actor.subrace.title()})"
+                ancestry += f" ({actor.subrace.replace('_', ' ').title()})"
             if actor.parent_races:
                 ancestry += " (" + " / ".join(race.title() for race in actor.parent_races) + ")"
             title_font = pygame.font.SysFont(None, 32)
@@ -538,11 +547,10 @@ def run_creation(available_avatars=None):
                 screen.blit(font.render(label, True, (255, 255, 255)),
                             (rect.x + 65, rect.y + 135))
 
-        if flow.stage != 'menu':
-            pygame.draw.rect(screen, (75, 82, 96), back_rect, border_radius=5)
-            pygame.draw.rect(screen, (180, 190, 205), back_rect, 2, border_radius=5)
-            back_text = font.render("Back", True, (255, 255, 255))
-            screen.blit(back_text, back_text.get_rect(center=back_rect.center))
+        pygame.draw.rect(screen, (75, 82, 96), back_rect, border_radius=5)
+        pygame.draw.rect(screen, (180, 190, 205), back_rect, 2, border_radius=5)
+        back_text = font.render("Back", True, (255, 255, 255))
+        screen.blit(back_text, back_text.get_rect(center=back_rect.center))
         draw_choice_tooltip(choice_tooltip)
         pygame.display.flip()
         clock.tick(60)

@@ -2,13 +2,22 @@
 
 Each top-level key is a subclass ID. The associated class in `classes.json`
 must list that ID in its `subclasses` array or creation will never offer it.
-Each record has `id`, `class`, `name`, `description`, and `features`.
+Each record has `id`, `class`, `name`, `description`, and `features`. The
+selectable built-in roster follows SRD 5.2.1. Former Worldforge subclasses
+remain in the table with `selectable: false` for saved-character compatibility.
 
-`features` is a map keyed by level-as-text. Each level contains a `name` and a
-short `summary`. The current UI chooses a path at level 1, while these milestone
-records describe later levels (currently 3, 6, 10, and 14). They are not
-mechanically granted. Keep text original and treat new effects as design notes
-until a Python resolver is added.
+`features` is a map keyed by level-as-text. A level may contain one feature
+object or a list of feature objects. Give each feature a stable `id`, `name`,
+and short `summary`; features at the same level are separate trainer purchases.
+Character creation chooses the subclass at level 3. Features appear as XP
+purchases at the trainer when the character meets their class-level
+prerequisite. Purchased entries are recorded on the character sheet. Their
+summaries remain descriptive until a matching Python effect resolver is added.
+Purchase IDs are `<subclass-id>_<feature-id>`; records without an `id` retain
+the legacy `<subclass-id>_<level>` convention.
+
+See [the SRD baseline and implementation limits](../../project/SRD-5.2.1.md)
+for attribution and current runtime support.
 
 To add a path: create a unique record, set `class` to the exact class ID, then
 add its ID to that class's `subclasses` list. Because a class override replaces

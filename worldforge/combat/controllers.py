@@ -1,5 +1,6 @@
 """Runtime controller interfaces shared by player and non-player actors."""
 from worldforge.combat.rules import edge_distance_feet, selected_weapon
+from worldforge.app.world import _hidden_from
 
 
 class Controller:
@@ -25,23 +26,22 @@ class AIController(Controller):
         actor_id = context["actor_id"]
         actor = combat["actors"][actor_id]
         targets = [entry for entry in combat["actors"].values()
-                   if entry["team"] == "players" and not entry["downed"]]
+                   if entry["team"] == "players" and not entry["downed"]
+                   and not _hidden_from(actor, entry, combat.get("arena"))]
         if not targets:
             return [{"type": "end_turn"}]
         target = min(targets, key=lambda entry: edge_distance_feet(actor, entry))
         target_id = target["id"]
         weapon, definition, _ = selected_weapon(actor["data"])
-        if weapon is None:
-            return [{"type": "end_turn"}]
-
-        ranged = (
+        ranged = bool(weapon) and (
             actor["data"].get("active_weapon_set") == "ranged"
             and weapon == actor["data"].get("equipment", {}).get("ranged")
         )
-        ranges = definition.get("ranges", {})
+        ranges = definition.get("ranges", {}) if definition else {}
         reach = ranges.get("melee", 5)
         edge_distance = edge_distance_feet(actor, target)
-        if ranged or ("thrown" in definition.get("tags", []) and edge_distance > reach):
+        if ranged or (definition and "thrown" in definition.get("tags", [])
+                      and edge_distance > reach):
             return [{"type": "attack", "target": target_id}, {"type": "end_turn"}]
 
         actions = []

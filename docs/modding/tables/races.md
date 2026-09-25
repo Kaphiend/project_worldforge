@@ -3,15 +3,16 @@
 Each top-level key is an ancestry ID. The creation screen lists records unless
 `selectable` is explicitly `false`.
 
-- `bonuses`: reference data keyed by ability ID (or `all`). It is shown/stored
-  as race data, but the game does not automatically add these bonuses to rolled
-  ability scores yet.
+- `bonuses`: optional reference data keyed by ability ID (or `all`). SRD 5.2.1
+  species do not assign ability-score bonuses; Worldforge uses its own
+  attribute-point spending system.
 - `size`: descriptive text/value. Runtime speed logic does not use size.
 - `speed`: movement speed in feet, read by combat movement. Use a number.
 - `traits`: list of identifiers for future interpretation. Arbitrary new trait
   names are stored but have no behavior until Python supports them.
-- `subraces`: map from subrace ID to a record with optional `bonuses` and
-  `traits`. If this object is present, character creation requires a subrace.
+- `subraces`: map from lineage/ancestry choice ID to a record with optional
+  `bonuses` and `traits`. If present, character creation requires a choice.
+- `rules_source`: identifies SRD 5.2.1 content or a Worldforge extension.
 - `half_breed: true`: sends creation to the two-parent selection stage.
   `parent_count` documents the count; current flow specifically asks for two.
 - `selectable: false`: hides this ancestry in creation (useful for a template).

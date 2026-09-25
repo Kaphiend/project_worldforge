@@ -4,24 +4,67 @@
     "avatar": "asset_pack/Orc.png",
     "controller": "ai",
     "elite_chance": 0.08,
-    "class_pool": ["barbarian", "fighter", "ranger", "rogue", "paladin"],
-    "gear_slots": ["chest", "main_hand", "off_hand"],
+    "class_pool": [
+      "barbarian",
+      "fighter",
+      "ranger",
+      "rogue",
+      "paladin"
+    ],
+    "gear_slots": [
+      "chest",
+      "main_hand",
+      "off_hand"
+    ],
     "gear_pools": {
-      "chest": ["leather", "chain_shirt", "scale_mail"],
-      "main_hand": ["dagger", "sword_1h", "axe_1h", "hammer_1h", "sword_2h", "axe_2h"],
-      "off_hand": ["shield", "dagger", "sword_1h", "axe_1h", "hammer_1h"]
+      "chest": [
+        "leather",
+        "chain_shirt",
+        "scale_mail"
+      ],
+      "main_hand": [
+        "dagger",
+        "sword_1h",
+        "axe_1h",
+        "hammer_1h",
+        "sword_2h",
+        "axe_2h"
+      ],
+      "off_hand": [
+        "shield",
+        "dagger",
+        "sword_1h",
+        "axe_1h",
+        "hammer_1h"
+      ]
     },
     "perception": {
       "levels": [
-        {"dc": 10, "title": "Orc"},
-        {"dc": 13, "title": "Orc Raider"}
+        {
+          "dc": 10,
+          "title": "Orc"
+        },
+        {
+          "dc": 13,
+          "title": "Orc Raider"
+        }
       ]
     },
     "max_hp": 18,
     "current_hp": 18,
     "level": 1,
-    "abilities": {"strength": 14, "dexterity": 12, "constitution": 12, "intellect": 9, "wisdom": 10, "charisma": 10},
-    "weapon_prof": ["simple", "martial"],
+    "abilities": {
+      "strength": 14,
+      "dexterity": 12,
+      "constitution": 12,
+      "intellect": 9,
+      "wisdom": 10,
+      "charisma": 10
+    },
+    "weapon_prof": [
+      "simple",
+      "martial"
+    ],
     "armor_prof": [],
     "saves": [],
     "known_spells": [],
@@ -30,11 +73,31 @@
     "active_effects": [],
     "inventory": [],
     "equipment": {
-      "chest": {"id": "raider-leather", "name": "Worn Leather", "slot": "chest", "category": "light", "base_ac": 11, "tags": [], "rarity": null, "rolled_attributes": {}},
-      "main_hand": {"id": "raider-sword", "name": "Road Sword", "slot": "main_hand", "template_id": "sword_1h", "tags": [], "rarity": null, "rolled_attributes": {}}
+      "chest": {
+        "id": "raider-leather",
+        "name": "Worn Leather",
+        "slot": "chest",
+        "category": "light",
+        "base_ac": 11,
+        "tags": [],
+        "rarity": null,
+        "rolled_attributes": {}
+      },
+      "main_hand": {
+        "id": "raider-sword",
+        "name": "Road Sword",
+        "slot": "main_hand",
+        "template_id": "sword_1h",
+        "tags": [],
+        "rarity": null,
+        "rolled_attributes": {}
+      }
     },
     "active_weapon_set": "melee",
     "x": 650,
-    "y": 280
+    "y": 280,
+    "skills": [
+      "perception"
+    ]
   }
 }

@@ -1,257 +1,324 @@
 {
   "human": {
-    "bonuses": {
-      "all": 1
-    },
-    "size": "medium",
+    "bonuses": {},
+    "size": "medium-or-small",
     "speed": 30,
+    "rules_source": "SRD 5.2.1",
     "traits": [
-      "extra_language"
+      "resourceful",
+      "skillful",
+      "versatile"
     ],
-    "summary": "Adaptable people with broad ability and an extra language."
+    "summary": "Adaptable people with a flexible skill and origin-feature choice."
   },
   "elf": {
-    "bonuses": {
-      "dexterity": 2
-    },
+    "bonuses": {},
     "size": "medium",
     "speed": 30,
+    "rules_source": "SRD 5.2.1",
     "traits": [
-      "low_light_sight",
+      "darkvision",
+      "fey_ancestry",
       "keen_senses",
-      "charm_resistance",
-      "light_rest",
-      "weapon_familiarity"
+      "trance"
     ],
     "subraces": {
-      "dawn": {
-        "bonuses": {
-          "intellect": 1
-        },
+      "drow": {
+        "bonuses": {},
         "traits": [
-          "dawn_heritage"
+          "drow_lineage",
+          "dancing_lights",
+          "faerie_fire",
+          "darkness"
         ],
-        "summary": "An elf lineage with an intellect bonus and dawn heritage."
+        "summary": "Drow lineage grants darkvision and a small set of innate spells."
       },
-      "grove": {
-        "bonuses": {
-          "wisdom": 1
-        },
+      "high_elf": {
+        "bonuses": {},
         "traits": [
-          "grove_heritage"
+          "high_elf_lineage",
+          "prestidigitation",
+          "detect_magic",
+          "misty_step"
         ],
-        "summary": "An elf lineage with a wisdom bonus and grove heritage."
+        "summary": "High elf lineage grants a wizard cantrip and additional innate magic."
       },
-      "dusk": {
-        "bonuses": {
-          "charisma": 1
-        },
+      "wood_elf": {
+        "bonuses": {},
         "traits": [
-          "dusk_heritage"
+          "wood_elf_lineage",
+          "speed_35",
+          "druidcraft",
+          "longstrider",
+          "pass_without_trace"
         ],
-        "summary": "An elf lineage with a charisma bonus and dusk heritage."
+        "summary": "Wood elf lineage grants increased speed and nature magic."
       }
     },
-    "summary": "Keen-sensed, graceful people with a light sleep and resistance to charm."
+    "summary": "A long-lived people with keen senses, darkvision, fey ancestry, and trance."
   },
   "dwarf": {
-    "bonuses": {
-      "constitution": 2
-    },
+    "bonuses": {},
     "size": "medium",
-    "speed": 25,
+    "speed": 30,
+    "rules_source": "SRD 5.2.1",
     "traits": [
-      "low_light_sight",
-      "poison_resistance",
-      "stonecraft",
-      "weapon_familiarity",
-      "tool_familiarity"
+      "darkvision",
+      "dwarven_resilience",
+      "dwarven_toughness",
+      "stonecunning"
     ],
-    "subraces": {
-      "hearth": {
-        "bonuses": {
-          "wisdom": 1
-        },
-        "traits": [
-          "hearth_heritage"
-        ],
-        "summary": "A dwarf lineage with a wisdom bonus and hearth heritage."
-      },
-      "stone": {
-        "bonuses": {
-          "strength": 2
-        },
-        "traits": [
-          "stone_heritage"
-        ],
-        "summary": "A sturdy dwarf lineage with a strength bonus and stone heritage."
-      }
-    },
-    "summary": "Tough, sure-footed folk known for poison resistance and stonecraft."
+    "summary": "A sturdy people with poison resilience, extra vitality, and stone sense."
   },
   "halfling": {
-    "bonuses": {
-      "dexterity": 2
-    },
+    "bonuses": {},
     "size": "small",
-    "speed": 25,
+    "speed": 30,
+    "rules_source": "SRD 5.2.1",
     "traits": [
-      "low_roll_reroll",
-      "fear_resistance",
-      "small_space_movement"
+      "brave",
+      "halfling_nimbleness",
+      "lucky"
     ],
-    "subraces": {
-      "swift": {
-        "bonuses": {
-          "charisma": 1
-        },
-        "traits": [
-          "swift_heritage"
-        ],
-        "summary": "A swift halfling lineage with a charisma bonus."
-      },
-      "steadfast": {
-        "bonuses": {
-          "constitution": 1
-        },
-        "traits": [
-          "steadfast_heritage"
-        ],
-        "summary": "A hardy halfling lineage with a constitution bonus."
-      }
-    },
-    "summary": "Small, quick people who recover from unlucky rolls and resist fear."
+    "summary": "A small, nimble people known for luck and courage."
   },
   "gnome": {
-    "bonuses": {
-      "intellect": 2
-    },
+    "bonuses": {},
     "size": "small",
-    "speed": 25,
+    "speed": 30,
+    "rules_source": "SRD 5.2.1",
     "traits": [
-      "low_light_sight",
+      "darkvision",
       "gnomish_cunning"
     ],
     "subraces": {
       "forest": {
-        "bonuses": {
-          "dexterity": 1
-        },
+        "bonuses": {},
         "traits": [
-          "speak_with_small_beasts"
+          "forest_gnome_lineage",
+          "minor_illusion",
+          "speak_with_animals"
         ],
-        "summary": "A forest gnome with a dexterity bonus and a bond with small beasts."
+        "summary": "Forest lineage grants a cantrip and limited animal speech magic."
       },
       "rock": {
-        "bonuses": {
-          "constitution": 1
-        },
+        "bonuses": {},
         "traits": [
-          "tinker_crafting"
+          "rock_gnome_lineage",
+          "mending",
+          "prestidigitation",
+          "clockwork_tinkering"
         ],
-        "summary": "A rock gnome with a constitution bonus and tinkering craft."
+        "summary": "Rock lineage grants two cantrips and the ability to make a clockwork device."
       }
     },
-    "summary": "Small, clever folk with sharp minds and a gift for craft or nature."
+    "summary": "A small people with darkvision, magical resilience, and a supernatural lineage."
+  },
+  "goliath": {
+    "bonuses": {},
+    "size": "medium",
+    "speed": 35,
+    "rules_source": "SRD 5.2.1",
+    "traits": [
+      "giant_ancestry_choice",
+      "large_form",
+      "powerful_build"
+    ],
+    "summary": "A giant-descended people with powerful physical traits and an ancestry boon.",
+    "subraces": {
+      "cloud": {
+        "bonuses": {},
+        "traits": [
+          "cloud_giant_ancestry",
+          "clouds_jaunt"
+        ],
+        "summary": "Cloud giant ancestry grants a brief teleport."
+      },
+      "fire": {
+        "bonuses": {},
+        "traits": [
+          "fire_giant_ancestry",
+          "fire_burn"
+        ],
+        "summary": "Fire giant ancestry empowers a damaging strike."
+      },
+      "frost": {
+        "bonuses": {},
+        "traits": [
+          "frost_giant_ancestry",
+          "frost_chill"
+        ],
+        "summary": "Frost giant ancestry slows a creature with a chilling blow."
+      },
+      "hill": {
+        "bonuses": {},
+        "traits": [
+          "hill_giant_ancestry",
+          "hill_tumble"
+        ],
+        "summary": "Hill giant ancestry can knock a creature prone."
+      },
+      "stone": {
+        "bonuses": {},
+        "traits": [
+          "stone_giant_ancestry",
+          "stone_endurance"
+        ],
+        "summary": "Stone giant ancestry helps blunt incoming damage."
+      },
+      "storm": {
+        "bonuses": {},
+        "traits": [
+          "storm_giant_ancestry",
+          "storm_thunder"
+        ],
+        "summary": "Storm giant ancestry answers injury with thunder."
+      }
+    }
   },
   "orc": {
-    "bonuses": {
-      "strength": 2
-    },
+    "bonuses": {},
     "size": "medium",
     "speed": 30,
+    "rules_source": "SRD 5.2.1",
     "traits": [
-      "low_light_sight",
-      "relentless_endurance",
-      "aggressive"
+      "adrenaline_rush",
+      "darkvision",
+      "relentless_endurance"
     ],
-    "summary": "Strong, relentless warriors who can push through defeat and rush foes."
-  },
-  "dragonborn": {
-    "bonuses": {
-      "strength": 2,
-      "charisma": 1
-    },
-    "size": "medium",
-    "speed": 30,
-    "traits": [
-      "breath_weapon",
-      "draconic_resistance"
-    ],
-    "subraces": {
-      "red": {
-        "bonuses": {},
-        "traits": [
-          "breath_fire"
-        ],
-        "summary": "Red dragon ancestry grants a fire breath weapon."
-      },
-      "blue": {
-        "bonuses": {},
-        "traits": [
-          "breath_lightning"
-        ],
-        "summary": "Blue dragon ancestry grants a lightning breath weapon."
-      },
-      "green": {
-        "bonuses": {},
-        "traits": [
-          "breath_poison"
-        ],
-        "summary": "Green dragon ancestry grants a poison breath weapon."
-      },
-      "black": {
-        "bonuses": {},
-        "traits": [
-          "breath_acid"
-        ],
-        "summary": "Black dragon ancestry grants an acid breath weapon."
-      },
-      "white": {
-        "bonuses": {},
-        "traits": [
-          "breath_cold"
-        ],
-        "summary": "White dragon ancestry grants a cold breath weapon."
-      }
-    },
-    "summary": "Proud draconic people with a breath weapon and elemental resistance."
+    "summary": "A durable people who can surge forward and endure a decisive blow."
   },
   "tiefling": {
-    "bonuses": {
-      "charisma": 2,
-      "intellect": 1
-    },
-    "size": "medium",
+    "bonuses": {},
+    "size": "medium-or-small",
     "speed": 30,
+    "rules_source": "SRD 5.2.1",
     "traits": [
-      "low_light_sight",
-      "hellish_resistance"
+      "darkvision",
+      "fiendish_legacy_choice",
+      "otherworldly_presence"
     ],
     "subraces": {
       "infernal": {
         "bonuses": {},
         "traits": [
-          "infernal_legacy"
+          "infernal_legacy",
+          "fire_resistance",
+          "thaumaturgy",
+          "hellish_rebuke",
+          "darkness"
         ],
-        "summary": "Infernal heritage shapes this tiefling’s innate magic."
+        "summary": "Infernal legacy grants fire resistance and related innate magic."
       },
       "abyssal": {
         "bonuses": {},
         "traits": [
-          "abyssal_legacy"
+          "abyssal_legacy",
+          "poison_resistance",
+          "thaumaturgy",
+          "ray_of_sickness",
+          "hold_person"
         ],
-        "summary": "Abyssal heritage shapes this tiefling’s innate magic."
+        "summary": "Abyssal legacy grants poison resistance and related innate magic."
       },
       "chthonic": {
         "bonuses": {},
         "traits": [
-          "chthonic_legacy"
+          "chthonic_legacy",
+          "necrotic_resistance",
+          "thaumaturgy",
+          "false_life",
+          "ray_of_enfeeblement"
         ],
-        "summary": "Chthonic heritage shapes this tiefling’s innate magic."
+        "summary": "Chthonic legacy grants necrotic resistance and related innate magic."
       }
     },
-    "summary": "People marked by fiendish heritage, with darkvision and hellish resistance."
+    "summary": "A fiend-touched people with darkvision and a chosen supernatural legacy."
+  },
+  "dragonborn": {
+    "bonuses": {},
+    "size": "medium",
+    "speed": 30,
+    "rules_source": "SRD 5.2.1",
+    "traits": [
+      "draconic_ancestry_choice",
+      "breath_weapon",
+      "damage_resistance",
+      "darkvision"
+    ],
+    "subraces": {
+      "black": {
+        "bonuses": {},
+        "traits": [
+          "acid_ancestry"
+        ],
+        "summary": "Black dragon ancestry grants acid resistance and a matching breath weapon."
+      },
+      "blue": {
+        "bonuses": {},
+        "traits": [
+          "lightning_ancestry"
+        ],
+        "summary": "Blue dragon ancestry grants lightning resistance and a matching breath weapon."
+      },
+      "brass": {
+        "bonuses": {},
+        "traits": [
+          "fire_ancestry"
+        ],
+        "summary": "Brass dragon ancestry grants fire resistance and a matching breath weapon."
+      },
+      "bronze": {
+        "bonuses": {},
+        "traits": [
+          "lightning_ancestry"
+        ],
+        "summary": "Bronze dragon ancestry grants lightning resistance and a matching breath weapon."
+      },
+      "copper": {
+        "bonuses": {},
+        "traits": [
+          "acid_ancestry"
+        ],
+        "summary": "Copper dragon ancestry grants acid resistance and a matching breath weapon."
+      },
+      "gold": {
+        "bonuses": {},
+        "traits": [
+          "fire_ancestry"
+        ],
+        "summary": "Gold dragon ancestry grants fire resistance and a matching breath weapon."
+      },
+      "green": {
+        "bonuses": {},
+        "traits": [
+          "poison_ancestry"
+        ],
+        "summary": "Green dragon ancestry grants poison resistance and a matching breath weapon."
+      },
+      "red": {
+        "bonuses": {},
+        "traits": [
+          "fire_ancestry"
+        ],
+        "summary": "Red dragon ancestry grants fire resistance and a matching breath weapon."
+      },
+      "silver": {
+        "bonuses": {},
+        "traits": [
+          "cold_ancestry"
+        ],
+        "summary": "Silver dragon ancestry grants cold resistance and a matching breath weapon."
+      },
+      "white": {
+        "bonuses": {},
+        "traits": [
+          "cold_ancestry"
+        ],
+        "summary": "White dragon ancestry grants cold resistance and a matching breath weapon."
+      }
+    },
+    "summary": "A draconic people with a chosen elemental ancestry and breath weapon."
   },
   "half-breed": {
     "bonuses": {},
@@ -262,6 +329,7 @@
     "traits": [
       "choose_two_parent_races"
     ],
-    "summary": "Choose two parent ancestries; their traits and physical features shape this character."
+    "rules_source": "Worldforge",
+    "summary": "Choose two parent species; this custom ancestry is outside SRD 5.2.1."
   }
 }

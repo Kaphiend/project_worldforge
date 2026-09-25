@@ -177,15 +177,13 @@ class HostSession:
         def publish_combat(combat_state):
             public_state = deepcopy(combat_state)
             if public_state:
+                # Area caches are host-owned and may contain full enemy
+                # records for maps the party has not entered yet.
+                public_state.pop("world_areas", None)
                 enemy_ids = set()
                 for entry in public_state.get("actors", {}).values():
                     if entry.get("team") == "enemies":
                         enemy_ids.add(entry["id"])
-                        enemy_data = entry.get("data", {})
-                        entry["data"] = {
-                            "name": enemy_data.get("name", "Enemy"),
-                            "avatar": enemy_data.get("avatar"),
-                        }
                 public_state["order"] = [
                     ({"id": entry["id"]} if entry.get("id") in enemy_ids else entry)
                     for entry in public_state.get("order", [])

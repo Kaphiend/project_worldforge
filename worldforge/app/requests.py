@@ -1,15 +1,27 @@
 """Host-side party synchronization and validated action requests."""
 from copy import deepcopy
-import uuid
 import pygame
-from worldforge.combat.rules import edge_distance_feet, initiative_for
-from worldforge.content.classes import ABILITIES, CLASSES, SPELLS, ARENAS, SCENARIOS
-from worldforge.actors.factory import equip_item, item_definition, unequip_item
-from worldforge.core.progression import initialize_resources, class_unlocked_level, qualified_level, unspent_xp, spend_xp, charge_xp_penalty, sync_progression_levels, set_spell_prepared, class_unlock_cost, unlocked_classes, adjusted_purchase_cost, spend_attribute_point
-from worldforge.app.actions import _active_actor_id, _advance_turn, _apply_action, _do_ability, _do_attack, _do_spell, _log, _remove_downed_from_order, _reject_action, _resolve_party_rest, _use_item_outside_combat
-from worldforge.app.encounters import CORPSE_DESPAWN_MS, DEFAULT_SCENARIO, _combat_snapshot, _corpse_loot, _new_combat, _progression_sync_state, _random_mob_entry
-from worldforge.app.world import ACTOR_SIZE, PIXELS_PER_FOOT, _movement_allowance
+from worldforge.combat.rules import initiative_for
+from worldforge.content.classes import ARENAS, SCENARIOS
+from worldforge.actors.factory import equip_item, unequip_item
+from worldforge.app.actions import _apply_action
+from worldforge.app.attack_actions import _do_attack
+from worldforge.app.combat_flow import (
+    _active_actor_id, _advance_turn, _log, _reject_action,
+)
+from worldforge.app.encounters import (CORPSE_DESPAWN_MS, DEFAULT_SCENARIO,
+    _combat_snapshot, _corpse_loot, _new_combat, _progression_sync_state,
+    _random_mob_entry, _world_mob_from_entry)
+from worldforge.app.world import _movement_allowance
 from worldforge.app.rendering import _player_id
+from worldforge.app.travel import travel_party_through_exit
+from worldforge.app.commerce import _vendor_action
+from worldforge.app.rest_flow import (_camp_bed_checkin, _start_camp,
+                                      _start_inn_checkin)
+from worldforge.app.loot_actions import handle_loot_action
+from worldforge.app.progression_requests import handle_progression_action
+from worldforge.app.item_actions import _use_item_outside_combat
+from worldforge.app.spell_actions import _do_ability, _do_spell
 
 def _add_joined_players(combat, remote_players):
     """Add players who accept an invite after combat has already begun."""
@@ -103,12 +115,17 @@ def _settle_victory(combat, players):
     for entry in combat.get("actors", {}).values():
         if (entry.get("team") == "enemies" and entry.get("downed")
                 and entry.get("corpse_despawn_at") is None):
-            entry["corpse_despawn_at"] = None
             entry["loot"] = _corpse_loot(entry)
+            # Empty corpses have nothing for the player to interact with, so
+            # begin their normal despawn countdown as soon as combat settles.
+            entry["corpse_despawn_at"] = (
+                pygame.time.get_ticks() + CORPSE_DESPAWN_MS
+                if not entry["loot"] else None)
     arena = combat.get("arena", {})
     existing = [entry for entry in combat.get("actors", {}).values()
                 if entry.get("team") == "enemies"]
-    fresh = _random_mob_entry(arena, existing, players)
+    mob_pool = SCENARIOS.get(combat.get("scenario_id"), {}).get("mob_pool")
+    fresh = _random_mob_entry(arena, existing, players, mob_pool)
     if fresh:
         combat["actors"][fresh["id"]] = fresh
         _log(combat, f"A new {fresh['data'].get('name', 'mob')} appears elsewhere on the map.")
@@ -119,7 +136,20 @@ def _settle_victory(combat, players):
     combat["turn_index"] = 0
     combat["ability_uses"] = {}
 
-def _handle_action_request(actor, local_player_id, actor_id, action, remote_players, combat):
+
+def _handle_action_request(actor, local_player_id, actor_id, action,
+                           remote_players, combat, vendor_state=None):
+    if action.get("type") in {"vendor_buy", "vendor_sell", "vendor_buyback"}:
+        return _vendor_action(actor, local_player_id, actor_id, action,
+                              remote_players, combat, vendor_state)
+    loot_result = handle_loot_action(
+        actor, local_player_id, actor_id, action, remote_players, combat)
+    if loot_result is not None:
+        return loot_result
+    progression_result = handle_progression_action(
+        actor, local_player_id, actor_id, action, remote_players, combat)
+    if progression_result is not None:
+        return progression_result
     if action.get("type") == "chat":
         speaker = (actor if actor_id == local_player_id else next(
             (remote.get("actor") for remote in remote_players
@@ -133,217 +163,27 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
                 _log(combat, f"{name} acts {emote}.")
         return combat
     if action.get("type") == "rest_outdoor":
-        return _resolve_party_rest(actor, local_player_id, remote_players,
-                                   combat, "outdoor")
-    if action.get("type") == "rest_inn":
-        return _resolve_party_rest(actor, local_player_id, remote_players,
-                                   combat, "inn")
-    if action.get("type") == "increase_ability":
-        entry = (combat or {}).get("actors", {}).get(actor_id)
-        owner = (entry.get("data") if entry else
-                 (actor if actor_id == local_player_id else next(
-                     (remote.get("actor") for remote in remote_players
-                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
-        if owner is None:
-            return {"_action_error": "Character is unavailable."}
-        data = owner if isinstance(owner, dict) else vars(owner)
-        success, message = spend_attribute_point(data, action.get("ability"))
-        if not success:
-            return {"_action_error": message}
-        if entry:
-            entry["data"].update(data)
-            return combat
-        return _progression_sync_state(actor, local_player_id, remote_players)
-    if action.get("type") == "prepare_spell":
-        entry = (combat or {}).get("actors", {}).get(actor_id)
-        owner = (entry.get("data") if entry else
-                 (actor if actor_id == local_player_id else next(
-                     (remote.get("actor") for remote in remote_players
-                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
-        if owner is None:
-            return {"_action_error": "Character is unavailable."}
-        data = owner if isinstance(owner, dict) else vars(owner)
-        success, message = set_spell_prepared(
-            data, action.get("spell_id"), bool(action.get("prepare", True)))
-        if not success:
-            return {"_action_error": message}
-        if entry:
-            entry["data"].update(data)
-            return combat
-        return _progression_sync_state(actor, local_player_id, remote_players)
-    if action.get("type") in {"loot_take", "loot_take_all", "loot_finish"}:
-        if not combat or combat.get("active"):
-            return {"_action_error": "There is no corpse available to loot."}
-        corpse_id = action.get("target")
-        corpse = combat.get("actors", {}).get(corpse_id)
-        if (not corpse or corpse.get("team") != "enemies"
-                or not corpse.get("downed")):
-            return {"_action_error": "That corpse is no longer available."}
-        now = pygame.time.get_ticks()
-        expiry = corpse.get("corpse_despawn_at")
-        if expiry is not None and now >= expiry:
-            return {"_action_error": "That corpse has already been looted and is gone."}
-        player_entry = combat.get("actors", {}).get(actor_id)
-        owner = (player_entry.get("data") if player_entry else
-                 (actor if actor_id == local_player_id else next(
-                     (remote.get("actor") for remote in remote_players
-                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
-        if owner is None:
-            return {"_action_error": "Character is unavailable."}
-        data = owner if isinstance(owner, dict) else vars(owner)
-        if actor_id == local_player_id:
-            loot_x, loot_y = actor.x, actor.y
-        else:
-            remote = next((item for item in remote_players
-                           if _player_id(item) == actor_id), {})
-            loot_x, loot_y = remote.get("x", data.get("x", 0)), remote.get("y", data.get("y", 0))
-        loot_position = {"x": loot_x, "y": loot_y,
-                         "width": ACTOR_SIZE, "height": ACTOR_SIZE}
-        distance = edge_distance_feet(loot_position, corpse,
-                                      PIXELS_PER_FOOT, ACTOR_SIZE)
-        if distance > 5:
-            return {"_action_error": "Move within 5 feet of the corpse to loot it."}
-
-        loot = corpse.setdefault("loot", [])
-        if action["type"] in {"loot_take", "loot_take_all"}:
-            if action["type"] == "loot_take_all":
-                claimed = list(loot)
-                loot.clear()
-            else:
-                item_id = action.get("item_id")
-                item = next((item for item in loot if item.get("id") == item_id), None)
-                if item is None:
-                    return {"_action_error": "That item has already been taken."}
-                claimed = [item]
-                loot.remove(item)
-            inventory = data.setdefault("inventory", [])
-            for item in claimed:
-                definition = item_definition(item)
-                template_id = item.get("template_id")
-                quantity = max(1, int(item.get("quantity", 1) or 1))
-                if definition.get("stackable") and template_id:
-                    max_stack = max(1, int(definition.get("max_stack", 99)))
-                    remaining = quantity
-                    for existing in inventory:
-                        if existing.get("template_id") != template_id:
-                            continue
-                        current = max(1, int(existing.get("quantity", 1) or 1))
-                        added = min(remaining, max(0, max_stack - current))
-                        existing["quantity"] = current + added
-                        remaining -= added
-                        if not remaining:
-                            break
-                    while remaining:
-                        added = min(remaining, max_stack)
-                        copy_item = deepcopy(item)
-                        copy_item["id"] = uuid.uuid4().hex[:12]
-                        copy_item["quantity"] = added
-                        inventory.append(copy_item)
-                        remaining -= added
-                else:
-                    inventory.append(deepcopy(item))
-            if player_entry:
-                player_entry["data"].update(data)
-            for item in claimed:
-                _log(combat, f"{data.get('name', actor_id)} takes {item.get('name', 'an item')} from the shared loot.")
-            if action["type"] == "loot_take_all":
-                corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
-            return combat
-
-        if corpse.get("corpse_despawn_at") is None:
-            corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
-        _log(combat, f"Looting {corpse.get('data', {}).get('name', 'the corpse')} ends.")
-        return combat
-    if action.get("type") in {"trainer_purchase", "unlock_class", "release_spirit"}:
-        if combat and combat.get("active") and action.get("type") in {
-                "trainer_purchase", "unlock_class"}:
-            return {"_action_error": "You cannot train during combat."}
-        entry = (combat or {}).get("actors", {}).get(actor_id)
-        owner = (entry.get("data") if entry else
-                 (actor if actor_id == local_player_id else next(
-                     (remote.get("actor") for remote in remote_players
-                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
-        if owner is None:
-            return {"_action_error": "Character is unavailable."}
-        data = owner if isinstance(owner, dict) else vars(owner)
-        if action["type"] == "unlock_class":
-            class_id = action.get("class_id")
-            if class_id not in CLASSES:
-                return {"_action_error": "That class is unavailable."}
-            if class_id in unlocked_classes(data):
-                return {"_action_notice": "That class is already unlocked."}
-            cost = class_unlock_cost(data, class_id)
-            if cost > unspent_xp(data):
-                return {"_action_error": f"Not enough unspent XP ({cost} required)."}
-            if not spend_xp(data, cost):
-                return {"_action_error": "Could not spend XP for the class unlock."}
-            data.setdefault("classes", []).append({"name": class_id, "level": 1})
-            sync_progression_levels(data)
-            initialize_resources(data)
-            if entry:
-                entry["data"].update(data)
-            return combat or _progression_sync_state(
-                actor, local_player_id, remote_players)
-        if action["type"] == "trainer_purchase":
-            class_id = action.get("class_id")
-            kind, item_id = action.get("kind"), action.get("item_id")
-            table = SPELLS if kind == "spell" else ABILITIES if kind == "ability" else {}
-            definition = table.get(item_id)
-            if (not definition or class_id not in definition.get("classes", [])
-                    or definition.get("acquisition") != "trainer_purchase"):
-                return {"_action_error": "That trainer option is unavailable."}
-            if class_id not in unlocked_classes(data):
-                return {"_action_error": "Unlock this class before buying its options."}
-            purchase_key = ("class_spell_purchases" if kind == "spell"
-                            else "class_ability_purchases")
-            owned_key = "known_spells" if kind == "spell" else "known_abilities"
-            purchases = data.setdefault(purchase_key, {})
-            owned_for_class = purchases.setdefault(class_id, [])
-            if item_id in owned_for_class:
-                return {"_action_notice": "You already own that option."}
-            tier = int(definition.get("prerequisite_class_level", 1))
-            if tier > min(qualified_level(data), class_unlocked_level(data, class_id)):
-                return {"_action_error": "Buy an option from each prior tier and meet its level requirement."}
-            cost = adjusted_purchase_cost(data, class_id, definition)
-            if cost is None:
-                return {"_action_error": "This option has no XP price configured."}
-            if cost > unspent_xp(data):
-                return {"_action_error": f"Not enough unspent XP ({cost} required)."}
-            owned_for_class.append(item_id)
-            if item_id not in data.setdefault(owned_key, []):
-                data[owned_key].append(item_id)
-            spend_xp(data, cost)
-            sync_progression_levels(data)
-            if entry:
-                entry["data"].update(data)
-            if combat:
-                _log(combat, f"{data.get('name', 'Actor')} learns {definition.get('name', item_id)} for {cost} XP.")
-            return combat or _progression_sync_state(
-                actor, local_player_id, remote_players)
-        if not data.get("downed"):
-            return {"_action_error": "You are not downed."}
-        penalty = charge_xp_penalty(data, 10)
-        data["downed"] = False
-        data["current_hp"] = max(1, int(data.get("current_hp", 0) or 0))
-        data["withdrawn"] = True
+        return _start_camp(actor, local_player_id, remote_players, combat)
+    if action.get("type") == "travel_exit":
+        return travel_party_through_exit(
+            actor, local_player_id, actor_id, remote_players, combat,
+            action.get("exit_id"))
+    if action.get("type") == "rest_camp_checkin":
+        return _camp_bed_checkin(
+            actor, local_player_id, actor_id, remote_players, combat,
+            action.get("bed_id"))
+    if action.get("type") in {"rest_inn", "rest_inn_checkin"}:
         arena = (combat or {}).get("arena") or ARENAS.get(
             SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {})
-        bed = next(iter(arena.get("inn_beds", [])), {})
-        data["x"] = int(bed.get("respawn_x", bed.get("x", 130) + bed.get("width", 100) + 12))
-        data["y"] = int(bed.get("respawn_y", bed.get("y", 170) + bed.get("height", 60) + 12))
-        if not isinstance(owner, dict):
-            owner.x, owner.y, owner.downed = data["x"], data["y"], False
-            owner.current_hp, owner.withdrawn = data["current_hp"], True
-        if entry:
-            entry["x"], entry["y"], entry["downed"] = data["x"], data["y"], False
-            if actor_id == local_player_id:
-                actor.x, actor.y = data["x"], data["y"]
-                actor.current_hp, actor.downed, actor.withdrawn = data["current_hp"], False, True
-            _remove_downed_from_order(combat)
-            _log(combat, f"{data.get('name', 'Actor')} releases their spirit and returns to the inn, losing {penalty} XP.")
-        return combat or _progression_sync_state(
-            actor, local_player_id, remote_players)
+        bed_id = action.get("bed_id") or next(
+            (item.get("id") for item in arena.get("inn_beds", [])), None)
+        return _start_inn_checkin(actor, local_player_id, actor_id,
+                                  remote_players, combat, bed_id)
     if not combat or not combat.get("active"):
+        if action.get("type") == "flee":
+            return {"_action_notice": "There is no combat to flee from."}
+        if action.get("type") == "hide":
+            return {"_action_notice": "Use K to sneak while exploring. Hide is a combat action."}
         if action.get("type") in {"equip_item", "unequip_item", "use_item"}:
             owner = actor if actor_id == local_player_id else next(
                 (remote.get("actor") for remote in remote_players
@@ -359,11 +199,14 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
                 if target_id == actor_id:
                     target_id = owner.get("id") if isinstance(owner, dict) else owner.id
                 _use_item_outside_combat(owner, action.get("item"), target_id,
-                                          local_player_id, remote_players)
+                                          local_player_id, remote_players,
+                                          (combat or {}).get("arena"))
             if combat:
                 changed = {"inventory", "equipment", "current_hp", "downed",
                            "xp_total", "xp_spent_by_level", "level", "classes",
                            "class_spell_purchases", "class_ability_purchases",
+                           "class_feature_purchases", "class_skill_purchases",
+                           "class_features", "skills",
                            "known_spells", "prepared_spells", "known_abilities",
                            "withdrawn", "x", "y"}
                 source = vars(owner) if not isinstance(owner, dict) else owner
@@ -383,18 +226,36 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
                     target_entry["downed"] = bool(target_entry["data"].get("downed", False))
             return combat or _progression_sync_state(
                 actor, local_player_id, remote_players)
-        if action.get("type") not in {"attack", "ranged_attack", "throw", "cast_spell", "use_ability"}:
+        if action.get("type") == "fast_hands":
+            return {"_action_notice": "Fast Hands is available during combat."}
+        if action.get("type") not in {"attack", "unarmed_strike", "ranged_attack", "throw", "cast_spell", "use_ability"}:
             return combat
-        combat = _new_combat(actor, local_player_id, remote_players)
+        previous = combat or {}
+        scenario_id = previous.get("scenario_id", DEFAULT_SCENARIO)
+        world_mobs = [_world_mob_from_entry(entry)
+                      for entry in previous.get("actors", {}).values()
+                      if entry.get("team") == "enemies"]
+        combat = _new_combat(actor, local_player_id, remote_players,
+                             scenario_id=scenario_id,
+                             world_mobs=world_mobs if previous else None)
+        combat["world_areas"] = deepcopy(previous.get("world_areas", {}))
+        combat["world_area_items"] = deepcopy(
+            previous.get("world_area_items", {}))
+        combat["ground_items"] = deepcopy(previous.get("ground_items", []))
+        combat["vendor_buyback"] = deepcopy(
+            previous.get("vendor_buyback", {}))
         _log(combat, "Combat started.")
         action_type = action.get('type')
         resolved = (
             _do_attack(combat, actor_id, action.get('target'),
-                       attack_mode={"throw": "throw", "ranged_attack": "ranged"}.get(action_type, "primary"))
-            if action_type in {"attack", "ranged_attack", "throw"} else
+                       attack_mode={"throw": "throw", "ranged_attack": "ranged",
+                                    "unarmed_strike": "unarmed"}.get(action_type, "primary"))
+            if action_type in {"attack", "unarmed_strike", "ranged_attack", "throw"} else
             _do_spell(combat, actor_id, action.get('spell'), action.get('target'))
             if action_type == 'cast_spell' else
             _do_ability(combat, actor_id, action.get('ability'), action.get('target'))
+            if action_type == 'use_ability' else
+            False
         )
         if not resolved:
             # Preserve the explanation without applying encounter spawn
@@ -416,6 +277,6 @@ def _handle_action_request(actor, local_player_id, actor_id, action, remote_play
                 unequip_item(entry["data"], action.get("slot"))
     elif actor_id == _active_actor_id(combat):
         _apply_action(combat, actor_id, action)
-    elif action.get("type") in {"attack", "ranged_attack", "throw", "cast_spell", "use_ability", "use_item", "move"}:
+    elif action.get("type") in {"attack", "ranged_attack", "throw", "cast_spell", "use_ability", "use_item", "move", "hide", "fast_hands", "flee"}:
         _reject_action(combat, "It is not your turn.", action.get("target") or actor_id)
     return combat

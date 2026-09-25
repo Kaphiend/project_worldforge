@@ -1,6 +1,7 @@
 """Character save files and session locks."""
 import json
 import sys
+from dataclasses import fields
 from worldforge.core.runtime_paths import resource_path, user_data_path
 
 
@@ -21,6 +22,20 @@ def load_actor(actor_id):
     path = SAVE_DIR / f"{actor_id}.json"
     with path.open() as save_file:
         data = json.load(save_file)
+    # Map the previous custom elf subrace labels to their nearest 2024 SRD
+    # lineages. Species with no 2024 lineage keep their base species identity.
+    legacy_subraces = {
+        ("elf", "dawn"): "high_elf",
+        ("elf", "grove"): "wood_elf",
+        ("elf", "dusk"): "drow",
+        ("dwarf", "hearth"): None,
+        ("dwarf", "stone"): None,
+        ("halfling", "swift"): None,
+        ("halfling", "steadfast"): None,
+    }
+    old_subrace = (data.get("race"), data.get("subrace"))
+    if old_subrace in legacy_subraces:
+        data["subrace"] = legacy_subraces[old_subrace]
     # Migrate saves produced before the design adopted the persistent downed state.
     if 'dead' in data:
         data.setdefault('downed', data['dead'])
@@ -39,7 +54,8 @@ def load_actor(actor_id):
         bars[0][0] = 'action:weapon_attack'
     elif not any(item in {'action:weapon_attack', 'action:ranged_weapon_attack'}
                  for bar in bars for item in bar if isinstance(item, str)):
-        first_empty = next(((bar, slot) for bar in bars
+        first_empty = next(((bar_index, slot)
+                            for bar_index, bar in enumerate(bars)
                             for slot, item in enumerate(bar) if item is None), None)
         if first_empty:
             bar, slot = first_empty
@@ -54,6 +70,9 @@ def load_actor(actor_id):
     data.setdefault('xp_spent_by_level', {})
     data.setdefault('class_spell_purchases', {})
     data.setdefault('class_ability_purchases', {})
+    data.setdefault('class_feature_purchases', {})
+    data.setdefault('class_skill_purchases', {})
+    data.setdefault('class_features', [])
     data.setdefault('xp_rest_spent_by_level', {})
     data.setdefault('attribute_points_spent', {})
     data.setdefault('withdrawn', False)
@@ -69,22 +88,17 @@ def load_actor(actor_id):
             spell_id for spell_id, spell in SPELLS.items()
             if class_names.intersection(spell.get('classes', []))
             and spell.get('prerequisite_class_level', 1) <= level
-            and (not spell.get('acquisition')
-                 or spell.get('acquisition') == 'starting_cantrip')
+            and spell.get('acquisition') != 'trainer_purchase'
         ]
     if not isinstance(data.get('known_spells'), list):
         data['known_spells'] = []
     class_names = {entry.get('name') for entry in data.get('classes', [])}
     if not class_names and data.get('char_class'):
         class_names.add(data['char_class'])
-    class_names.update(class_id for class_id, ids in
-                       (data.get('class_spell_purchases', {}) or {}).items() if ids)
-    class_names.update(class_id for class_id, ids in
-                       (data.get('class_ability_purchases', {}) or {}).items() if ids)
-    for spell_id, spell in SPELLS.items():
-        if spell.get('cantrip') and class_names.intersection(spell.get('classes', [])):
-            if spell_id not in data['known_spells']:
-                data['known_spells'].append(spell_id)
+    for purchase_key in ('class_spell_purchases', 'class_ability_purchases',
+                         'class_feature_purchases', 'class_skill_purchases'):
+        class_names.update(class_id for class_id, ids in
+                           (data.get(purchase_key, {}) or {}).items() if ids)
     if data.get('char_class'):
         class_names.add(data['char_class'])
     # Remove class spells that may have entered a legacy save through the old
@@ -121,6 +135,20 @@ def load_actor(actor_id):
             if spell.get('acquisition') == 'trainer_purchase' and not spell.get('cantrip'):
                 for class_id in class_names.intersection(spell.get('classes', [])):
                     data['class_spell_purchases'].setdefault(class_id, []).append(spell_id)
+    bought_spells = {spell_id for ids in data['class_spell_purchases'].values()
+                     for spell_id in ids}
+    data['known_spells'] = [spell_id for spell_id in data['known_spells']
+                            if spell_id in SPELLS
+                            and (not SPELLS[spell_id].get('cantrip')
+                                 or spell_id in bought_spells)]
+    bought_skills = {str(skill).casefold()
+                     for skills in data['class_skill_purchases'].values()
+                     for skill in skills}
+    data['skills'] = sorted(bought_skills)
+    bought_features = {feature_id
+                       for features in data['class_feature_purchases'].values()
+                       for feature_id in features}
+    data['class_features'] = sorted(bought_features)
     if not data['class_ability_purchases']:
         for ability_id in data.get('known_abilities', []):
             ability = ABILITIES.get(ability_id, {})
@@ -160,6 +188,11 @@ def load_actor(actor_id):
     for class_id, spell_ids in leveled_by_class.items():
         trimmed.extend(spell_ids[:prepared_spell_limit(data, class_id)])
     data['prepared_spells'] = cantrips + trimmed
+    # Runtime combat snapshots can contain fields such as ``hitbox`` that are
+    # not part of the persistent Actor model. Ignore those when loading older
+    # or polluted saves so they cannot prevent the character from loading.
+    actor_fields = {field.name for field in fields(Actor)}
+    data = {key: value for key, value in data.items() if key in actor_fields}
     actor = Actor(**data)
 
     for slot in EQUIPMENT_SLOTS:

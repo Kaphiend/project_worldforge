@@ -32,9 +32,7 @@
       }
     },
     "subclasses": [
-      "barbarian_emberblood",
-      "barbarian_stonewake",
-      "barbarian_wild_prowler"
+      "barbarian_path_of_the_berserker"
     ],
     "progression": {
       "1": [
@@ -224,7 +222,9 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "summary": "A fierce front-line warrior who turns toughness and fury into force."
+    "summary": "A fierce front-line warrior who turns toughness and fury into force.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "bard": {
     "hit_die": 8,
@@ -251,9 +251,7 @@
       }
     },
     "subclasses": [
-      "bard_storykeeper",
-      "bard_chorusblade",
-      "bard_echo_weaver"
+      "bard_college_of_lore"
     ],
     "progression": {
       "1": [
@@ -467,7 +465,9 @@
       19,
       20
     ],
-    "summary": "A versatile performer who supports allies and shapes magic through art."
+    "summary": "A versatile performer who supports allies and shapes magic through art.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "cleric": {
     "hit_die": 8,
@@ -500,9 +500,7 @@
       }
     },
     "subclasses": [
-      "cleric_hearthwarden",
-      "cleric_dawnkeeper",
-      "cleric_graveguide"
+      "cleric_life_domain"
     ],
     "progression": {
       "1": [
@@ -716,7 +714,9 @@
       19,
       20
     ],
-    "summary": "A divine spellcaster who protects allies and confronts threats with faith."
+    "summary": "A divine spellcaster who protects allies and confronts threats with faith.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "druid": {
     "hit_die": 8,
@@ -751,9 +751,7 @@
       }
     },
     "subclasses": [
-      "druid_greenward",
-      "druid_beastbound",
-      "druid_weathercaller"
+      "druid_circle_of_the_land"
     ],
     "progression": {
       "1": [
@@ -967,7 +965,9 @@
       19,
       20
     ],
-    "summary": "A nature-focused spellcaster who heals, controls the field, and adapts."
+    "summary": "A nature-focused spellcaster who heals, controls the field, and adapts.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "fighter": {
     "hit_die": 10,
@@ -1008,9 +1008,7 @@
       }
     },
     "subclasses": [
-      "fighter_vanguard",
-      "fighter_weapon_scholar",
-      "fighter_ironwall"
+      "fighter_champion"
     ],
     "progression": {
       "1": [
@@ -1053,8 +1051,14 @@
         {
           "id": "fighter_05",
           "name": "Second Windup",
-          "summary": "Recover from a missed strike and prepare a quick follow-up.",
+          "summary": "After your first weapon strike, make a quick follow-up attack as part of the same action.",
           "purchase": "trainer_xp",
+          "auto_grant": false,
+          "xp_purchase_cost": 10,
+          "effect": {
+            "kind": "extra_weapon_attack",
+            "amount": 1
+          },
           "prerequisite_class_level": 5
         }
       ],
@@ -1200,7 +1204,9 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "summary": "A disciplined weapon specialist built for reliable attacks and defense."
+    "summary": "A disciplined weapon specialist built for reliable attacks and defense.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "monk": {
     "hit_die": 8,
@@ -1231,9 +1237,7 @@
       }
     },
     "subclasses": [
-      "monk_stillwater",
-      "monk_windstep",
-      "monk_iron_pulse"
+      "monk_warrior_of_the_open_hand"
     ],
     "progression": {
       "1": [
@@ -1423,7 +1427,9 @@
       "purchase": "spend_xp_earned_at_character_level",
       "auto_grant": false
     },
-    "summary": "A mobile martial artist who fights with speed, focus, and discipline."
+    "summary": "A mobile martial artist who fights with speed, focus, and discipline.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "paladin": {
     "hit_die": 10,
@@ -1462,9 +1468,7 @@
       }
     },
     "subclasses": [
-      "paladin_beacon",
-      "paladin_oathward",
-      "paladin_truthseeker"
+      "paladin_oath_of_devotion"
     ],
     "progression": {
       "1": [
@@ -1678,7 +1682,9 @@
       19,
       20
     ],
-    "summary": "A durable champion who combines martial skill with sacred magic."
+    "summary": "A durable champion who combines martial skill with sacred magic.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "ranger": {
     "hit_die": 10,
@@ -1715,9 +1721,7 @@
       }
     },
     "subclasses": [
-      "ranger_trailwarden",
-      "ranger_beast_companion",
-      "ranger_farshot"
+      "ranger_hunter"
     ],
     "progression": {
       "1": [
@@ -1931,7 +1935,9 @@
       19,
       20
     ],
-    "summary": "A scout and hunter who blends weapon attacks, survival, and nature magic."
+    "summary": "A scout and hunter who blends weapon attacks, survival, and nature magic.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "rogue": {
     "hit_die": 8,
@@ -1954,7 +1960,6 @@
       "intimidation",
       "investigation",
       "perception",
-      "performance",
       "persuasion",
       "sleight of hand",
       "stealth"
@@ -1969,189 +1974,176 @@
       }
     },
     "subclasses": [
-      "rogue_shadowrunner",
-      "rogue_trickhand",
-      "rogue_duelist"
+      "rogue_thief"
     ],
     "progression": {
       "1": [
         {
-          "id": "rogue_01",
-          "name": "Quiet Entry",
-          "summary": "Move without drawing notice when using available cover.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 1
+          "id": "rogue_expertise_1",
+          "name": "Expertise",
+          "summary": "Choose two skills you have trained; your proficiency bonus is doubled for checks using them.",
+          "effect": {
+            "kind": "expertise_choice",
+            "count": 2
+          }
+        },
+        {
+          "id": "rogue_sneak_attack",
+          "name": "Sneak Attack",
+          "summary": "Once per turn, add 1d6 damage with a finesse or ranged weapon when you have advantage, or an ally is next to the target, and you lack disadvantage.",
+          "effect": {
+            "kind": "sneak_attack",
+            "dice": "1d6",
+            "level_scaling": "rogue"
+          }
+        },
+        {
+          "id": "rogue_thieves_cant",
+          "name": "Thieves’ Cant",
+          "summary": "Learn the coded slang used by the underworld.",
+          "effect": {
+            "kind": "proficiency_choice",
+            "proficiency": "language",
+            "value": "thieves_cant"
+          }
+        },
+        {
+          "id": "rogue_weapon_mastery",
+          "name": "Weapon Mastery",
+          "summary": "Choose mastery properties for two weapons you are proficient with. Weapon mastery effects will be implemented with the weapon rules.",
+          "effect": {
+            "kind": "weapon_mastery_choice",
+            "count": 2
+          }
         }
       ],
       "2": [
         {
-          "id": "rogue_02",
-          "name": "Precise Opening",
-          "summary": "Deal greater damage when an ally distracts your target.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 2
+          "id": "rogue_cunning_action",
+          "name": "Cunning Action",
+          "summary": "Take Dash, Disengage, or Hide as a bonus action. Hide is available now; Dash and Disengage are queued for their movement actions.",
+          "effect": {
+            "kind": "cunning_action",
+            "actions": [
+              "hide",
+              "dash",
+              "disengage"
+            ]
+          }
         }
       ],
       "3": [
         {
-          "id": "rogue_03",
-          "name": "Quick Hands",
-          "summary": "Manipulate a small object without interrupting movement.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 3
-        }
-      ],
-      "4": [
-        {
-          "id": "rogue_04",
-          "name": "Escape Route",
-          "summary": "Slip away from a nearby threat after a close exchange.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 4
+          "id": "rogue_steady_aim",
+          "name": "Steady Aim",
+          "summary": "Trade movement this turn for advantage on your next attack against a visible target.",
+          "effect": {
+            "kind": "steady_aim"
+          }
         }
       ],
       "5": [
         {
-          "id": "rogue_05",
-          "name": "False Tell",
-          "summary": "Create a feint that opens a target to an ally.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 5
+          "id": "rogue_cunning_strike",
+          "name": "Cunning Strike",
+          "summary": "Trade Sneak Attack dice to apply a tactical rider; supported riders will be added as combat effects.",
+          "effect": {
+            "kind": "cunning_strike"
+          }
+        },
+        {
+          "id": "rogue_uncanny_dodge",
+          "name": "Uncanny Dodge",
+          "summary": "Use a reaction to halve damage from an attacker you can see.",
+          "effect": {
+            "kind": "uncanny_dodge"
+          }
         }
       ],
       "6": [
         {
-          "id": "rogue_06",
-          "name": "Light Footing",
-          "summary": "Cross a hazardous surface with practiced balance.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 6
+          "id": "rogue_expertise_2",
+          "name": "Expertise (Second Training)",
+          "summary": "Choose two additional trained skills for Expertise.",
+          "effect": {
+            "kind": "expertise_choice",
+            "count": 2
+          }
         }
       ],
       "7": [
         {
-          "id": "rogue_07",
-          "name": "Reliable Skill",
-          "summary": "Treat a practiced task as competent under pressure.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 7
-        }
-      ],
-      "8": [
+          "id": "rogue_evasion",
+          "name": "Evasion",
+          "summary": "Avoid damage from effects that allow a Dexterity save for half damage.",
+          "effect": {
+            "kind": "evasion"
+          }
+        },
         {
-          "id": "rogue_08",
-          "name": "Shadow Blend",
-          "summary": "Use dim light and cover to break line of sight.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 8
-        }
-      ],
-      "9": [
-        {
-          "id": "rogue_09",
-          "name": "Trap Reader",
-          "summary": "Identify likely triggers and weak points in simple mechanisms.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 9
-        }
-      ],
-      "10": [
-        {
-          "id": "rogue_10",
-          "name": "Quick Recovery",
-          "summary": "Regain composure after narrowly avoiding a threat.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 10
+          "id": "rogue_reliable_talent",
+          "name": "Reliable Talent",
+          "summary": "Treat a d20 roll of 9 or lower as 10 for proficient skill and tool checks.",
+          "effect": {
+            "kind": "reliable_talent",
+            "minimum_roll": 10
+          }
         }
       ],
       "11": [
         {
-          "id": "rogue_11",
-          "name": "Disrupting Cut",
-          "summary": "A precise strike can hinder a target’s next movement.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 11
-        }
-      ],
-      "12": [
-        {
-          "id": "rogue_12",
-          "name": "Borrowed Identity",
-          "summary": "Adopt a convincing manner based on careful observation.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 12
-        }
-      ],
-      "13": [
-        {
-          "id": "rogue_13",
-          "name": "Slip the Net",
-          "summary": "Escape a restraint or confined space with practiced movement.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 13
+          "id": "rogue_improved_cunning_strike",
+          "name": "Improved Cunning Strike",
+          "summary": "Apply up to two Cunning Strike options when you deal Sneak Attack damage.",
+          "effect": {
+            "kind": "improved_cunning_strike",
+            "max_options": 2
+          }
         }
       ],
       "14": [
         {
-          "id": "rogue_14",
-          "name": "Unseen Route",
-          "summary": "Move between patches of cover without exposing your path.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 14
+          "id": "rogue_devious_strikes",
+          "name": "Devious Strikes",
+          "summary": "Gain additional options for Cunning Strike, including Daze, Knock Out, and Obscure.",
+          "effect": {
+            "kind": "devious_strikes"
+          }
         }
       ],
       "15": [
         {
-          "id": "rogue_15",
-          "name": "Tactical Read",
-          "summary": "Predict the safest route through a contested area.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 15
-        }
-      ],
-      "16": [
-        {
-          "id": "rogue_16",
-          "name": "Deep Deception",
-          "summary": "Maintain a false identity through sustained scrutiny.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 16
-        }
-      ],
-      "17": [
-        {
-          "id": "rogue_17",
-          "name": "Opportunity Chain",
-          "summary": "Turn one successful opening into a second quick maneuver.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 17
+          "id": "rogue_slippery_mind",
+          "name": "Slippery Mind",
+          "summary": "Gain proficiency in Wisdom and Charisma saving throws.",
+          "effect": {
+            "kind": "save_proficiency",
+            "saves": [
+              "wisdom",
+              "charisma"
+            ]
+          }
         }
       ],
       "18": [
         {
-          "id": "rogue_18",
-          "name": "Vanishing Act",
-          "summary": "Disappear from immediate notice using a practiced diversion.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 18
-        }
-      ],
-      "19": [
-        {
-          "id": "rogue_19",
-          "name": "Perfect Setup",
-          "summary": "Create an opening that makes a precise strike highly reliable.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 19
+          "id": "rogue_elusive",
+          "name": "Elusive",
+          "summary": "Attacks do not gain advantage against you while you are not incapacitated.",
+          "effect": {
+            "kind": "elusive"
+          }
         }
       ],
       "20": [
         {
-          "id": "rogue_20",
-          "name": "Master of Intrigue",
-          "summary": "Reach the highest expression of misdirection and precision.",
-          "purchase": "trainer_xp",
-          "prerequisite_class_level": 20
+          "id": "rogue_stroke_of_luck",
+          "name": "Stroke of Luck",
+          "summary": "Turn a failed D20 test into a 20 once per short or long rest.",
+          "effect": {
+            "kind": "stroke_of_luck",
+            "uses_per_rest": 1
+          }
         }
       ]
     },
@@ -2159,9 +2151,12 @@
     "progression_policy": {
       "unlock": "sequential_within_class",
       "purchase": "spend_xp_earned_at_character_level",
-      "auto_grant": false
+      "auto_grant": false,
+      "rules_source": "SRD 5.2.1"
     },
-    "summary": "A precise, adaptable operator who relies on stealth and decisive strikes."
+    "summary": "A skilled, agile specialist who creates openings with stealth, precision, and fast decisions.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "sorcerer": {
     "hit_die": 6,
@@ -2191,9 +2186,7 @@
       }
     },
     "subclasses": [
-      "sorcerer_bloodspark",
-      "sorcerer_tempest_heart",
-      "sorcerer_altered_form"
+      "sorcerer_draconic_sorcery"
     ],
     "progression": {
       "1": [
@@ -2407,7 +2400,9 @@
       19,
       20
     ],
-    "summary": "A spellcaster whose innate magic offers potent, flexible offense."
+    "summary": "A spellcaster whose innate magic offers potent, flexible offense.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "warlock": {
     "hit_die": 8,
@@ -2440,9 +2435,7 @@
       }
     },
     "subclasses": [
-      "warlock_hollow_star",
-      "warlock_thorn_pact",
-      "warlock_whispering_deep"
+      "warlock_fiend_patron"
     ],
     "progression": {
       "1": [
@@ -2656,7 +2649,9 @@
       19,
       20
     ],
-    "summary": "A pact-bound caster who pairs repeatable magic with supernatural gifts."
+    "summary": "A pact-bound caster who pairs repeatable magic with supernatural gifts.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   },
   "wizard": {
     "hit_die": 6,
@@ -2686,9 +2681,7 @@
       }
     },
     "subclasses": [
-      "wizard_runecrafter",
-      "wizard_ward_scholar",
-      "wizard_battle_arcanist"
+      "wizard_evoker"
     ],
     "progression": {
       "1": [
@@ -2902,6 +2895,8 @@
       19,
       20
     ],
-    "summary": "A learned spellcaster with a broad arcane toolkit and careful preparation."
+    "summary": "A learned spellcaster with a broad arcane toolkit and careful preparation.",
+    "rules_source": "SRD 5.2.1",
+    "subclass_level": 3
   }
 }

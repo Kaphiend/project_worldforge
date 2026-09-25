@@ -1,0 +1,387 @@
+{
+  "name": "Cleric",
+  "id": "db2aabe8",
+  "max_hp": 32,
+  "current_hp": 16,
+  "classes": [
+    {
+      "name": "cleric",
+      "level": 4
+    }
+  ],
+  "level": 4,
+  "class_levels_initialized": true,
+  "xp_total": 3544,
+  "xp_earned_by_level": {
+    "3": 3700
+  },
+  "xp_spent_by_level": {
+    "3": 110,
+    "4": 10
+  },
+  "xp_rest_spent_by_level": {
+    "4": 36
+  },
+  "class_spell_purchases": {
+    "cleric": [
+      "arcane_spark",
+      "frost_needle",
+      "lantern_verdict",
+      "restorative_revival"
+    ]
+  },
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [
+    "arcane_spark",
+    "frost_needle",
+    "lantern_verdict",
+    "restorative_revival"
+  ],
+  "prepared_spells": [
+    "arcane_spark",
+    "frost_needle",
+    "lantern_verdict",
+    "restorative_revival"
+  ],
+  "spell_hotbars": [
+    [
+      "spell:arcane_spark",
+      "spell:frost_needle",
+      "spell:lantern_verdict",
+      "spell:restorative_revival",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "action:weapon_attack",
+      "action:ranged_weapon_attack",
+      "action:flee",
+      "action:sneak",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": "bbc00f5cca5b",
+    "e": "94f916107674"
+  },
+  "known_abilities": [],
+  "class_features": [
+    "cleric_01",
+    "cleric_02",
+    "cleric_03",
+    "cleric_04",
+    "cleric_life_domain_disciple_of_life",
+    "cleric_life_domain_life_domain_spells"
+  ],
+  "class_feature_purchases": {
+    "cleric": [
+      "cleric_01",
+      "cleric_02",
+      "cleric_life_domain_disciple_of_life",
+      "cleric_life_domain_life_domain_spells",
+      "cleric_03",
+      "cleric_04"
+    ]
+  },
+  "class_skill_purchases": {
+    "cleric": [
+      "history",
+      "insight"
+    ]
+  },
+  "spell_points": 4,
+  "class_resources": {},
+  "attribute_points_spent": {
+    "wisdom": 2
+  },
+  "gold": 520,
+  "outdoor_rest_streak": 1,
+  "avatar": "asset_pack/Soldier.png",
+  "abilities": {
+    "wisdom": 18,
+    "constitution": 15,
+    "strength": 15,
+    "charisma": 13,
+    "dexterity": 12,
+    "intellect": 11
+  },
+  "unspent": [
+    10,
+    13,
+    11,
+    12,
+    10,
+    13
+  ],
+  "saves": [
+    "wisdom",
+    "charisma"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple"
+  ],
+  "race": "half-breed",
+  "subrace": "",
+  "subclass": "cleric_life_domain",
+  "parent_races": [
+    "halfling",
+    "dragonborn"
+  ],
+  "char_class": "cleric",
+  "skills": [
+    "history",
+    "insight"
+  ],
+  "controller": "player",
+  "x": 1830,
+  "y": 108,
+  "inventory": [
+    {
+      "id": "bbc00f5cca5b",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 3,
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "94f916107674",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 1,
+      "template_id": "revival_scroll"
+    },
+    {
+      "id": "eb64c91e57f5",
+      "template_id": "leather",
+      "name": "Guarded Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "armor_class_bonus": 3
+      }
+    },
+    {
+      "id": "ba15df9b20b9",
+      "template_id": "dagger",
+      "name": "Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "a2b58c441f81",
+      "template_id": "scale_mail",
+      "name": "Scale Mail",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "776659e15060",
+      "template_id": "axe_2h",
+      "name": "Axe (2H)",
+      "slot": "main_hand",
+      "tags": [
+        "2h",
+        "heavy"
+      ],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "e33868a56645",
+      "name": "Dagger",
+      "slot": "hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "dagger"
+    }
+  ],
+  "equipment": {
+    "head": {
+      "id": "5dec89581265",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "e4523177652a",
+      "name": "Chain Shirt",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "chain_shirt"
+    },
+    "hands": {
+      "id": "8a94c02386d1",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "93130a04643d",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "dfe9030430f8",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "429742e955a1",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "300bfe9d4480",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "33f91ccb7f18",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "ee250340651d",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "c6122b122dbd",
+      "template_id": "dagger",
+      "name": "Forceful Accurate Dagger",
+      "slot": "main_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "rare",
+      "item_level": 1,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 2,
+        "weapon_attack_bonus": 1
+      }
+    },
+    "off_hand": {
+      "id": "e5aedb2d24af",
+      "name": "Shield",
+      "slot": "hand",
+      "tags": [
+        "shield"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "shield"
+    },
+    "ranged": null
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true,
+  "hitbox": {
+    "offset_x": 30.0,
+    "offset_y": 26.0,
+    "width": 40,
+    "height": 48
+  }
+}

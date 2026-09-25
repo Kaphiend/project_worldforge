@@ -2,11 +2,12 @@
 from copy import deepcopy
 from math import floor
 
-from worldforge.content.classes import ABILITIES, CONDITIONS, SPELLS
+from worldforge.content.classes import ABILITIES, SPELLS
 from worldforge.combat.rules import armor_class, distance_feet, edge_distance_feet, proficiency_bonus, resolve_healing_effect
 from worldforge.combat.conditions import apply_condition
 from worldforge.core.dice import roll_d20, roll_dice
 from worldforge.actors.factory import modifier
+from worldforge.combat.species import damage_resistances
 
 
 def _effects_for(definition, outcome=None):
@@ -38,10 +39,14 @@ def _apply(effect, caster, target, source_id, *, critical=False):
     if kind == "damage":
         rolled_amount, rolls = roll_dice(effect["formula"], critical=critical)
         amount = floor(rolled_amount * effect.get("multiplier", 1))
+        resisted = effect.get("damage_type", "untyped") in damage_resistances(target)
+        if resisted:
+            amount //= 2
         _damage(target, amount)
         return {"kind": kind, "amount": amount, "rolled_amount": rolled_amount,
                 "rolls": rolls,
-                "damage_type": effect.get("damage_type", "untyped")}
+                "damage_type": effect.get("damage_type", "untyped"),
+                "resisted": resisted}
     if kind == "healing":
         amount, rolls = roll_dice(effect["formula"])
         restored = resolve_healing_effect(target, effect, amount)

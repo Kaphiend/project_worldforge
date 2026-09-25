@@ -82,15 +82,15 @@ the current fight; they can join a later fight.
 
 ## Rest cost rules
 
-`resting.py` contains the rest costs and resource recovery. Press `Z` to request
-an outdoor rest; the host requires the nearest enemy to be more than 100 feet
-away. The cost begins at 1% of unspent XP, rises by one percentage point per
-consecutive outdoor rest up to 5%, and has a 1 XP minimum. A character with no
-unspent XP cannot rest outdoors. Press `F` near an inn bed to confirm an inn
-rest for 10 gold; this resets the outdoor streak. Both types refill spell and
-configured class pools. Inn rest is available without XP if the character has
-the gold.
+`resting.py` contains the rest costs and resource recovery. Press `Z` to travel
+to safe camp; every party member must be more than 100 feet from every living
+enemy and able to pay before travel begins. At camp, each member checks in at
+their assigned bedroll. The individual XP cost begins at 1% of unspent XP,
+rises by one percentage point per consecutive outdoor rest up to 5%, and has a
+1 XP minimum. A character with no unspent XP cannot camp. At an inn, each
+party member interacts with the bed and pays 10 gold for the night. Both types
+refill spell and configured class pools only after every connected member
+checks in. Inn rest resets the outdoor streak.
 
-Health recovery, condition removal, a party-ready flow, and camp-stage travel
-remain future work. The current demo shares one combat state among connected
-players.
+Health recovery and condition removal remain future work. The current demo
+shares rest readiness and combat state among connected players.

@@ -2,14 +2,14 @@
 
 This mod is deliberately small and is the best working example to copy.
 
-- `scenarios.json` defines `first_contact`, the current default scenario. It
-  refers to arena `roadside_clearing` and NPC `clearing_raider`.
-- `arenas.json` defines the 1200-by-800 pixel play area, decorative ground
-  rectangles, and solid obstacle rectangles.
+- `scenarios.json` defines the roadside clearing and forest path encounters,
+  plus peaceful market and inn areas.
+- `arenas.json` defines the connected 1600-by-1100-and-larger areas, the
+  separate Market Square vendor and Town Inn bed, exits, and scenery.
 - `npcs.json` defines `clearing_raider`, its stats, Orc avatar, gear, simple AI
   controller, and two Perception title tiers.
 
-IDs must match across all three files. For example, changing the arena's key
+IDs must match across these files. For example, changing the arena's key
 requires changing the scenario's `arena` value. Changing the NPC's key requires
-changing the scenario enemy's `npc` value. Keep `first_contact` intact unless
-also changing `worldforge/app/encounters.py:DEFAULT_SCENARIO` or adding scenario selection.
+changing the scenario enemy's `npc` value. `first_contact` remains the game
+start area; connect any added scenarios with arena `exits`.

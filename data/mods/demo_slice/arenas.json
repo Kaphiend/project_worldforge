@@ -1,7 +1,7 @@
 {
   "roadside_clearing": {
     "name": "Roadside Clearing",
-    "bounds": {"x": 0, "y": 0, "width": 1600, "height": 1100},
+    "bounds": {"x": 0, "y": 0, "width": 3000, "height": 1900},
     "ground_color": [64, 91, 67],
     "edge_color": [34, 49, 40],
     "decorations": [
@@ -9,7 +9,15 @@
       {"kind": "rect", "x": 770, "y": 690, "width": 210, "height": 38, "color": [91, 89, 58]},
       {"kind": "rect", "x": 1010, "y": 150, "width": 130, "height": 50, "color": [91, 89, 58]},
       {"kind": "rect", "x": 1270, "y": 260, "width": 190, "height": 46, "color": [91, 89, 58]},
-      {"kind": "rect", "x": 1350, "y": 780, "width": 165, "height": 42, "color": [91, 89, 58]}
+      {"kind": "rect", "x": 1350, "y": 780, "width": 165, "height": 42, "color": [91, 89, 58]},
+      {"kind": "rect", "x": 1540, "y": 700, "width": 820, "height": 86, "color": [105, 91, 61]},
+      {"kind": "rect", "x": 1740, "y": 590, "width": 250, "height": 300, "color": [105, 91, 61]},
+      {"kind": "rect", "x": 1940, "y": 1130, "width": 620, "height": 180, "color": [81, 105, 67]},
+      {"kind": "rect", "x": 300, "y": 1250, "width": 700, "height": 150, "color": [81, 105, 67]},
+      {"kind": "rect", "x": 1000, "y": 1480, "width": 900, "height": 72, "color": [105, 91, 61]},
+      {"kind": "ellipse", "x": 1940, "y": 1280, "width": 240, "height": 145, "color": [48, 102, 105], "outline": [92, 132, 103], "outline_width": 8},
+      {"kind": "ellipse", "x": 2280, "y": 380, "width": 250, "height": 160, "color": [53, 91, 58], "outline": [86, 116, 69], "outline_width": 12},
+      {"kind": "ellipse", "x": 460, "y": 1110, "width": 330, "height": 190, "color": [71, 104, 63], "outline": [99, 125, 75], "outline_width": 10}
     ],
     "obstacles": [
       {"x": 350, "y": 230, "width": 90, "height": 130},
@@ -17,16 +25,212 @@
       {"x": 890, "y": 270, "width": 75, "height": 155},
       {"x": 970, "y": 620, "width": 125, "height": 90},
       {"x": 1240, "y": 495, "width": 95, "height": 160},
-      {"x": 1430, "y": 880, "width": 110, "height": 70}
-    ],
-    "inn_beds": [
-      {"id": "roadside_inn_bed", "name": "Roadside Inn", "x": 130, "y": 170,
-       "width": 100, "height": 60, "interaction_range_feet": 15,
-       "respawn_x": 242, "respawn_y": 242}
+      {"x": 1430, "y": 880, "width": 110, "height": 70},
+      {"x": 1810, "y": 970, "width": 140, "height": 90},
+      {"x": 2210, "y": 900, "width": 95, "height": 170},
+      {"x": 2360, "y": 1440, "width": 180, "height": 85},
+      {"x": 1570, "y": 1570, "width": 120, "height": 110},
+      {"x": 440, "y": 1530, "width": 150, "height": 90}
     ],
     "trainers": [
       {"id": "roadside_trainer", "name": "Class Trainer", "x": 270, "y": 170,
        "width": 42, "height": 54, "interaction_range_feet": 15}
+    ],
+    "exits": [
+      {"id": "forest_trail", "name": "Forest Trail", "x": 1980,
+       "y": 0, "width": 112, "height": 38,
+       "interaction_range_feet": 12,
+       "destination_scenario": "forest_path",
+       "destination_spawn": [1680, 1880], "party_spawn_spacing": 70},
+      {"id": "market_road", "name": "Old Market Road", "x": 2760,
+       "y": 1280, "width": 40, "height": 120,
+       "interaction_range_feet": 12,
+       "destination_scenario": "market_square",
+       "destination_spawn": [70, 1040], "party_spawn_spacing": 65}
+    ]
+  },
+  "forest_path": {
+    "name": "Forest Path",
+    "bounds": {"x": 0, "y": 0, "width": 3000, "height": 2100},
+    "ground_color": [58, 80, 58],
+    "edge_color": [31, 45, 34],
+    "decorations": [
+      {"kind": "rect", "x": 470, "y": 180, "width": 270,
+       "height": 500, "color": [67, 93, 59]},
+      {"kind": "rect", "x": 1010, "y": 300, "width": 420,
+       "height": 780, "color": [67, 93, 59]},
+      {"kind": "rect", "x": 1540, "y": 470, "width": 1080,
+       "height": 92, "color": [108, 91, 61]},
+      {"kind": "rect", "x": 1850, "y": 410, "width": 230,
+       "height": 430, "color": [108, 91, 61]},
+      {"kind": "rect", "x": 430, "y": 1280, "width": 350,
+       "height": 290, "color": [72, 102, 63]},
+      {"kind": "rect", "x": 1120, "y": 1500, "width": 520,
+       "height": 230, "color": [72, 102, 63]},
+      {"kind": "rect", "x": 2210, "y": 1130, "width": 370,
+       "height": 310, "color": [72, 102, 63]},
+      {"kind": "ellipse", "x": 520, "y": 860, "width": 370, "height": 220, "color": [42, 72, 47], "outline": [84, 108, 60], "outline_width": 12},
+      {"kind": "ellipse", "x": 1410, "y": 1230, "width": 330, "height": 245, "color": [46, 75, 48], "outline": [91, 116, 66], "outline_width": 14},
+      {"kind": "ellipse", "x": 2310, "y": 380, "width": 370, "height": 250, "color": [42, 72, 47], "outline": [84, 108, 60], "outline_width": 12}
+    ],
+    "obstacles": [
+      {"x": 210, "y": 250, "width": 100, "height": 145},
+      {"x": 400, "y": 80, "width": 120, "height": 90},
+      {"x": 790, "y": 540, "width": 170, "height": 100},
+      {"x": 1150, "y": 1190, "width": 180, "height": 100},
+      {"x": 1650, "y": 950, "width": 130, "height": 200},
+      {"x": 2090, "y": 840, "width": 150, "height": 110},
+      {"x": 2340, "y": 1500, "width": 180, "height": 130},
+      {"x": 720, "y": 1680, "width": 130, "height": 110}
+    ],
+    "exits": [
+      {"id": "roadside_trail", "name": "Roadside Trail", "x": 550,
+       "y": 2060, "width": 120, "height": 40,
+       "interaction_range_feet": 12,
+       "destination_scenario": "first_contact",
+       "destination_spawn": [1940, 60], "party_spawn_spacing": 65},
+      {"id": "market_road", "name": "Market Road", "x": 2960,
+       "y": 760, "width": 40, "height": 120,
+       "interaction_range_feet": 12,
+       "destination_scenario": "market_square",
+       "destination_spawn": [1490, 70], "party_spawn_spacing": 65}
+    ]
+  },
+  "market_square": {
+    "name": "Market Square",
+    "bounds": {"x": 0, "y": 0, "width": 3000, "height": 2100},
+    "ground_color": [94, 82, 61],
+    "edge_color": [46, 42, 35],
+    "decorations": [
+      {"kind": "rect", "x": 450, "y": 250, "width": 720,
+       "height": 420, "color": [117, 96, 63]},
+      {"kind": "rect", "x": 1360, "y": 920, "width": 250,
+       "height": 100, "color": [112, 88, 57]},
+      {"kind": "rect", "x": 300, "y": 850, "width": 1080,
+       "height": 100, "color": [117, 96, 63]},
+      {"kind": "rect", "x": 1040, "y": 650, "width": 340,
+       "height": 500, "color": [117, 96, 63]},
+      {"kind": "rect", "x": 1700, "y": 270, "width": 900,
+       "height": 500, "color": [112, 88, 57]},
+      {"kind": "rect", "x": 1830, "y": 1230, "width": 930,
+       "height": 560, "color": [117, 96, 63]},
+      {"kind": "rect", "x": 870, "y": 1550, "width": 450,
+       "height": 330, "color": [112, 88, 57]},
+      {"kind": "ellipse", "x": 2050, "y": 850, "width": 300, "height": 180, "color": [79, 110, 79], "outline": [151, 137, 93], "outline_width": 10},
+      {"kind": "ellipse", "x": 780, "y": 1040, "width": 240, "height": 165, "color": [115, 93, 62], "outline": [159, 134, 91], "outline_width": 8},
+      {"kind": "ellipse", "x": 2450, "y": 1650, "width": 210, "height": 130, "color": [115, 93, 62], "outline": [159, 134, 91], "outline_width": 8}
+    ],
+    "obstacles": [
+      {"x": 620, "y": 360, "width": 180, "height": 110},
+      {"x": 900, "y": 460, "width": 180, "height": 110},
+      {"x": 1740, "y": 390, "width": 180, "height": 100},
+      {"x": 2190, "y": 1010, "width": 130, "height": 170},
+      {"x": 2410, "y": 1500, "width": 180, "height": 110},
+      {"x": 560, "y": 1420, "width": 130, "height": 190}
+    ],
+    "vendors": [
+      {"id": "market_vendor", "name": "Market Supply Vendor", "x": 180,
+       "y": 190, "width": 52, "height": 62,
+       "interaction_range_feet": 18,
+       "stock": [
+         {"id": "healing_potion", "item_id": "healing_potion", "price": 10},
+         {"id": "revival_scroll", "item_id": "revival_scroll", "price": 10}
+       ]}
+    ],
+    "exits": [
+      {"id": "old_market_road", "name": "Old Market Road", "x": 0,
+       "y": 1280, "width": 38, "height": 120,
+       "interaction_range_feet": 12,
+       "destination_scenario": "first_contact",
+       "destination_spawn": [2800, 1290], "party_spawn_spacing": 25},
+      {"id": "forest_road", "name": "Forest Road", "x": 1840, "y": 0,
+       "width": 120, "height": 38, "interaction_range_feet": 12,
+       "destination_scenario": "forest_path",
+       "destination_spawn": [2810, 810], "party_spawn_spacing": 25},
+      {"id": "inn_lane", "name": "Inn Lane", "x": 1420, "y": 2060,
+       "width": 120, "height": 40, "interaction_range_feet": 12,
+       "destination_scenario": "town_inn",
+       "destination_spawn": [1490, 70], "party_spawn_spacing": 65}
+    ]
+  },
+  "town_inn": {
+    "name": "Town Inn",
+    "bounds": {"x": 0, "y": 0, "width": 3000, "height": 2100},
+    "ground_color": [105, 86, 66],
+    "edge_color": [46, 38, 33],
+    "decorations": [
+      {"kind": "rect", "x": 300, "y": 220, "width": 1000,
+       "height": 650, "color": [126, 96, 66]},
+      {"kind": "rect", "x": 430, "y": 950, "width": 720,
+       "height": 48, "color": [80, 62, 48]},
+      {"kind": "rect", "x": 1420, "y": 260, "width": 1050,
+       "height": 780, "color": [126, 96, 66]},
+      {"kind": "rect", "x": 1510, "y": 1110, "width": 670,
+       "height": 430, "color": [119, 88, 63]},
+      {"kind": "rect", "x": 520, "y": 1160, "width": 690,
+       "height": 390, "color": [91, 70, 53]},
+      {"kind": "rect", "x": 1200, "y": 1000, "width": 180,
+       "height": 560, "color": [80, 62, 48]},
+      {"kind": "rect", "x": 2140, "y": 1540, "width": 640,
+       "height": 160, "color": [80, 62, 48]},
+      {"kind": "ellipse", "x": 1710, "y": 560, "width": 300, "height": 180, "color": [143, 106, 71], "outline": [187, 151, 104], "outline_width": 9},
+      {"kind": "ellipse", "x": 630, "y": 1270, "width": 260, "height": 150, "color": [106, 81, 62], "outline": [154, 120, 88], "outline_width": 8},
+      {"kind": "ellipse", "x": 2250, "y": 1360, "width": 300, "height": 190, "color": [112, 83, 59], "outline": [164, 126, 87], "outline_width": 8}
+    ],
+    "obstacles": [
+      {"x": 440, "y": 340, "width": 150, "height": 100},
+      {"x": 1000, "y": 610, "width": 150, "height": 100},
+      {"x": 1490, "y": 540, "width": 120, "height": 280},
+      {"x": 1920, "y": 430, "width": 190, "height": 100},
+      {"x": 2040, "y": 1180, "width": 180, "height": 130},
+      {"x": 810, "y": 1240, "width": 150, "height": 110}
+    ],
+    "inn_beds": [
+      {"id": "town_inn_bed", "name": "Town Inn Bed", "x": 730,
+       "y": 410, "width": 150, "height": 90,
+       "interaction_range_feet": 18, "respawn_x": 910, "respawn_y": 510}
+    ],
+    "exits": [
+      {"id": "market_lane", "name": "Market Lane", "x": 1820, "y": 0,
+       "width": 120, "height": 38, "interaction_range_feet": 12,
+       "destination_scenario": "market_square",
+       "destination_spawn": [1420, 1910], "party_spawn_spacing": 25}
+    ]
+  },
+  "safe_camp": {
+    "name": "Safe Camp",
+    "bounds": {"x": 0, "y": 0, "width": 2400, "height": 1600},
+    "ground_color": [72, 89, 66],
+    "edge_color": [35, 48, 38],
+    "decorations": [
+      {"kind": "rect", "x": 330, "y": 260, "width": 250, "height": 100,
+       "color": [105, 84, 54]}
+    ],
+    "camp_beds": [
+      {"id": "camp_bed_1", "name": "Bedroll 1", "x": 115, "y": 130,
+       "width": 70, "height": 28, "spawn_x": 15, "spawn_y": 90,
+       "interaction_range_feet": 8},
+      {"id": "camp_bed_2", "name": "Bedroll 2", "x": 320, "y": 130,
+       "width": 70, "height": 28, "spawn_x": 220, "spawn_y": 90,
+       "interaction_range_feet": 8},
+      {"id": "camp_bed_3", "name": "Bedroll 3", "x": 525, "y": 130,
+       "width": 70, "height": 28, "spawn_x": 425, "spawn_y": 90,
+       "interaction_range_feet": 8},
+      {"id": "camp_bed_4", "name": "Bedroll 4", "x": 730, "y": 130,
+       "width": 70, "height": 28, "spawn_x": 630, "spawn_y": 90,
+       "interaction_range_feet": 8},
+      {"id": "camp_bed_5", "name": "Bedroll 5", "x": 115, "y": 420,
+       "width": 70, "height": 28, "spawn_x": 15, "spawn_y": 380,
+       "interaction_range_feet": 8},
+      {"id": "camp_bed_6", "name": "Bedroll 6", "x": 320, "y": 420,
+       "width": 70, "height": 28, "spawn_x": 220, "spawn_y": 380,
+       "interaction_range_feet": 8},
+      {"id": "camp_bed_7", "name": "Bedroll 7", "x": 525, "y": 420,
+       "width": 70, "height": 28, "spawn_x": 425, "spawn_y": 380,
+       "interaction_range_feet": 8},
+      {"id": "camp_bed_8", "name": "Bedroll 8", "x": 730, "y": 420,
+       "width": 70, "height": 28, "spawn_x": 630, "spawn_y": 380,
+       "interaction_range_feet": 8}
     ]
   }
 }

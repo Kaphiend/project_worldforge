@@ -1,5 +1,9 @@
 # Worldforge modder guide
 
+Built-in class and species content uses D&D SRD 5.2.1 where identified. See
+[`docs/project/SRD-5.2.1.md`](../project/SRD-5.2.1.md) for scope and required
+attribution.
+
 This is the hands-on guide for changing the gray-box game. You do **not** need
 to change Python for ordinary content edits. Start by copying an example JSON
 record, changing its ID and values, then put it in a mod folder. Keep the game
@@ -28,13 +32,15 @@ modders and maintainers can follow the implemented behavior.
 
 ## World interactions
 
-`F` is the shared nearby-interaction key. The current implementation supports
-inn beds: when the active character is within the bed's configured
-`interaction_range_feet`, `F` opens a confirmation prompt. Confirm with `Y` or
-Enter to attempt an inn rest; cancel with `N` or Escape. The rest costs 10 gold
-per participating character, and the party rest is applied only when all
-participants can pay and meet the bed-distance requirement. `Z` remains the
-outdoor camp action.
+`F` is the shared nearby-interaction key. At an area exit, confirm with `Y` or
+Enter to move the connected party to its destination scenario. Each area keeps
+its living mobs while the party is elsewhere. At an inn bed, each party member
+presses `F`, confirms with `Y` or Enter, and pays 10 gold for the night. Inn
+rest completes when every connected party member has checked in and can pay.
+Outdoor `Z` travel first checks that every character is more than 100 feet from
+every living enemy and can pay their individual XP cost, then moves the party
+to the `safe_camp` stage. Each character has an assigned bedroll and must
+interact with it using `F`; resting completes after everyone checks in.
 
 Bed interaction range is configured on each arena's `inn_beds` entry. For
 example:
@@ -43,6 +49,15 @@ example:
 {"id":"inn_bed", "name":"Inn Bed", "x":130, "y":170,
  "width":100, "height":60, "interaction_range_feet":15}
 ```
+
+Outdoor rest stages use `camp_beds`. Each entry has an `id`, `name`, rectangle,
+`spawn_x`, `spawn_y`, and `interaction_range_feet`. The `safe_camp` arena needs
+at least one bedroll per party member, up to the eight-player party cap.
+
+Add an area by defining its arena and scenario JSON records. Connect areas with
+arena `exits` that name a destination scenario and arrival point. See
+[`tables/arenas.md`](tables/arenas.md) and
+[`tables/scenarios.md`](tables/scenarios.md) for the fields.
 
 Corpse looting uses this same `F` interaction path: within five feet of a
 defeated mob, open its shared loot container. The container holds the mob
@@ -87,10 +102,8 @@ modifier (minimum one); cantrips do not use a preparation slot. The game checks
 the limit on both the client UI and host action path. Prepared IDs are saved in
 `prepared_spells`; older saves are trimmed to the limit while preserving
 cantrips. Spell records marked `cantrip: true` with `spell_point_cost: 0` use an action
-without spending the shared spell pool. `starting_cantrip` acquisition is
-granted to matching classes at character creation and added to older saves;
-Trainer-purchase spells are unlocked at the map trainer using each record’s
-`xp_purchase_cost`; starting cantrips are still granted by class data. The demo includes Arcane Spark and Frost Needle as
+without spending the shared spell pool. Cantrips and other spells are learned
+at the map trainer using each record’s `xp_purchase_cost`. The demo includes Arcane Spark and Frost Needle as
 level-one caster attacks; tune damage, range, classes, and descriptions in
 `data/spells.json`.
 The map trainer charges per-item `xp_purchase_cost`. Current unspent XP sets
@@ -220,8 +233,11 @@ notes are the comments for the data files.
   new combat calculation must be interpreted. A JSON field by itself does not
   make a new rule work.
 - `worldforge/app/loop.py` owns the interactive frame loop and coordinates input,
-  movement, and session state. `worldforge/app/hud.py` draws the scene overlays and
-  in-game panels. `worldforge/app/actions.py` validates and
+  movement, and drawing. `worldforge/app/host_tick.py` advances host-authoritative
+  world and combat state once per frame. `worldforge/app/interaction_input.py`,
+  `hotbar_input.py`, and `chat_input.py` hold focused input behavior.
+  `worldforge/app/hud.py` draws the scene overlays and in-game panels.
+  `worldforge/app/actions.py` validates and
   resolves combat actions and turns; `worldforge/app/requests.py` validates player
   requests such as looting, training, and resting. `worldforge/app/game.py` keeps
   the stable `run_game` import used by the launchers.
@@ -286,10 +302,10 @@ The remaining project, data, save, and asset notes are indexed in
   currently executes recurring `damage_over_time` and tracks
   `attack_disadvantage`; `worldforge/app/actions.py` interprets `bound_in_briar` as stopped
   movement. A new primitive needs matching Python behavior.
-- **Progression text is not a power.** Class progression and subclass milestone
-  entries are currently descriptive/unlock data. They do not automatically
-  grant a mechanical effect. Spells and abilities with supported effects are
-  separate records.
+- **Class features require XP purchases.** Class progression entries appear in
+  the trainer when their class-level prerequisite is met. `Second Windup` uses
+  the supported `extra_weapon_attack` effect. Other class effects and subclass
+  milestone effects remain descriptive until matching runtime behavior exists.
 - **Starting items use catalog templates.** Put `{ "template_id": "dagger" }`
   in a class's `starting_gear`; the gear is added as a unique instance. The
   class key is the destination slot. Use exact supported slot names.

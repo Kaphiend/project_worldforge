@@ -6,6 +6,7 @@ from worldforge.core.dice import roll_d20, roll_dice, scale_dice_count
 from worldforge.actors.factory import (effective_max_hp, item_attribute_total, modifier,
                      _unique_equipped_items)
 from worldforge.combat.conditions import consume_condition_use, has_condition
+from worldforge.combat.species import damage_resistances, species_traits
 
 
 def _value(actor, key, default=None):
@@ -32,6 +33,8 @@ def speed_feet(actor):
         return explicit_speed
     race = _value(actor, "race", "human")
     if race != "half-breed":
+        if "speed_35" in species_traits(actor):
+            return 35
         return RACES.get(race, {}).get("speed", 30)
     parent_speeds = [RACES.get(name, {}).get("speed", 30)
                      for name in (_value(actor, "parent_races", []) or [])]
@@ -71,6 +74,8 @@ def initiative_for(actor):
 
 
 def _proficient(actor, definition):
+    if definition.get("category") == "unarmed_strike":
+        return True
     weapon_class = definition.get("weapon_class")
     proficiencies = _value(actor, "weapon_prof", []) or []
     if _value(actor, "char_class", "") == "warlock" and definition.get("weapon_family") == "sword":
@@ -156,22 +161,30 @@ def _distance_disadvantage(definition, distance, ranged, adjacent_distance=None)
 
 def attack(actor, target, distance_feet, *, melee_distance_feet=None,
            adjacent_distance_feet=None, line_of_sight=True,
-           attack_mode="primary"):
-    """Resolve a primary weapon attack or a separately selected thrown attack.
+           attack_mode="primary", unseen_attack=False,
+           sneak_attack_dice=0, sneak_attack_opportunity=False):
+    """Resolve a primary, unarmed, or separately selected thrown attack.
 
     ``primary`` always uses the selected weapon set and never auto-throws a
-    thrown-tagged hand weapon. ``throw`` explicitly uses the main-hand weapon
-    and is only legal for a template tagged ``thrown``.
+    thrown-tagged hand weapon. ``throw`` explicitly uses any main-hand weapon
+    and defaults to a 20/60 ft range when the template has no thrown range.
     """
     equipment = _equipment(actor)
     thrown_attack = attack_mode == "throw"
+    unarmed_attack = attack_mode == "unarmed"
     if thrown_attack:
         weapon = equipment.get("main_hand")
         definition = _definition(weapon)
         dual_wield = False
-        if not _is_weapon(weapon) or "thrown" not in definition.get("tags", []):
+        if not _is_weapon(weapon):
             return {"kind": "attack", "success": False,
-                    "message": "Your main-hand weapon cannot be thrown."}
+                    "message": "You need a main-hand weapon to throw."}
+    elif unarmed_attack:
+        weapon = {"name": "Unarmed Strike", "category": "unarmed_strike",
+                  "damage_dice": "1d1", "damage_type": "bludgeoning",
+                  "ranges": {"melee": 5}}
+        definition = weapon
+        dual_wield = False
     elif attack_mode == "ranged":
         weapon = equipment.get("ranged")
         definition = _definition(weapon)
@@ -181,6 +194,13 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
                     "message": "No ranged weapon is equipped."}
     else:
         weapon, definition, dual_wield = selected_weapon(actor)
+        if weapon is None:
+            weapon = {"name": "Unarmed Strike", "category": "unarmed_strike",
+                      "damage_dice": "1d1", "damage_type": "bludgeoning",
+                      "ranges": {"melee": 5}}
+            definition = weapon
+            dual_wield = False
+            unarmed_attack = True
     if weapon is None:
         return {"kind": "attack", "success": False, "message": "No attack weapon is equipped."}
     ranged = (thrown_attack or attack_mode == "ranged" or
@@ -189,8 +209,8 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
     ranges = definition.get("ranges", {})
     reach = ranges.get("melee", 5)
     if thrown_attack:
-        ranges = {"normal": ranges.get("thrown_normal", 0),
-                  "long": ranges.get("thrown_long", 0)}
+        ranges = {"normal": ranges.get("thrown_normal", 20),
+                  "long": ranges.get("thrown_long", 60)}
     melee_distance = distance_feet if melee_distance_feet is None else melee_distance_feet
     if ranged:
         if not line_of_sight:
@@ -210,7 +230,11 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
     disadvantage = (_distance_disadvantage(
         attack_definition, distance_feet, ranged, adjacent_distance_feet)
         or has_condition(actor, "off_balance"))
-    natural, dice = roll_d20(-1 if disadvantage else 0)
+    attack_advantage = -1 if disadvantage else 1 if unseen_attack else 0
+    natural, dice = roll_d20(attack_advantage)
+    if natural == 1 and "lucky" in species_traits(actor):
+        natural, reroll = roll_d20(attack_advantage)
+        dice += reroll
     if has_condition(actor, "off_balance"):
         consume_condition_use(actor, "off_balance")
     critical = natural == 20
@@ -229,27 +253,42 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
         "damage_type": definition.get("damage_type", "untyped"),
     }
     if hit:
-        damage_expression = definition.get("damage_dice", "1d4")
-        if definition.get("damage_profiles"):
-            has_offhand = bool(_equipment(actor).get("off_hand"))
-            damage_expression = definition["damage_profiles"][
-                "off_hand_occupied" if has_offhand else "off_hand_empty"
-            ]
-        dice_multiplier = item_attribute_total(
-            weapon, "weapon_damage_dice_multiplier") or 1
-        if dice_multiplier > 1:
-            damage_expression = scale_dice_count(damage_expression, dice_multiplier)
-        damage, damage_rolls = roll_dice(damage_expression, critical=critical)
-        rolled_damage_bonus = item_attribute_total(weapon, "weapon_damage_bonus")
-        damage = max(0, damage + ability_mod + rolled_damage_bonus)
-        bonus_effects = [effect for effect in (_value(actor, "active_effects", []) or [])
-                         if effect.get("kind") == "next_weapon_hit_bonus"]
+        if unarmed_attack:
+            damage, damage_rolls = max(0, 1 + ability_mod), []
+        else:
+            damage_expression = definition.get("damage_dice", "1d4")
+            if definition.get("damage_profiles"):
+                has_offhand = bool(_equipment(actor).get("off_hand"))
+                damage_expression = definition["damage_profiles"][
+                    "off_hand_occupied" if has_offhand else "off_hand_empty"
+                ]
+            dice_multiplier = item_attribute_total(
+                weapon, "weapon_damage_dice_multiplier") or 1
+            if dice_multiplier > 1:
+                damage_expression = scale_dice_count(damage_expression, dice_multiplier)
+            damage, damage_rolls = roll_dice(damage_expression, critical=critical)
+            rolled_damage_bonus = item_attribute_total(weapon, "weapon_damage_bonus")
+            damage = max(0, damage + ability_mod + rolled_damage_bonus)
+        sneak_damage, sneak_rolls = 0, []
+        if (sneak_attack_dice and not unarmed_attack and not disadvantage
+                and (unseen_attack or sneak_attack_opportunity)
+                and (not _is_weapon(weapon) or ranged
+                     or "finesse" in definition.get("tags", []))):
+            sneak_damage, sneak_rolls = roll_dice(
+                f"{int(sneak_attack_dice)}d6", critical=critical)
+            damage += sneak_damage
+        bonus_effects = ([] if unarmed_attack else [
+            effect for effect in (_value(actor, "active_effects", []) or [])
+            if effect.get("kind") == "next_weapon_hit_bonus"])
         bonus_rolls = []
         for effect in bonus_effects:
             bonus, rolled = roll_dice(effect["formula"])
             damage += bonus
             bonus_rolls.extend(rolled)
             _value(actor, "active_effects", []).remove(effect)
+        resisted = definition.get("damage_type", "untyped") in damage_resistances(target)
+        if resisted:
+            damage = damage // 2
         if isinstance(target, dict):
             hp_key = "current_hp" if "current_hp" in target else "hp"
             target[hp_key] = max(0, int(target.get(hp_key, 1)) - damage)
@@ -260,7 +299,9 @@ def attack(actor, target, distance_feet, *, melee_distance_feet=None,
             target.current_hp = hp
             if hp == 0:
                 target.downed = True
-        event.update(damage=damage, damage_rolls=damage_rolls + bonus_rolls,
+        event.update(damage=damage, resisted=resisted,
+                     damage_rolls=damage_rolls + bonus_rolls + sneak_rolls,
+                     sneak_attack_damage=sneak_damage,
                      target_hp=_value(target, "current_hp", _value(target, "hp", 0)))
     return event
 

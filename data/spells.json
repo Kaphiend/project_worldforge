@@ -35,7 +35,8 @@
     },
     "description": "A forceful bolt of raw magic strikes a distant foe.",
     "prerequisite_class_level": 1,
-    "acquisition": "starting_cantrip"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "frost_needle": {
     "name": "Frost Needle",
@@ -73,7 +74,8 @@
     },
     "description": "A narrow shard of ice flies toward a creature you can see.",
     "prerequisite_class_level": 1,
-    "acquisition": "starting_cantrip"
+    "acquisition": "trainer_purchase",
+    "xp_purchase_cost": 10
   },
   "restorative_revival": {
     "name": "Restorative Revival",

@@ -1,27 +1,28 @@
 """Interactive Pygame frame loop and session-level drawing."""
 import math
-import sys
-import time
-from pprint import pprint
 from copy import deepcopy
 import pygame
-from worldforge.combat.rules import edge_distance_feet
-from worldforge.content.classes import ARENAS, SCENARIOS
+from worldforge.content.classes import ARENAS, SCENARIOS, MOB_GENERATION_RULES
 from worldforge.ui.sprite_sheet import load_spritesheet
 from worldforge.core.storage import save_actor
 from worldforge.actors.factory import equip_item, unequip_item
 from worldforge.core.runtime_paths import asset_path
 from worldforge.app.hud import draw_game_frame
-from worldforge.app.requests import _add_joined_players, _handle_action_request, _remove_disconnected_players, _settle_victory
-from worldforge.app.actions import _active_actor_id, _log, _process_turn_start, _run_ai_turns, _use_item_outside_combat
-from worldforge.app.encounters import COMBAT_TRIGGER_RANGE_FEET, DEFAULT_SCENARIO, _combat_snapshot, _combat_trigger, _new_combat, _world_mob_from_entry
-from worldforge.app.world import ACTOR_SIZE, PIXELS_PER_FOOT, SCREEN_SIZE, _actor_hitbox, _camera_offset, _move_actor, _target_clickbox, _walk_destination
+from worldforge.app.actor_sync import _sync_local_actor
+from worldforge.app.requests import _handle_action_request
+from worldforge.app.combat_flow import _active_actor_id
+from worldforge.app.item_actions import _use_item_outside_combat
+from worldforge.app.encounters import (DEFAULT_SCENARIO, _new_combat,
+                                      _new_world_state)
+from worldforge.app.world import ACTOR_SIZE, SCREEN_SIZE, _actor_hitbox, _camera_offset, _move_actor, _walk_destination
+from worldforge.app.world import _stealth_check
 from worldforge.app.rendering import _advance_character_animation, _draw_players, _player_id
-
-def _print_character_sheet(actor_data):
-    print(f"Character sheet: {actor_data.get('name', 'Other player')}")
-    pprint(actor_data)
-    sys.stdout.flush()
+from worldforge.app.interaction_input import (actor_at_world_position,
+                                              interact_nearby,
+                                              target_at_screen_position)
+from worldforge.app.hotbar_input import dispatch_hotbar_action
+from worldforge.app.chat_input import handle_chat_event
+from worldforge.app.host_tick import advance_host_world
 
 def _copy_invite(text):
     try:
@@ -31,76 +32,12 @@ def _copy_invite(text):
     except (AttributeError, pygame.error):
         return False
 
-def _handle_right_click(position, actor, remote_players):
-    own_rect = _target_clickbox(actor.x, actor.y)
-    if own_rect.collidepoint(position):
-        _print_character_sheet(vars(actor))
-        return
-    for remote in reversed(remote_players):
-        rect = _target_clickbox(remote.get("x", 0), remote.get("y", 0))
-        if rect.collidepoint(position) and remote.get("actor"):
-            _print_character_sheet(remote["actor"])
-            return
-
-def _sync_local_actor(actor, combat, actor_id):
-    if not combat:
-        return
-    entry = combat.get("actors", {}).get(actor_id)
-    if not entry:
-        return
-    actor.current_hp = entry["data"].get("current_hp", actor.current_hp)
-    actor.downed = bool(entry["downed"])
-    actor.conditions = deepcopy(entry["data"].get("conditions", []))
-    actor.active_effects = deepcopy(entry["data"].get("active_effects", []))
-    actor.inventory = deepcopy(entry["data"].get("inventory", actor.inventory))
-    inventory_ids = {item.get("id") for item in actor.inventory}
-    quick_items = actor.quick_items if isinstance(actor.quick_items, dict) else {}
-    actor.quick_items = {
-        key: item_id if item_id in inventory_ids else None
-        for key, item_id in {"q": None, "e": None, **quick_items}.items()
-    }
-    # Hotbar and quick-slot assignments are local control preferences. Keep
-    # the local save authoritative instead of overwriting it from a network
-    # combat snapshot that may predate the player's assignment.
-    actor.equipment = deepcopy(entry["data"].get("equipment", actor.equipment))
-    actor.abilities = deepcopy(entry["data"].get("abilities", actor.abilities))
-    actor.attribute_points_spent = deepcopy(entry["data"].get(
-        "attribute_points_spent", actor.attribute_points_spent))
-    actor.active_weapon_set = entry["data"].get("active_weapon_set", actor.active_weapon_set)
-    actor.xp_total = entry["data"].get("xp_total", actor.xp_total)
-    actor.xp_earned_by_level = deepcopy(
-        entry["data"].get("xp_earned_by_level", actor.xp_earned_by_level))
-    actor.xp_spent_by_level = deepcopy(
-        entry["data"].get("xp_spent_by_level", actor.xp_spent_by_level))
-    actor.xp_rest_spent_by_level = deepcopy(
-        entry["data"].get("xp_rest_spent_by_level", actor.xp_rest_spent_by_level))
-    actor.spell_points = entry["data"].get("spell_points", actor.spell_points)
-    actor.class_resources = deepcopy(
-        entry["data"].get("class_resources", actor.class_resources))
-    actor.gold = entry["data"].get("gold", actor.gold)
-    actor.level = entry["data"].get("level", actor.level)
-    actor.classes = deepcopy(entry["data"].get("classes", actor.classes))
-    actor.class_spell_purchases = deepcopy(entry["data"].get(
-        "class_spell_purchases", actor.class_spell_purchases))
-    actor.class_ability_purchases = deepcopy(entry["data"].get(
-        "class_ability_purchases", actor.class_ability_purchases))
-    actor.known_spells = deepcopy(entry["data"].get("known_spells", actor.known_spells))
-    actor.prepared_spells = deepcopy(entry["data"].get("prepared_spells", actor.prepared_spells))
-    actor.known_abilities = deepcopy(entry["data"].get("known_abilities", actor.known_abilities))
-    actor.withdrawn = bool(entry["data"].get("withdrawn", False))
-    actor.outdoor_rest_streak = entry["data"].get(
-        "outdoor_rest_streak", actor.outdoor_rest_streak)
-    # Exploration owns the live position after a fight. The retained combat
-    # snapshot is intentionally static while world mobs/corpses persist; copying
-    # its old coordinates every frame makes exploration movement snap back.
-    if entry["data"].get("withdrawn") or combat.get("active"):
-        actor.x, actor.y = entry["x"], entry["y"]
-
-
 def run_game(actor, get_other_players, send_state, multiplayer=True, combat_transport=None,
              party_status=None, invite_address=None):
     pygame.init()
-    screen = pygame.display.set_mode(SCREEN_SIZE)
+    windowed_size = SCREEN_SIZE
+    fullscreen = False
+    screen = pygame.display.set_mode(windowed_size, pygame.RESIZABLE)
     clock = pygame.time.Clock()
     running = True
     speed = 5
@@ -134,7 +71,10 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     if not multiplayer:
         player_id = actor.id
     is_host = combat_transport["host"]
-    combat = None if is_host else combat_transport["get"]()
+    combat = (_new_world_state(actor, player_id, get_other_players())
+              if is_host else combat_transport["get"]())
+    last_area_scenario_id = (combat or {}).get("scenario_id")
+    vendor_state = {"buyback": {}}
     selected_target = None
     feedback_target_id = None
     feedback_flash_until = 0
@@ -150,13 +90,17 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
     exit_to_menu = False
     quit_prompt = False
     from worldforge.ui.inventory import InventoryScreen
-    from worldforge.ui.spellbook import SpellbookUI, normalize_action_hotbars, action_definition
+    from worldforge.ui.spellbook import SpellbookUI, normalize_action_hotbars
     from worldforge.ui.trainer import TrainerUI
     from worldforge.ui.loot import LootUI
+    from worldforge.ui.vendor import VendorUI
+    from worldforge.ui.character_sheet import CharacterSheetUI
     inventory_ui = InventoryScreen()
     spellbook_ui = SpellbookUI()
     trainer_ui = TrainerUI()
     loot_ui = LootUI()
+    vendor_ui = VendorUI()
+    character_sheet_ui = CharacterSheetUI()
     combat_log_rect = pygame.Rect(0, 0, 0, 0)
     combat_log_scroll = 0
     chat_mode = False
@@ -169,7 +113,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
         nonlocal feedback_target_id, feedback_flash_until
         if is_host:
             updated = _handle_action_request(
-                actor, player_id, player_id, action, remote_players, combat)
+                actor, player_id, player_id, action, remote_players, combat,
+                vendor_state)
             if updated and "_action_error" in updated:
                 action_notice = f"Combat log: {updated['_action_error']}"
                 action_notice_until = pygame.time.get_ticks() + 2400
@@ -181,6 +126,23 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 action_notice_until = pygame.time.get_ticks() + 3000
                 if updated.get("sync_only"):
                     combat = updated
+                if updated.get("vendor_state_changed"):
+                    updated.pop("_action_notice", None)
+                    updated.pop("vendor_state_changed", None)
+                    combat = updated
+                    _sync_local_actor(actor, combat, player_id)
+                if updated.get("rest_state_changed"):
+                    updated.pop("_action_notice", None)
+                    updated.pop("rest_state_changed", None)
+                    combat = updated
+                    _sync_local_actor(actor, combat, player_id)
+                if updated.get("area_changed"):
+                    updated.pop("_action_notice", None)
+                    updated.pop("area_changed", None)
+                    vendor_state["buyback"] = {}
+                    updated["vendor_buyback"] = {}
+                    combat = updated
+                    _sync_local_actor(actor, combat, player_id)
                 return
             combat = updated
             _sync_local_actor(actor, combat, player_id)
@@ -189,91 +151,64 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
 
     def use_bar_action(assigned_action):
         nonlocal action_notice, action_notice_until
-        if not assigned_action:
-            return False
-        action_kind, action_id, definition = action_definition(assigned_action)
-        if not definition:
-            return False
-        targeting = definition.get("targeting", {})
-        if targeting.get("mode") != "self" and not selected_target:
+        consumed, notice = dispatch_hotbar_action(
+            assigned_action, selected_target, submit, toggle_sneaking,
+            notify_missing_target=True)
+        if notice:
             action_notice = "Select a target first."
             action_notice_until = pygame.time.get_ticks() + 1800
-            return True
-        if action_kind == "action":
-            action_types = {"weapon_attack": "attack",
-                            "ranged_weapon_attack": "ranged_attack",
-                            "throw_weapon": "throw"}
-            submit({"type": action_types[action_id], "target": selected_target})
-        elif action_kind == "spell":
-            submit({"type": "cast_spell", "spell": action_id,
-                    "target": selected_target})
+        return consumed
+
+    def toggle_sneaking():
+        nonlocal action_notice, action_notice_until
+        if combat and combat.get("active"):
+            action_notice = "You cannot sneak during combat. Use Hide instead."
+        elif actor.downed:
+            action_notice = "A downed character cannot sneak."
         else:
-            submit({"type": "use_ability", "ability": action_id,
-                    "target": selected_target})
-        return True
+            actor.sneaking = not bool(getattr(actor, "sneaking", False))
+            if actor.sneaking:
+                actor.stealth_check_total = _stealth_check(vars(actor))["total"]
+                action_notice = (
+                    f"Sneaking (Stealth {actor.stealth_check_total}). Press K to stop.")
+            else:
+                actor.stealth_check_total = None
+                action_notice = "You stop sneaking."
+        action_notice_until = pygame.time.get_ticks() + 2200
 
     while running:
         dt = clock.tick(60)
         remote_players = get_other_players() if multiplayer else []
         if is_host:
-            if combat and combat.get('active'):
-                _remove_disconnected_players(combat, remote_players, player_id)
-                _add_joined_players(combat, remote_players)
-            for request in combat_transport["poll"]():
-                updated = _handle_action_request(
-                    actor, player_id, request["player_id"], request["action"],
-                    remote_players, combat)
-                if updated and "_action_error" in updated:
-                    action_notice = updated["_action_error"]
-                    action_notice_until = pygame.time.get_ticks() + 2400
-                elif updated and "_action_notice" in updated:
-                    action_notice = updated["_action_notice"]
-                    action_notice_until = pygame.time.get_ticks() + 3000
-                    if updated.get("sync_only"):
-                        combat = updated
-                else:
-                    combat = updated
-            if combat:
-                now = pygame.time.get_ticks()
-                for mob_id, entry in list(combat.get("actors", {}).items()):
-                    expiry = entry.get("corpse_despawn_at")
-                    if (entry.get("team") == "enemies" and expiry is not None
-                            and now >= expiry):
-                        del combat["actors"][mob_id]
-                players_for_spawn = [_combat_snapshot(player_id, vars(actor))]
-                players_for_spawn.extend(
-                    _combat_snapshot(_player_id(remote), remote["actor"])
-                    for remote in remote_players if remote.get("actor"))
-                _settle_victory(combat, players_for_spawn)
-            if not combat or not combat.get("active"):
-                world_mobs = ([ _world_mob_from_entry(entry)
-                                for entry in combat.get("actors", {}).values()
-                                if entry.get("team") == "enemies"]
-                              if combat and not combat.get("sync_only") else None)
-                trigger = _combat_trigger(
-                    actor, player_id, remote_players,
-                    world_mobs=world_mobs)
-                if trigger:
-                    spotted_player, enemy_id = trigger
-                    combat = _new_combat(
-                        actor, player_id, remote_players,
-                        world_mobs=world_mobs)
-                    player_name = combat["actors"][spotted_player]["data"].get(
-                        "name", spotted_player)
-                    enemy_name = combat["actors"][enemy_id]["data"].get(
-                        "name", "An enemy")
-                    _log(combat, (f"{enemy_name} spots {player_name} within "
-                                  f"{COMBAT_TRIGGER_RANGE_FEET} feet. Combat begins!"))
-            if combat:
-                _process_turn_start(combat)
-                _run_ai_turns(combat)
-            combat_transport["publish"](combat)
-            _sync_local_actor(actor, combat, player_id)
+            combat, host_notice, host_notice_duration = advance_host_world(
+                actor, player_id, remote_players, combat, combat_transport,
+                vendor_state)
+            if host_notice is not None:
+                action_notice = host_notice
+                action_notice_until = (pygame.time.get_ticks()
+                                       + host_notice_duration)
         else:
             latest = combat_transport["get"]()
             if latest is not None:
+                area_changed = (latest.get("scenario_id")
+                                != last_area_scenario_id)
                 combat = latest
-                _sync_local_actor(actor, combat, player_id)
+                last_area_scenario_id = combat.get("scenario_id")
+                _sync_local_actor(actor, combat, player_id,
+                                  consume_position_sync=True,
+                                  force_position=area_changed)
+
+        if loot_ui.visible:
+            loot_corpse = (combat or {}).get("actors", {}).get(
+                loot_ui.corpse_id)
+            if not loot_corpse or not loot_corpse.get("loot"):
+                loot_ui.close()
+
+        if selected_target:
+            available_targets = set((combat or {}).get("actors", {}))
+            available_targets.update(_player_id(remote) for remote in remote_players)
+            if selected_target not in available_targets:
+                selected_target = None
 
         action_feedback = (combat or {}).get("action_feedback", {})
         if action_feedback.get("id") and action_feedback["id"] != feedback_seen_id:
@@ -286,42 +221,35 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                          active_id == player_id)
         current_frames = sprite_frames.get(actor.avatar, default_frames)
         current_arena = (combat or {}).get("arena") or ARENAS.get(
-            SCENARIOS.get(DEFAULT_SCENARIO, {}).get("arena"), {})
+            SCENARIOS.get((combat or {}).get("scenario_id", DEFAULT_SCENARIO), {})
+            .get("arena"), {})
         camera = _camera_offset(actor, current_arena, screen.get_size())
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if character_sheet_ui.visible and event.type != pygame.QUIT:
+                character_sheet_ui.handle_event(event)
+                continue
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                if fullscreen:
+                    screen = pygame.display.set_mode(
+                        windowed_size, pygame.RESIZABLE)
+                    fullscreen = False
+                else:
+                    windowed_size = screen.get_size()
+                    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                    fullscreen = True
+            elif event.type == pygame.QUIT:
                 exit_to_menu = False
                 running = False
-            elif chat_mode and event.type == pygame.TEXTINPUT:
-                chat_text = (chat_text + event.text)[:160]
-            elif chat_mode and event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    chat_mode, chat_text = False, ""
-                    pygame.key.stop_text_input()
-                elif event.key == pygame.K_BACKSPACE:
-                    chat_text = chat_text[:-1]
-                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    message = chat_text.strip()
-                    if message:
-                        bubble_text = message
-                        if message.lower().startswith("/act "):
-                            emote = message[5:].strip()
-                            bubble_text = (f"{actor.name} acts {emote}" if emote
-                                           else "")
-                        if bubble_text:
-                            local_speech = {"text": bubble_text,
-                                            "expires_at": time.time() + 2.5}
-                            send_state(actor.x, actor.y, local_animation["anim"],
-                                       facing_left, vars(actor), local_speech)
-                            if message.lower().startswith("/act "):
-                                submit({"type": "chat", "text": message})
-                            else:
-                                # Ordinary speech is visible overhead but stays
-                                # out of the combat event log.
-                                submit({"type": "chat", "text": message})
-                    chat_mode, chat_text = False, ""
-                    pygame.key.stop_text_input()
+            elif chat_mode and event.type in (pygame.TEXTINPUT, pygame.KEYDOWN):
+                handled, chat_text, speech = handle_chat_event(
+                    event, chat_text, actor, local_animation, facing_left,
+                    send_state, submit)
+                if speech is not None:
+                    local_speech = speech
+                if handled and event.type == pygame.KEYDOWN and event.key in (
+                        pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    chat_mode = False
             elif quit_prompt:
                 if event.type == pygame.KEYDOWN:
                     if event.key in (pygame.K_y, pygame.K_RETURN, pygame.K_KP_ENTER):
@@ -363,6 +291,12 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 spellbook_ui.tooltips_enabled = not spellbook_ui.tooltips_enabled
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_BACKQUOTE:
                 spellbook_ui.cycle_bar()
+            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_k
+                  and not (combat and combat.get("active")) and not actor.downed
+                  and not spellbook_ui.visible and not inventory_ui.visible
+                  and not trainer_ui.visible and not loot_ui.visible
+                  and not interact_prompt and not chat_mode):
+                toggle_sneaking()
             elif spellbook_ui.visible:
                 if event.type == pygame.KEYDOWN and event.key in (pygame.K_MINUS,
                                                                     pygame.K_ESCAPE):
@@ -374,6 +308,18 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         submit(spellbook_action)
                     actor.spell_hotbars = deepcopy(
                         spell_data.get("spell_hotbars", actor.spell_hotbars))
+            elif vendor_ui.visible:
+                vendor = next((item for item in current_arena.get("vendors", [])
+                               if item.get("id") == vendor_ui.vendor_id), None)
+                vendor_data = ((combat or {}).get("actors", {}).get(player_id, {})
+                               .get("data", vars(actor)))
+                buyback_by_actor = (combat or {}).get(
+                    "vendor_buyback", vendor_state["buyback"])
+                buyback = buyback_by_actor.get(player_id, [])
+                vendor_action = vendor_ui.handle_event(
+                    event, vendor, vendor_data, buyback)
+                if vendor_action:
+                    submit(vendor_action)
             elif trainer_ui.visible:
                 trainer_data = ((combat or {}).get("actors", {}).get(player_id, {})
                                 .get("data", vars(actor)))
@@ -386,7 +332,11 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 if event.type == pygame.KEYDOWN and event.key in (
                         pygame.K_y, pygame.K_RETURN, pygame.K_KP_ENTER):
                     if interact_prompt.get("type") == "inn_bed":
-                        submit({"type": "rest_inn"})
+                        submit({"type": "rest_inn_checkin",
+                                "bed_id": interact_prompt.get("bed_id")})
+                    elif interact_prompt.get("type") == "area_exit":
+                        submit({"type": "travel_exit",
+                                "exit_id": interact_prompt.get("exit_id")})
                     interact_prompt = None
                 elif event.type == pygame.KEYDOWN and event.key in (
                         pygame.K_n, pygame.K_ESCAPE):
@@ -433,7 +383,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         elif inventory_action["type"] == "use_item":
                             _use_item_outside_combat(
                                 actor, inventory_action.get("item"),
-                                inventory_action.get("target"), player_id, remote_players)
+                                inventory_action.get("target"), player_id,
+                                remote_players, current_arena)
                     submit(inventory_action)
                 actor.quick_items = deepcopy(inventory_data.get(
                     "quick_items", actor.quick_items))
@@ -444,38 +395,12 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 chat_mode, chat_text = True, ""
                 pygame.key.start_text_input()
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_f:
-                nearby = []
-                for kind, items in (("trainer", current_arena.get("trainers", [])),
-                                    ("inn_bed", current_arena.get("inn_beds", []))):
-                    for item in items:
-                        distance = edge_distance_feet(
-                            vars(actor), item, PIXELS_PER_FOOT, ACTOR_SIZE)
-                        if distance <= int(item.get("interaction_range_feet", 5)):
-                            nearby.append((distance, kind, item))
-                for corpse in (combat or {}).get("actors", {}).values():
-                    if (combat and combat.get("active")
-                            or corpse.get("team") != "enemies"
-                            or not corpse.get("downed")):
-                        continue
-                    expiry = corpse.get("corpse_despawn_at")
-                    if expiry is not None and pygame.time.get_ticks() >= expiry:
-                        continue
-                    distance = edge_distance_feet(
-                        vars(actor), corpse, PIXELS_PER_FOOT, ACTOR_SIZE)
-                    if distance <= 5:
-                        nearby.append((distance, "loot", corpse))
-                interaction = min(nearby, default=None, key=lambda item: item[0])
-                if interaction and interaction[1] == "trainer":
-                    trainer_ui.toggle(vars(actor))
-                elif interaction and interaction[1] == "loot":
-                    loot_ui.open(interaction[2]["id"])
-                elif interaction:
-                    bed = interaction[2]
-                    interact_prompt = {"type": "inn_bed", "name": bed.get(
-                        "name", "Inn Bed")}
-                else:
-                    action_notice = "There is nothing nearby to interact with."
-                    action_notice_until = pygame.time.get_ticks() + 2000
+                interact_prompt, notice, duration = interact_nearby(
+                    actor, player_id, current_arena, combat, submit,
+                    trainer_ui, vendor_ui, loot_ui)
+                if notice:
+                    action_notice = notice
+                    action_notice_until = pygame.time.get_ticks() + duration
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_z:
                 submit({"type": "rest_outdoor"})
             elif event.type == pygame.QUIT:
@@ -487,8 +412,16 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             elif (event.type == pygame.KEYDOWN and event.key == pygame.K_n
                   and is_host and combat and combat.get("result")
                   and combat["result"].get("outcome") != "victory"):
+                previous = combat
                 combat = _new_combat(actor, player_id, remote_players,
-                                     combat.get("scenario_id", DEFAULT_SCENARIO))
+                                     previous.get("scenario_id", DEFAULT_SCENARIO))
+                combat["world_areas"] = deepcopy(previous.get("world_areas", {}))
+                combat["world_area_items"] = deepcopy(
+                    previous.get("world_area_items", {}))
+                combat["ground_items"] = deepcopy(
+                    previous.get("ground_items", []))
+                combat["vendor_buyback"] = deepcopy(
+                    previous.get("vendor_buyback", {}))
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 if selected_target:
                     selected_target = None
@@ -520,46 +453,21 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         remote["x"] = drawn_positions[remote_id][0] + camera[0]
                         remote["y"] = drawn_positions[remote_id][1] + camera[1]
                     click_players.append(remote)
-                _handle_right_click(world_click, actor, click_players)
+                selected_actor = actor_at_world_position(
+                    world_click, actor, click_players,
+                    (combat or {}).get("actors", {}).values())
+                if selected_actor:
+                    character_sheet_ui.open(selected_actor)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 clicked = False
                 assigned_action = spellbook_ui.hud_action_at(event.pos)
                 if assigned_action and not spellbook_ui.visible:
                     use_bar_action(assigned_action)
                     clicked = True
-                own_rect = _target_clickbox(actor.x - camera[0],
-                                            actor.y - camera[1])
-                if not clicked and own_rect.collidepoint(event.pos):
-                    selected_target = player_id
-                    clicked = True
                 if not clicked:
-                    enemy_entries = list((combat or {}).get("actors", {}).values())
-                    if not combat or combat.get("sync_only"):
-                        scenario = SCENARIOS.get(DEFAULT_SCENARIO, {})
-                        for index, spawn in enumerate(scenario.get("enemies", [])):
-                            enemy_entries.append({
-                                "id": spawn.get("id", f"{spawn.get('npc')}-{index + 1}"),
-                                "team": "enemies", "x": spawn.get("x", 600),
-                                "y": spawn.get("y", 280), "width": ACTOR_SIZE, "height": ACTOR_SIZE,
-                            })
-                    for enemy in enemy_entries:
-                        if enemy.get("team") != "enemies":
-                            continue
-                        rect = _target_clickbox(enemy["x"] - camera[0],
-                                                enemy["y"] - camera[1])
-                        if rect.collidepoint(event.pos):
-                            selected_target = enemy["id"]
-                            clicked = True
-                            break
-                for remote in reversed(remote_players) if not clicked else ():
-                    player_key = remote.get("id", (remote.get("actor") or {}).get("id", "remote"))
-                    drawn = drawn_positions.get(player_key)
-                    position = drawn or (remote.get("x", 0), remote.get("y", 0))
-                    rect = _target_clickbox(*position)
-                    if rect.collidepoint(event.pos):
-                        selected_target = player_key
-                        clicked = True
-                        break
+                    selected_target, clicked = target_at_screen_position(
+                        event.pos, actor, player_id, combat, remote_players,
+                        drawn_positions, camera)
                 if not clicked and combat and combat.get("active") and local_can_act:
                     submit({"type": "move",
                             "x": event.pos[0] + camera[0] - ACTOR_SIZE / 2,
@@ -570,6 +478,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 if selected_target:
                     submit({"type": "ranged_attack", "target": selected_target})
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
+                if combat and combat.get("active"):
+                    submit({"type": "fast_hands"})
             elif event.type == pygame.KEYDOWN and event.key in (
                     pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3,
                     pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7,
@@ -578,36 +489,20 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                 bars = normalize_action_hotbars(vars(actor).get("spell_hotbars"))
                 hotbar_action = bars[spellbook_ui.active_bar][slot_index]
                 if hotbar_action:
-                    action_kind, action_id, definition = action_definition(hotbar_action)
-                    targeting = definition.get("targeting", {})
-                    needs_target = targeting.get("mode") != "self"
-                    if ((action_kind == "spell" or targeting) and needs_target
-                            and not selected_target):
-                        continue
-                    if action_kind == "action":
-                        action_types = {
-                            "weapon_attack": "attack",
-                            "ranged_weapon_attack": "ranged_attack",
-                            "throw_weapon": "throw",
-                        }
-                        submit({"type": action_types[action_id],
-                                "target": selected_target})
-                    elif action_kind == "spell":
-                        submit({"type": "cast_spell", "spell": action_id,
-                                "target": selected_target})
-                    else:
-                        submit({"type": "use_ability", "ability": action_id,
-                                "target": selected_target})
+                    dispatch_hotbar_action(
+                        hotbar_action, selected_target, submit, toggle_sneaking,
+                        notify_missing_target=False)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_t:
                 if selected_target:
                     submit({"type": "throw", "target": selected_target})
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_LSHIFT:
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
                 if combat and combat.get("active") and local_can_act:
                     submit({"type": "end_turn"})
 
         keys = pygame.key.get_pressed()
         moving = False
-        if (not chat_mode and combat and combat.get("active")
+        if (not character_sheet_ui.visible and not chat_mode
+                and combat and combat.get("active")
                 and local_can_act and not actor.downed):
             key_dx = int(bool(keys[pygame.K_RIGHT] or keys[pygame.K_d])) - int(
                 bool(keys[pygame.K_LEFT] or keys[pygame.K_a]))
@@ -625,7 +520,7 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         "x": current_x + key_dx / length * step,
                         "y": current_y + key_dy / length * step})
                 last_combat_key_move = now
-        if (not chat_mode and not actor.downed and
+        if (not character_sheet_ui.visible and not chat_mode and not actor.downed and
                 (not combat or not combat.get("active") or actor.withdrawn)):
             occupied = []
             for remote in remote_players:
@@ -638,7 +533,9 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     if entry["team"] == "enemies" and not entry["downed"]
                 )
             else:
-                for spawn in SCENARIOS.get(DEFAULT_SCENARIO, {}).get("enemies", []):
+                scenario = SCENARIOS.get(
+                    (combat or {}).get("scenario_id", DEFAULT_SCENARIO), {})
+                for spawn in scenario.get("enemies", []):
                     occupied.append(_actor_hitbox(spawn.get("x", 0),
                                                   spawn.get("y", 0)))
             if (keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_s]
@@ -646,14 +543,18 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                     or keys[pygame.K_DOWN] or keys[pygame.K_LEFT]
                     or keys[pygame.K_RIGHT]):
                 explore_destination = None
+            sneak_factor = max(0.1, min(1.0, float(
+                MOB_GENERATION_RULES.get("stealth", {}).get(
+                    "exploration_speed_multiplier", 0.5))))
             if explore_destination:
                 dx, dy = (explore_destination[0] - actor.x,
                           explore_destination[1] - actor.y)
                 distance = math.hypot(dx, dy)
-                if distance <= speed:
+                explore_speed = speed * (sneak_factor if getattr(actor, "sneaking", False) else 1)
+                if distance <= explore_speed:
                     explore_destination = None
                 else:
-                    step = min(speed, distance)
+                    step = min(explore_speed, distance)
                     path_x, path_y = _walk_destination(
                         actor.x, actor.y, dx / distance * step,
                         dy / distance * step, current_arena, occupied)
@@ -664,7 +565,8 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
                         explore_destination = None
             if not explore_destination:
                 key_moving, facing_left = _move_actor(
-                    actor, keys, speed, facing_left, current_arena, occupied)
+                    actor, keys, speed * (sneak_factor if getattr(actor, "sneaking", False) else 1),
+                    facing_left, current_arena, occupied)
                 moving = moving or key_moving
         local_entry = (combat or {}).get("actors", {}).get(player_id)
         if actor.withdrawn and local_entry:
@@ -696,15 +598,25 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
         if combat:
             combat_actors = combat.get("actors", {})
             combat_is_active = bool(combat.get("active"))
+            snapshot_is_authoritative = (combat_is_active
+                                        or bool(combat.get("rest_session")))
             remote_players = [
                 {**remote,
-                 "x": combat_actors.get(_player_id(remote), {}).get("x", remote.get("x", 0)),
-                 "y": combat_actors.get(_player_id(remote), {}).get("y", remote.get("y", 0)),
-                 "combat_animation": combat_actors.get(_player_id(remote), {}).get("animation_event"),
+                 "x": (combat_actors.get(_player_id(remote), {}).get(
+                     "x", remote.get("x", 0)) if snapshot_is_authoritative
+                     else remote.get("x", 0)),
+                 "y": (combat_actors.get(_player_id(remote), {}).get(
+                     "y", remote.get("y", 0)) if snapshot_is_authoritative
+                     else remote.get("y", 0)),
+                 "combat_animation": (combat_actors.get(
+                     _player_id(remote), {}).get("animation_event")
+                     if combat_is_active else None),
                  "facing": (combat_actors.get(_player_id(remote), {}).get(
                      "facing_left", remote.get("facing", False))
                      if combat_is_active else remote.get("facing", False)),
-                 "downed": combat_actors.get(_player_id(remote), {}).get("downed",
+                 "downed": (combat_actors.get(_player_id(remote), {}).get(
+                     "downed", (remote.get("actor") or {}).get("downed", False))
+                     if snapshot_is_authoritative else
                      (remote.get("actor") or {}).get("downed", False))}
                 for remote in remote_players
             ]
@@ -752,7 +664,12 @@ def run_game(actor, get_other_players, send_state, multiplayer=True, combat_tran
             "spellbook_ui": spellbook_ui,
             "sprite_frames": sprite_frames,
             "trainer_ui": trainer_ui,
+            "vendor_ui": vendor_ui,
+            "vendor_buyback": ((combat or {}).get("vendor_buyback", {})
+                                .get(player_id, []) if combat else
+                                vendor_state["buyback"].get(player_id, [])),
         })
+        character_sheet_ui.draw(screen, font)
         pygame.display.flip()
 
     _sync_local_actor(actor, combat, player_id)

@@ -1,5 +1,5 @@
 """Character creation state and rules, independent of the Pygame screen."""
-from worldforge.content.classes import ABILITIES, RACES, CLASSES, SPELLS, skill_options
+from worldforge.content.classes import RACES, CLASSES
 from worldforge.actors.factory import (
     actor_factory,
     apply_class_proficiencies,
@@ -9,6 +9,7 @@ from worldforge.actors.factory import (
     starting_hp,
     random_fully_geared_actor,
 )
+from worldforge.core.dice import ability_modifier
 from worldforge.core.storage import lock_actor, load_actor, save_actor, unlock_actor
 from worldforge.core.progression import initialize_resources
 
@@ -46,9 +47,7 @@ class CharacterCreationFlow:
             "subclass": "class",
             "skills": ("subclass" if self.actor and CLASSES.get(
                 self.actor.char_class, {}).get("subclasses") else "class"),
-            "abilities": ("skills" if self.actor and CLASSES.get(
-                self.actor.char_class, {}).get("skill_choices", 0) else
-                "subclass" if self.actor and CLASSES.get(
+            "abilities": ("subclass" if self.actor and CLASSES.get(
                     self.actor.char_class, {}).get("subclasses") else "class"),
             "avatar": "menu",
             "done": "menu",
@@ -122,8 +121,8 @@ class CharacterCreationFlow:
                 self.actor.subclass = None
                 self.actor.skills = []
             self.actor.char_class = char_class
-            self.actor.classes = [{'name': char_class, 'level': 1}]
-            self.actor.level = 1
+            self.actor.classes = [{'name': char_class, 'level': 3}]
+            self.actor.level = 3
 
     def confirm_class(self):
         if self.actor and self.actor.char_class:
@@ -132,7 +131,7 @@ class CharacterCreationFlow:
             if CLASSES[self.actor.char_class].get('subclasses'):
                 self.stage = 'subclass'
             else:
-                self.stage = 'skills' if CLASSES[self.actor.char_class].get('skill_choices', 0) else 'abilities'
+                self.stage = 'abilities'
 
     def select_subclass(self, subclass_id):
         if (self.actor and subclass_id in
@@ -141,24 +140,14 @@ class CharacterCreationFlow:
 
     def confirm_subclass(self):
         if self.actor and self.actor.subclass:
-            self.stage = 'skills' if CLASSES[self.actor.char_class].get('skill_choices', 0) else 'abilities'
+            self.stage = 'abilities'
 
     def select_skill(self, skill):
-        if not self.actor:
-            return
-        # skill_options() expands classes.json's ["any"] sentinel (bard) to
-        # the full skill list -- using the raw CLASSES[...]['skills'] list
-        # here caps options at 1 entry and skill_choices can never be met.
-        options = skill_options(self.actor.char_class)
-        limit = int(CLASSES[self.actor.char_class].get('skill_choices', 0))
-        if skill in self.actor.skills:
-            self.actor.skills.remove(skill)
-        elif skill in options and len(self.actor.skills) < limit:
-            self.actor.skills.append(skill)
+        """Skill training is purchased from the trainer after creation."""
+        return None
 
     def confirm_skills(self):
-        if self.actor and len(self.actor.skills) == int(
-                CLASSES[self.actor.char_class].get('skill_choices', 0)):
+        if self.actor:
             self.stage = 'abilities'
 
     def assign_roll(self, roll_index):
@@ -173,29 +162,21 @@ class CharacterCreationFlow:
             self._finish_new_character()
 
     def _finish_new_character(self):
-        self.actor.max_hp = starting_hp(self.actor)
+        hit_die = CLASSES[self.actor.char_class]['hit_die']
+        con_modifier = ability_modifier(
+            min(30, int(self.actor.abilities.get('constitution', 10))))
+        level_up_hp = max(1, hit_die // 2 + 1 + con_modifier)
+        self.actor.max_hp = starting_hp(self.actor) + level_up_hp * (self.actor.level - 1)
         self.actor.current_hp = self.actor.max_hp
+        self.actor.xp_total = 1700
+        self.actor.xp_earned_by_level = {"3": 1700}
+        self.actor.class_features = []
+        self.actor.class_feature_purchases = {}
+        self.actor.class_skill_purchases = {}
         apply_starting_gear(self.actor)
-        class_name = self.actor.char_class
-        self.actor.known_spells = [
-            spell_id for spell_id, spell in SPELLS.items()
-            if class_name in spell.get('classes', [])
-            and spell.get('prerequisite_class_level', 1) <= self.actor.level
-            and (not spell.get('acquisition')
-                 or spell.get('acquisition') == 'starting_cantrip')
-        ]
-        self.actor.known_abilities = [
-            ability_id for ability_id, ability in ABILITIES.items()
-            if class_name in ability.get('classes', [])
-            and ability.get('acquisition') != 'trainer_purchase'
-            and ability.get('prerequisite_class_level', 1) <= self.actor.level
-        ]
-        # Starting cantrips are ready by default. Leveled spells are learned
-        # from trainers and selected explicitly within the class prep limit.
-        self.actor.prepared_spells = [
-            spell_id for spell_id in self.actor.known_spells
-            if SPELLS[spell_id].get("acquisition") == "starting_cantrip"
-        ]
+        self.actor.known_spells = []
+        self.actor.known_abilities = []
+        self.actor.prepared_spells = []
         initialize_resources(vars(self.actor), refill=True)
         self.stage = 'avatar'
 

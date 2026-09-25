@@ -7,8 +7,8 @@ legality and the randomized fully geared demo actor are also defined here.
 """
 from dataclasses import dataclass, field
 from copy import deepcopy
-from worldforge.content.classes import (ABILITIES, ALL_SKILLS, EQUIPMENT_ITEMS, RACES, CLASSES,
-                     SPELLS, NPCS, ITEM_ATTRIBUTES, MOB_GENERATION_RULES)
+from worldforge.content.classes import (EQUIPMENT_ITEMS, RACES, CLASSES,
+                     NPCS, ITEM_ATTRIBUTES, MOB_GENERATION_RULES)
 from worldforge.core.dice import ability_points, ability_modifier
 from worldforge.core.progression import initialize_resources
 import random
@@ -27,6 +27,7 @@ class Actor:
     current_hp: int =10
     classes: list = field(default_factory=list)
     level: int = 1
+    class_levels_initialized: bool = True
     xp_total: int = 0
     xp_earned_by_level: dict = field(default_factory=dict)
     xp_spent_by_level: dict = field(default_factory=dict)
@@ -35,6 +36,9 @@ class Actor:
     class_ability_purchases: dict = field(default_factory=dict)
     withdrawn: bool = False
     downed: bool = False
+    sneaking: bool = False
+    stealth_check_total: int = None
+    hidden: dict = None
     conditions: list = field(default_factory=list)
     active_effects: list = field(default_factory=list)
     known_spells: list = field(default_factory=list)
@@ -45,9 +49,14 @@ class Actor:
         [None] * 10, [None] * 10])
     quick_items: dict = field(default_factory=lambda: {"q": None, "e": None})
     known_abilities: list = field(default_factory=list)
+    class_features: list = field(default_factory=list)
+    class_feature_purchases: dict = field(default_factory=dict)
+    class_skill_purchases: dict = field(default_factory=dict)
     spell_points: int = None
     class_resources: dict = field(default_factory=dict)
     attribute_points_spent: dict = field(default_factory=dict)
+    # Class levels are selected when earned character levels are applied.
+    # The XP-based level is permanent; trainer spending only affects purchase access.
     gold: int = 50
     outdoor_rest_streak: int = 0
     avatar: str = 'asset_pack/Soldier.png'
@@ -111,13 +120,11 @@ def create_npc_instance(template_id, x, y):
         class_id = random.choice(class_pool or list(CLASSES))
     template["char_class"] = class_id
     template["classes"] = [{"name": class_id, "level": level}]
+    template["class_features"] = list(template.get("class_features", []) or [])
     class_data = CLASSES[class_id]
     for field_name in ("saves", "armor_prof", "weapon_prof"):
         template[field_name] = list(class_data.get(field_name, []))
-    class_skills = class_data.get("skills", [])
-    skill_pool = ALL_SKILLS if class_skills == ["any"] else class_skills
-    skill_count = min(int(class_data.get("skill_choices", 0) or 0), len(skill_pool))
-    template["skills"] = random.sample(list(skill_pool), skill_count) if skill_count else []
+    template["skills"] = list(template.get("skills", []) or [])
 
     supplied_abilities = template.get("abilities", {}) or {}
     scores = [int(supplied_abilities.get(name, 10) or 10) for name in ABILITY_NAMES]
@@ -286,6 +293,7 @@ def _generate_npc_equipment(template, template_id, class_id, level, elite):
             equipment[other_hand] = item
         else:
             equipment[slot] = item
+    _enforce_two_handed_equipment(equipment)
     return equipment
 
 def assign(actor, ability, roll_index):
@@ -338,11 +346,15 @@ def item_attribute_total(item, effect_kind):
 
 
 def effective_max_hp(actor):
-    """Return base max HP plus bonuses on currently equipped gear."""
+    """Return base max HP plus gear and species bonuses."""
     equipment = actor.get("equipment", {}) if isinstance(actor, dict) else actor.equipment
     base = actor.get("max_hp", 1) if isinstance(actor, dict) else actor.max_hp
     bonuses = sum(item_attribute_total(item, "maximum_hp_bonus")
                   for item in _unique_equipped_items(equipment))
+    from worldforge.combat.species import species_traits
+    if "dwarven_toughness" in species_traits(actor):
+        level = actor.get("level", 1) if isinstance(actor, dict) else actor.level
+        bonuses += max(1, int(level or 1))
     return max(1, int(base or 1) + bonuses)
 
 
@@ -366,23 +378,6 @@ def _clamp_current_hp(actor):
             actor["current_hp"] = min(int(actor["current_hp"]), effective_max_hp(actor))
     elif actor.current_hp is not None:
         actor.current_hp = min(int(actor.current_hp), effective_max_hp(actor))
-
-def racial_bonus_data(actor):
-    """Return selected ancestry bonus data without interpreting or applying it."""
-    if not actor or not actor.race:
-        return {}
-    race_data = RACES[actor.race]
-    result = {'race': dict(race_data.get('bonuses', {}))}
-    if actor.subrace:
-        result['subrace'] = dict(
-            race_data.get('subraces', {}).get(actor.subrace, {}).get('bonuses', {})
-        )
-    if actor.parent_races:
-        result['parents'] = [
-            {'race': name, 'bonuses': dict(RACES[name].get('bonuses', {}))}
-            for name in actor.parent_races
-        ]
-    return result
 
 def starting_hp(actor):
     hit_die = CLASSES[actor.char_class]['hit_die']
@@ -441,14 +436,11 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
     actor.char_class = class_name
     actor.gold = 500
     actor.level = 3
-    actor.xp_total = 900
-    actor.xp_earned_by_level = {"3": 900}
+    actor.xp_total = 1700
+    actor.xp_earned_by_level = {"3": 1700}
     actor.classes = [{'name': class_name, 'level': actor.level}]
     actor.abilities = prioritize_ability_scores(ability_points(), class_name)
-    actor.skills = random.sample(
-        CLASSES[class_name].get('skills', []),
-        min(CLASSES[class_name].get('skill_choices', 0),
-            len(CLASSES[class_name].get('skills', []))))
+    actor.skills = []
     subclass_ids = CLASSES[class_name].get('subclasses', [])
     if subclass_ids:
         actor.subclass = random.choice(subclass_ids)
@@ -495,6 +487,7 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
     if offhand_candidates:
         item = add_equipment_item(actor, template_id=random.choice(offhand_candidates))
         equip_item(actor, item['id'], 'off_hand')
+    _enforce_two_handed_equipment(actor.equipment)
 
     ranged_candidates = _eligible_item_templates('ranged', class_name)
     if ranged_candidates:
@@ -509,20 +502,9 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
         add_equipment_item(actor, template_id='healing_potion')
     add_equipment_item(actor, template_id='revival_scroll')
 
-    class_spell_ids = [spell_id for spell_id, spell in SPELLS.items()
-                       if class_name in spell.get('classes', [])
-                       and spell.get('prerequisite_class_level', 1) <= actor.level
-                       and (not spell.get('acquisition')
-                            or spell.get('acquisition') == 'starting_cantrip')]
-    actor.known_spells = class_spell_ids
-    actor.prepared_spells = [
-        spell_id for spell_id in class_spell_ids
-        if SPELLS[spell_id].get("acquisition") == "starting_cantrip"
-    ]
-    actor.known_abilities = [ability_id for ability_id, ability in ABILITIES.items()
-                             if class_name in ability.get('classes', [])
-                             and ability.get('acquisition') != 'trainer_purchase'
-                             and ability.get('prerequisite_class_level', 1) <= actor.level]
+    actor.known_spells = []
+    actor.prepared_spells = []
+    actor.known_abilities = []
     initialize_resources(vars(actor), refill=True)
     if avatars:
         actor.avatar = random.choice(list(avatars))
@@ -587,6 +569,18 @@ def item_definition(item):
     """Return catalog behavior when available, falling back to legacy data."""
     template_id = item.get('template_id')
     return EQUIPMENT_ITEMS.get(template_id, item)
+
+
+def _enforce_two_handed_equipment(equipment):
+    """Prevent generated loadouts from pairing a two-handed weapon with another item."""
+    main = equipment.get('main_hand')
+    off = equipment.get('off_hand')
+    if not main or not off or main.get('id') == off.get('id'):
+        return
+    if is_two_handed(item_definition(main)):
+        equipment['off_hand'] = main
+    elif is_two_handed(item_definition(off)):
+        equipment['main_hand'] = off
 
 
 def equip_item(actor, item_id, slot):

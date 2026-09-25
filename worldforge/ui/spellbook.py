@@ -1,9 +1,9 @@
 """Spell and ability book plus numbered action bars saved on each actor."""
 import pygame
 from worldforge.content.classes import ABILITIES, CLASSES, SPELLS
-from worldforge.actors.factory import item_definition
+from worldforge.combat.rules import selected_weapon
 from worldforge.core.progression import (prepared_leveled_spells, prepared_spell_limit,
-                         spell_source_class)
+                         is_cantrip, spell_source_class)
 
 BAR_COUNT = 4
 SLOTS_PER_BAR = 10
@@ -14,7 +14,13 @@ SLOT_GAP = 4
 SYSTEM_ACTIONS = {
     "weapon_attack": {
         "name": "Weapon Attack",
-        "description": "Attack with the currently selected primary weapon.",
+        "description": "Attack with your primary weapon, or make an Unarmed Strike if you have none.",
+        "action_cost": "action",
+        "targeting": {"mode": "one_target"},
+    },
+    "unarmed_strike": {
+        "name": "Unarmed Strike",
+        "description": "Make a melee attack dealing 1 + your Strength modifier bludgeoning damage.",
         "action_cost": "action",
         "targeting": {"mode": "one_target"},
     },
@@ -26,9 +32,27 @@ SYSTEM_ACTIONS = {
     },
     "throw_weapon": {
         "name": "Throw Main-hand Weapon",
-        "description": "Throw a main-hand weapon with the thrown property.",
+        "description": "Throw your equipped main-hand weapon. Weapons without the thrown property use a 20/60 ft range.",
         "action_cost": "action",
         "targeting": {"mode": "one_target"},
+    },
+    "hide": {
+        "name": "Hide",
+        "description": "Hide behind cover. Make a DC 15 Dexterity (Stealth) check; enemies can find you with Perception.",
+        "action_cost": "action",
+        "targeting": {"mode": "self"},
+    },
+    "flee": {
+        "name": "Flee",
+        "description": "Break combat and make nearby enemies lose aggro for 3 seconds.",
+        "action_cost": "action",
+        "targeting": {"mode": "self"},
+    },
+    "sneak": {
+        "name": "Sneak",
+        "description": "Toggle slower, quieter movement while exploring.",
+        "action_cost": "toggle",
+        "targeting": {"mode": "self"},
     },
 }
 
@@ -50,6 +74,12 @@ def normalize_action_hotbars(value):
                 action = f"spell:{action}"
             if isinstance(action, str):
                 kind, _, action_id = action.partition(":")
+                # Old saves had a separate forced Unarmed Strike slot. Fold
+                # it into the contextual primary attack so weapon/fist choice
+                # always follows the actor's current equipment.
+                if kind == "action" and action_id == "unarmed_strike":
+                    action_id = "weapon_attack"
+                    action = f"action:{action_id}"
                 if not ((kind == "spell" and action_id in SPELLS)
                         or (kind == "ability" and action_id in ABILITIES)
                         or (kind == "action" and action_id in SYSTEM_ACTIONS)):
@@ -68,6 +98,26 @@ def action_definition(action):
     table = (SPELLS if kind == "spell" else ABILITIES if kind == "ability"
              else SYSTEM_ACTIONS if kind == "action" else {})
     return kind, action_id, table.get(action_id)
+
+
+def _actor_action_definition(actor_data, action):
+    """Return the attack label and help text for the actor's current weapon."""
+    kind, action_id, definition = action_definition(action)
+    if kind != "action" or action_id != "weapon_attack":
+        return definition
+    contextual = dict(definition)
+    weapon, _, _ = selected_weapon(actor_data)
+    if weapon:
+        contextual["name"] = f"Attack with {weapon.get('name', 'Weapon')}"
+        contextual["description"] = (
+            f"Make a primary attack with {weapon.get('name', 'your equipped weapon')}. "
+            "If no weapon is equipped, this action automatically becomes an Unarmed Strike.")
+    else:
+        contextual["name"] = "Unarmed Attack"
+        contextual["description"] = (
+            "No weapon is equipped. This action automatically makes an Unarmed Strike "
+            "with your fists, dealing 1 + your Strength modifier bludgeoning damage.")
+    return contextual
 
 
 def _slot_label(index):
@@ -97,7 +147,8 @@ def _fit_line(font, text, max_width):
     return value + "…"
 
 
-def _draw_tooltip(screen, font, definition, position, kind="spell"):
+def _draw_tooltip(screen, font, definition, position, kind="spell",
+                  actor_data=None, spell_id=None):
     lines = [definition.get("name", kind.title())]
     description = definition.get("description", "No description available.")
     current = ""
@@ -113,6 +164,13 @@ def _draw_tooltip(screen, font, definition, position, kind="spell"):
     if kind == "spell":
         cost = max(0, int(definition.get("spell_point_cost", 1)))
         lines.append(f"Spell points: {cost}")
+        class_id = (spell_source_class(actor_data, spell_id)
+                    if actor_data is not None and spell_id else None)
+        ability = (definition.get("spellcasting_ability")
+                   or (CLASSES.get(class_id, {}).get("spellcasting_ability")
+                       if class_id else None))
+        if ability:
+            lines.append(f"Spellcasting stat: {ability.title()}")
     elif definition.get("action_cost"):
         lines.append(f"Action: {str(definition['action_cost']).replace('_', ' ')}")
     if definition.get("casting_time"):
@@ -205,19 +263,15 @@ class SpellbookUI:
                         for item_id in ids if item_id in SPELLS]
             return [(f"spell:{item_id}", SPELLS[item_id])
                     for item_id in ids if item_id in SPELLS]
+        if self.page == "actions":
+            action_ids = ["weapon_attack", "ranged_weapon_attack",
+                          "throw_weapon", "hide", "flee", "sneak"]
+            return [(f"action:{action_id}", _actor_action_definition(
+                actor_data, f"action:{action_id}"))
+                    for action_id in action_ids]
         actions = [(f"ability:{item_id}", ABILITIES[item_id])
                    for item_id in actor_data.get("known_abilities", [])
                    if item_id in ABILITIES]
-        # Generic weapon actions share the ability page and the same bars as
-        # class abilities, so every actor can assign their attacks consistently.
-        actions.insert(0, ("action:weapon_attack", SYSTEM_ACTIONS["weapon_attack"]))
-        equipment = actor_data.get("equipment", {})
-        if equipment.get("ranged"):
-            actions.insert(1, ("action:ranged_weapon_attack",
-                               SYSTEM_ACTIONS["ranged_weapon_attack"]))
-        main_hand = equipment.get("main_hand")
-        if main_hand and "thrown" in item_definition(main_hand).get("tags", []):
-            actions.insert(2, ("action:throw_weapon", SYSTEM_ACTIONS["throw_weapon"]))
         return actions
 
     def draw_bar(self, screen, font, actor_data):
@@ -256,15 +310,18 @@ class SpellbookUI:
                 pygame.draw.rect(screen, border, rect, 2, border_radius=4)
                 screen.blit(font.render(_slot_label(slot_index), True,
                                         (255, 220, 130)), (rect.x + 4, rect.y + 3))
-                kind, action_id, definition = action_definition(action)
+                kind, action_id, _ = action_definition(action)
+                definition = _actor_action_definition(actor_data, action)
                 action_label = _fit_line(font, definition.get("name", action_id),
                                          rect.width - 8)
                 screen.blit(font.render(action_label, True, (242, 244, 250)),
                             (rect.x + 4, rect.y + 19))
                 if selected and self.tooltips_enabled:
-                    hovered = (definition, kind)
+                    hovered = (definition, kind,
+                               action_id if kind == "spell" else None)
         if hovered:
-            _draw_tooltip(screen, font, hovered[0], mouse, hovered[1])
+            _draw_tooltip(screen, font, hovered[0], mouse, hovered[1],
+                          actor_data, hovered[2])
 
     def hud_action_at(self, position):
         """Return an assigned HUD action clicked by the player, if any."""
@@ -274,7 +331,8 @@ class SpellbookUI:
     def draw_book(self, screen, font, actor_data):
         if not self.visible:
             return
-        width, height = 660, min(620, screen.get_height() - 60)
+        width = min(660, max(1, screen.get_width() - 20))
+        height = min(620, max(1, screen.get_height() - 60))
         left, top = (screen.get_width() - width) // 2, (screen.get_height() - height) // 2
         panel = pygame.Surface((width, height), pygame.SRCALPHA)
         panel.fill((14, 18, 25, 245))
@@ -283,25 +341,36 @@ class SpellbookUI:
         screen.blit(font.render("SPELLBOOK  |  - or Esc to close", True,
                                 (255, 225, 150)), (left + 18, top + 14))
         guide_font = pygame.font.Font(None, 16)
-        screen.blit(guide_font.render(
-            "Click a known spell to prepare or unprepare it.",
-            True, (210, 220, 235)), (left + 18, top + 40))
-        screen.blit(guide_font.render(
-            "Leveled spells use your class preparation limit; cantrips are free.",
-            True, (210, 220, 235)), (left + 18, top + 57))
+        guide_lines = (
+            ("Click a known spell to prepare or unprepare it.",
+             "Leveled spells use your class preparation limit; cantrips are free.")
+            if self.page in {"prepared", "spellbook"} else
+            ("Select an action or class ability, then click a hotbar slot to assign it.",
+             "Press the assigned number or click the hotbar slot to use it.")
+        )
+        for index, line in enumerate(guide_lines):
+            screen.blit(guide_font.render(line, True, (210, 220, 235)),
+                        (left + 18, top + 40 + index * 17))
         self.page_rects = []
         tabs_y = top + 78
         pages = (("prepared", "Prepared Spells"),
                  ("spellbook", "Spellbook"),
-                 ("abilities", "Class Abilities"))
+                 ("abilities", "Class Abilities"),
+                 ("actions", "Actions"))
+        tab_gap = 5
+        tab_left = left + 12
+        tab_width = (width - 24 - tab_gap * (len(pages) - 1)) // len(pages)
+        tab_font = pygame.font.Font(None, 18)
         for page_index, (page, label) in enumerate(pages):
-            rect = pygame.Rect(left + 18 + page_index * 150, tabs_y, 140, 28)
+            rect = pygame.Rect(tab_left + page_index * (tab_width + tab_gap),
+                               tabs_y, tab_width, 28)
             self.page_rects.append((rect, page))
             pygame.draw.rect(screen, (65, 76, 96) if self.page == page else (34, 40, 52),
                              rect, border_radius=3)
             pygame.draw.rect(screen, (160, 175, 200), rect, 1, border_radius=3)
-            screen.blit(font.render(label, True, (240, 240, 245)),
-                        (rect.x + 12, rect.y + 6))
+            label = _fit_line(tab_font, label, rect.width - 10)
+            label_image = tab_font.render(label, True, (240, 240, 245))
+            screen.blit(label_image, label_image.get_rect(center=rect.center))
         known = self._known_actions(actor_data)
         if self.page == "prepared":
             class_ids = {entry.get("name") for entry in actor_data.get("classes", []) or []
@@ -316,17 +385,20 @@ class SpellbookUI:
                       f"{prepared_spell_limit(actor_data, class_id)}"
                       for class_id in casting_classes]
             count_text = ("Prepared: " + ", ".join(counts)
-                          if counts else "No spellcasting class")
-            count_text += "  (cantrips don't count)"
+                          if counts else "No spellcasting class is available.")
+            if counts:
+                count_text += "  (cantrips don't count)"
+            count_text = _fit_line(guide_font, count_text, width - 36)
             screen.blit(guide_font.render(count_text, True, (255, 225, 150)),
-                        (left + 18, top + 101))
-        row_top = top + (132 if self.page == "prepared" else 114)
-        visible_count = max(1, (height - (228 if self.page == "prepared" else 210)) // 30)
+                        (left + 18, top + 110))
+        row_top = top + (137 if self.page == "prepared" else 114)
+        visible_count = max(1, (top + height - 24 - row_top) // 30)
         self.scroll = min(self.scroll, max(0, len(known) - visible_count))
         self.spell_rects = []
         mouse = pygame.mouse.get_pos()
         hovered_definition = None
         hovered_kind = "spell"
+        hovered_spell_id = None
         for row, (action, definition) in enumerate(known[self.scroll:self.scroll + visible_count]):
             rect = pygame.Rect(left + 18, row_top + row * 30, width - 36, 28)
             self.spell_rects.append((rect, action))
@@ -335,21 +407,33 @@ class SpellbookUI:
                      (45, 52, 67) if hovered else (30, 36, 48))
             pygame.draw.rect(screen, color, rect, border_radius=3)
             pygame.draw.rect(screen, (100, 115, 140), rect, 1, border_radius=3)
-            prefix = "PREPARED  " if action.startswith("prepare:") and action[8:] in actor_data.get("prepared_spells", []) else (
+            spell_id = (action.partition(":")[2]
+                        if action.startswith(("spell:", "prepare:")) else None)
+            cantrip = bool(spell_id and is_cantrip(definition))
+            prefix = ("CANTRIP · " if cantrip else "") + (
+                "PREPARED  " if action.startswith("prepare:") and action[8:] in actor_data.get("prepared_spells", []) else (
                 "PREPARE  " if action.startswith("prepare:") else "")
+            )
             label = _fit_line(font, prefix + definition.get("name", action),
                               rect.width - 18)
-            screen.blit(font.render(label, True,
-                                    (242, 244, 250)), (rect.x + 9, rect.y + 6))
+            label_color = (155, 222, 255) if cantrip else (242, 244, 250)
+            screen.blit(font.render(label, True, label_color),
+                        (rect.x + 9, rect.y + 6))
             if hovered and self.tooltips_enabled:
                 hovered_definition = definition
-                hovered_kind = "spell" if self.page != "abilities" else "ability"
+                hovered_kind = ("spell" if self.page in {"prepared", "spellbook"}
+                                else "action" if self.page == "actions"
+                                else "ability")
+                if hovered_kind == "spell":
+                    hovered_spell_id = spell_id
         if not known:
             message = ("No prepared spells. Prepare known spells in the Spellbook page."
                        if self.page == "prepared" else
                        "No spells known yet. Learn spells from a trainer."
                        if self.page == "spellbook" else
-                       "No class abilities known yet. Learn them from a trainer.")
+                       "No class abilities known yet. Learn them from a trainer."
+                       if self.page == "abilities" else
+                       "No actions are available.")
             for message_index, line in enumerate(
                     _wrap_lines(font, message, width - 36)[:3]):
                 screen.blit(font.render(line, True, (210, 220, 235)),
@@ -373,13 +457,15 @@ class SpellbookUI:
             screen.blit(font.render(_slot_label(slot_index), True, (255, 220, 130)),
                         (rect.x + 2, rect.y + 2))
             if action:
-                _, action_id, definition = action_definition(action)
+                _, action_id, _ = action_definition(action)
+                definition = _actor_action_definition(actor_data, action)
                 screen.blit(font.render(definition.get("name", action_id)[:4],
                                         True, (240, 243, 248)), (rect.x + 2, rect.y + 20))
         screen.blit(font.render("Right-click an occupied slot to clear it.", True,
                                 (180, 192, 210)), (left + 18, top + height - 22))
         if hovered_definition:
-            _draw_tooltip(screen, font, hovered_definition, mouse, hovered_kind)
+            _draw_tooltip(screen, font, hovered_definition, mouse, hovered_kind,
+                          actor_data, hovered_spell_id)
 
     def draw(self, screen, font, actor_data):
         self.draw_bar(screen, font, actor_data)

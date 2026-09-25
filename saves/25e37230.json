@@ -1,0 +1,330 @@
+{
+  "name": "Sneaky",
+  "id": "25e37230",
+  "max_hp": 45,
+  "current_hp": 5,
+  "classes": [
+    {
+      "name": "rogue",
+      "level": 5
+    }
+  ],
+  "level": 5,
+  "class_levels_initialized": true,
+  "xp_total": 6504,
+  "xp_earned_by_level": {
+    "3": 3700,
+    "4": 3000
+  },
+  "xp_spent_by_level": {
+    "3": 100,
+    "5": 50
+  },
+  "xp_rest_spent_by_level": {
+    "4": 46
+  },
+  "class_spell_purchases": {},
+  "class_ability_purchases": {
+    "rogue": [
+      "distracting_feint"
+    ]
+  },
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "prepared_spells": [],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      "ability:distracting_feint",
+      "action:hide",
+      "action:throw_weapon",
+      "action:weapon_attack",
+      "action:flee",
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": "a79d5e1c0595",
+    "e": "dd21a2bb49c6"
+  },
+  "known_abilities": [
+    "distracting_feint"
+  ],
+  "class_features": [
+    "rogue_cunning_action",
+    "rogue_cunning_strike",
+    "rogue_expertise_1",
+    "rogue_sneak_attack",
+    "rogue_steady_aim",
+    "rogue_thief_fast_hands",
+    "rogue_thief_second_story_work",
+    "rogue_thieves_cant",
+    "rogue_uncanny_dodge",
+    "rogue_weapon_mastery"
+  ],
+  "class_feature_purchases": {
+    "rogue": [
+      "rogue_expertise_1",
+      "rogue_sneak_attack",
+      "rogue_thieves_cant",
+      "rogue_weapon_mastery",
+      "rogue_cunning_action",
+      "rogue_thief_fast_hands",
+      "rogue_thief_second_story_work",
+      "rogue_steady_aim",
+      "rogue_cunning_strike",
+      "rogue_uncanny_dodge"
+    ]
+  },
+  "class_skill_purchases": {
+    "rogue": [
+      "perception",
+      "athletics",
+      "acrobatics",
+      "investigation"
+    ]
+  },
+  "spell_points": 0,
+  "class_resources": {},
+  "attribute_points_spent": {
+    "dexterity": 1,
+    "constitution": 1
+  },
+  "gold": 570,
+  "outdoor_rest_streak": 1,
+  "avatar": "asset_pack/Soldier.png",
+  "abilities": {
+    "dexterity": 17,
+    "constitution": 16,
+    "intellect": 13,
+    "wisdom": 12,
+    "charisma": 9,
+    "strength": 8
+  },
+  "unspent": [
+    15,
+    12,
+    14,
+    15,
+    14,
+    13
+  ],
+  "saves": [
+    "dexterity",
+    "intellect"
+  ],
+  "armor_prof": [
+    "light"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial (finesse or light)"
+  ],
+  "race": "human",
+  "subrace": "",
+  "subclass": "rogue_thief",
+  "parent_races": [],
+  "char_class": "rogue",
+  "skills": [
+    "acrobatics",
+    "athletics",
+    "investigation",
+    "perception"
+  ],
+  "controller": "player",
+  "x": 570,
+  "y": 1896,
+  "inventory": [
+    {
+      "id": "dd21a2bb49c6",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 1,
+      "template_id": "revival_scroll"
+    },
+    {
+      "id": "d67e6f4f5929",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    },
+    {
+      "id": "74f7875a13b6",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    },
+    {
+      "id": "6432dfb15ad9",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    },
+    {
+      "id": "5b2c810e5f67",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    },
+    {
+      "id": "71f49a36cf77",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    },
+    {
+      "id": "cc29df3598e2",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    },
+    {
+      "id": "f2cda50dc92f",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    },
+    {
+      "id": "a79d5e1c0595",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 1
+    }
+  ],
+  "equipment": {
+    "head": {
+      "id": "cb74a7b31e94",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "d457fb18fe97",
+      "name": "Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather"
+    },
+    "hands": {
+      "id": "0ab309b2598b",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "7c57b7552fa2",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "39dae533f639",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "e38be81144fc",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "2e7cea29405b",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "5c3a5d2d4396",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "70d1899427e2",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": null,
+    "off_hand": null,
+    "ranged": null
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

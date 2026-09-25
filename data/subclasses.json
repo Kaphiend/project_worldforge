@@ -21,7 +21,9 @@
         "name": "Living Furnace",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "barbarian_stonewake": {
     "id": "barbarian_stonewake",
@@ -45,7 +47,9 @@
         "name": "Mountain Heart",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "barbarian_wild_prowler": {
     "id": "barbarian_wild_prowler",
@@ -69,7 +73,9 @@
         "name": "Apex Pursuit",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "bard_storykeeper": {
     "id": "bard_storykeeper",
@@ -93,7 +99,9 @@
         "name": "Living Legend",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "bard_chorusblade": {
     "id": "bard_chorusblade",
@@ -117,7 +125,9 @@
         "name": "Final Refrain",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "bard_echo_weaver": {
     "id": "bard_echo_weaver",
@@ -141,7 +151,9 @@
         "name": "Perfect Resonance",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "cleric_hearthwarden": {
     "id": "cleric_hearthwarden",
@@ -165,7 +177,9 @@
         "name": "Lasting Shelter",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "cleric_dawnkeeper": {
     "id": "cleric_dawnkeeper",
@@ -189,7 +203,9 @@
         "name": "Unsetting Dawn",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "cleric_graveguide": {
     "id": "cleric_graveguide",
@@ -213,7 +229,9 @@
         "name": "Threshold Watch",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "druid_greenward": {
     "id": "druid_greenward",
@@ -237,7 +255,9 @@
         "name": "Heart of the Grove",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "druid_beastbound": {
     "id": "druid_beastbound",
@@ -261,7 +281,9 @@
         "name": "Bond Without Words",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "druid_weathercaller": {
     "id": "druid_weathercaller",
@@ -285,7 +307,9 @@
         "name": "Open Sky",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "fighter_vanguard": {
     "id": "fighter_vanguard",
@@ -309,7 +333,9 @@
         "name": "Unbroken Front",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "fighter_weapon_scholar": {
     "id": "fighter_weapon_scholar",
@@ -333,7 +359,9 @@
         "name": "Master of Forms",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "fighter_ironwall": {
     "id": "fighter_ironwall",
@@ -357,7 +385,9 @@
         "name": "Unmoving Guard",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "monk_stillwater": {
     "id": "monk_stillwater",
@@ -381,7 +411,9 @@
         "name": "Stillwater Form",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "monk_windstep": {
     "id": "monk_windstep",
@@ -405,7 +437,9 @@
         "name": "Farstride",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "monk_iron_pulse": {
     "id": "monk_iron_pulse",
@@ -429,7 +463,9 @@
         "name": "Unbroken Rhythm",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "paladin_beacon": {
     "id": "paladin_beacon",
@@ -453,7 +489,9 @@
         "name": "Guiding Presence",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "paladin_oathward": {
     "id": "paladin_oathward",
@@ -477,7 +515,9 @@
         "name": "Lasting Ward",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "paladin_truthseeker": {
     "id": "paladin_truthseeker",
@@ -501,7 +541,9 @@
         "name": "Revealed Path",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "ranger_trailwarden": {
     "id": "ranger_trailwarden",
@@ -525,7 +567,9 @@
         "name": "Warden’s Route",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "ranger_beast_companion": {
     "id": "ranger_beast_companion",
@@ -549,7 +593,9 @@
         "name": "Trusted Partner",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "ranger_farshot": {
     "id": "ranger_farshot",
@@ -573,7 +619,9 @@
         "name": "Far Horizon",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "rogue_shadowrunner": {
     "id": "rogue_shadowrunner",
@@ -597,7 +645,9 @@
         "name": "Unseen Crossing",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "rogue_trickhand": {
     "id": "rogue_trickhand",
@@ -621,7 +671,9 @@
         "name": "Perfect Misdirection",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "rogue_duelist": {
     "id": "rogue_duelist",
@@ -645,7 +697,9 @@
         "name": "Unanswerable Feint",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "sorcerer_bloodspark": {
     "id": "sorcerer_bloodspark",
@@ -669,7 +723,9 @@
         "name": "Bright Conduit",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "sorcerer_tempest_heart": {
     "id": "sorcerer_tempest_heart",
@@ -693,7 +749,9 @@
         "name": "Eye of the Storm",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "sorcerer_altered_form": {
     "id": "sorcerer_altered_form",
@@ -717,7 +775,9 @@
         "name": "Living Change",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "warlock_hollow_star": {
     "id": "warlock_hollow_star",
@@ -741,7 +801,9 @@
         "name": "Quiet Orbit",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "warlock_thorn_pact": {
     "id": "warlock_thorn_pact",
@@ -765,7 +827,9 @@
         "name": "Evergreen Claim",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "warlock_whispering_deep": {
     "id": "warlock_whispering_deep",
@@ -789,7 +853,9 @@
         "name": "Voice Below",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "wizard_runecrafter": {
     "id": "wizard_runecrafter",
@@ -813,7 +879,9 @@
         "name": "Master Pattern",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "wizard_ward_scholar": {
     "id": "wizard_ward_scholar",
@@ -837,7 +905,9 @@
         "name": "Perfect Boundary",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
-    }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
   },
   "wizard_battle_arcanist": {
     "id": "wizard_battle_arcanist",
@@ -861,6 +931,504 @@
         "name": "Arcane Tempo",
         "summary": "Reach the mature expression of this discipline and extend its signature practice."
       }
+    },
+    "selectable": false,
+    "rules_source": "Worldforge legacy"
+  },
+  "barbarian_path_of_the_berserker": {
+    "id": "barbarian_path_of_the_berserker",
+    "class": "barbarian",
+    "name": "Path of the Berserker",
+    "description": "Channel rage into focused fury.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": {
+        "name": "Frenzy",
+        "summary": "Spend a Rage resource to add damage to a qualifying hit.",
+        "rules_source": "SRD 5.2.1",
+        "id": "frenzy"
+      },
+      "6": {
+        "name": "Mindless Rage",
+        "summary": "Rage protects you from charm and fear.",
+        "rules_source": "SRD 5.2.1",
+        "id": "mindless_rage"
+      },
+      "10": {
+        "name": "Retaliation",
+        "summary": "Strike back when a nearby creature harms you.",
+        "rules_source": "SRD 5.2.1",
+        "id": "retaliation"
+      },
+      "14": {
+        "name": "Intimidating Presence",
+        "summary": "Frighten nearby creatures with your menacing presence.",
+        "rules_source": "SRD 5.2.1",
+        "id": "intimidating_presence"
+      }
+    }
+  },
+  "bard_college_of_lore": {
+    "id": "bard_college_of_lore",
+    "class": "bard",
+    "name": "College of Lore",
+    "description": "A scholar of stories who gathers knowledge and magic.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": [
+        {
+          "id": "bonus_proficiencies",
+          "name": "Bonus Proficiencies",
+          "summary": "Choose three additional skills to purchase from a trainer.",
+          "rules_source": "SRD 5.2.1"
+        },
+        {
+          "id": "cutting_words",
+          "name": "Cutting Words",
+          "summary": "Use Bardic Inspiration to disrupt a visible creature’s attack, check, or damage roll.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "6": [
+        {
+          "id": "magical_discoveries",
+          "name": "Magical Discoveries",
+          "summary": "Choose two spells from the Cleric, Druid, or Wizard spell lists to purchase and learn.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "14": [
+        {
+          "id": "peerless_skill",
+          "name": "Peerless Skill",
+          "summary": "Add Bardic Inspiration to one of your own ability checks.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ]
+    }
+  },
+  "cleric_life_domain": {
+    "id": "cleric_life_domain",
+    "class": "cleric",
+    "name": "Life Domain",
+    "description": "A divine path devoted to healing and sustaining life.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": [
+        {
+          "id": "disciple_of_life",
+          "name": "Disciple of Life",
+          "summary": "Your healing spells restore additional vitality.",
+          "rules_source": "SRD 5.2.1"
+        },
+        {
+          "id": "life_domain_spells",
+          "name": "Life Domain Spells",
+          "summary": "Gain access to the domain spell list; each spell remains a separate trainer purchase.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "6": [
+        {
+          "id": "preserve_life",
+          "name": "Preserve Life",
+          "summary": "Channel divine energy to restore hit points across nearby allies.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "17": [
+        {
+          "id": "supreme_healing",
+          "name": "Supreme Healing",
+          "summary": "Healing dice restore their maximum result.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ]
+    }
+  },
+  "druid_circle_of_the_land": {
+    "id": "druid_circle_of_the_land",
+    "class": "druid",
+    "name": "Circle of the Land",
+    "description": "Draw power from an enduring bond with the natural world.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": [
+        {
+          "id": "circle_spells",
+          "name": "Circle Spells",
+          "summary": "Choose a land and gain access to its circle spells; each spell remains a separate trainer purchase.",
+          "rules_source": "SRD 5.2.1"
+        },
+        {
+          "id": "land_s_aid",
+          "name": "Land’s Aid",
+          "summary": "Channel Wild Shape to harm enemies and heal one nearby creature.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "6": [
+        {
+          "id": "natural_recovery",
+          "name": "Natural Recovery",
+          "summary": "Recover magical resources during a rest and cast one Circle spell without spending a slot.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "10": [
+        {
+          "id": "nature_s_ward",
+          "name": "Nature’s Ward",
+          "summary": "Gain protection from certain natural and magical effects.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "14": [
+        {
+          "id": "nature_s_sanctuary",
+          "name": "Nature’s Sanctuary",
+          "summary": "Natural creatures hesitate to harm you.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ]
+    }
+  },
+  "fighter_champion": {
+    "id": "fighter_champion",
+    "class": "fighter",
+    "name": "Champion",
+    "description": "A martial archetype built on athleticism and decisive attacks.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": {
+        "name": "Improved Critical",
+        "summary": "Score critical hits on an expanded attack-roll range.",
+        "rules_source": "SRD 5.2.1",
+        "id": "improved_critical"
+      },
+      "7": {
+        "name": "Additional Fighting Style",
+        "summary": "Choose another fighting style.",
+        "rules_source": "SRD 5.2.1",
+        "id": "additional_fighting_style"
+      },
+      "10": {
+        "name": "Heroic Warrior",
+        "summary": "Gain Heroic Inspiration at the start of each combat turn when you do not already have it.",
+        "rules_source": "SRD 5.2.1",
+        "id": "heroic_warrior"
+      },
+      "15": {
+        "name": "Superior Critical",
+        "summary": "Expand the critical-hit range further.",
+        "rules_source": "SRD 5.2.1",
+        "id": "superior_critical"
+      },
+      "18": {
+        "name": "Survivor",
+        "summary": "Recover vitality when your health is low.",
+        "rules_source": "SRD 5.2.1",
+        "id": "survivor"
+      }
+    }
+  },
+  "monk_warrior_of_the_open_hand": {
+    "id": "monk_warrior_of_the_open_hand",
+    "class": "monk",
+    "name": "Warrior of the Open Hand",
+    "description": "Master unarmed techniques that control and overwhelm opponents.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": {
+        "name": "Open Hand Technique",
+        "summary": "Add a push, knockdown, or reaction-denial rider to Flurry of Blows.",
+        "rules_source": "SRD 5.2.1",
+        "id": "open_hand_technique"
+      },
+      "6": {
+        "name": "Wholeness of Body",
+        "summary": "Use a bonus action to restore hit points.",
+        "rules_source": "SRD 5.2.1",
+        "id": "wholeness_of_body"
+      },
+      "11": {
+        "name": "Fleet Step",
+        "summary": "Move between your attacks with supernatural agility.",
+        "rules_source": "SRD 5.2.1",
+        "id": "fleet_step"
+      },
+      "17": {
+        "name": "Quivering Palm",
+        "summary": "Set a lethal vibration in a creature with an unarmed strike.",
+        "rules_source": "SRD 5.2.1",
+        "id": "quivering_palm"
+      }
+    }
+  },
+  "paladin_oath_of_devotion": {
+    "id": "paladin_oath_of_devotion",
+    "class": "paladin",
+    "name": "Oath of Devotion",
+    "description": "Uphold justice, honor, and protection through sacred commitment.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": [
+        {
+          "id": "oath_spells",
+          "name": "Oath Spells",
+          "summary": "Gain access to Devotion spells; each spell remains a separate trainer purchase.",
+          "rules_source": "SRD 5.2.1"
+        },
+        {
+          "id": "sacred_weapon",
+          "name": "Sacred Weapon",
+          "summary": "Empower a weapon with sacred energy.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "7": [
+        {
+          "id": "aura_of_devotion",
+          "name": "Aura of Devotion",
+          "summary": "Protect nearby allies from charm.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "15": [
+        {
+          "id": "smite_of_protection",
+          "name": "Smite of Protection",
+          "summary": "A Divine Smite can grant nearby allies protection.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "20": [
+        {
+          "id": "holy_nimbus",
+          "name": "Holy Nimbus",
+          "summary": "Radiate protective holy light.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ]
+    }
+  },
+  "ranger_hunter": {
+    "id": "ranger_hunter",
+    "class": "ranger",
+    "name": "Hunter",
+    "description": "Track and defeat dangerous prey with specialized tactics.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": [
+        {
+          "id": "hunter_s_lore",
+          "name": "Hunter’s Lore",
+          "summary": "Read a creature marked by Hunter’s Mark for certain strengths and weaknesses.",
+          "rules_source": "SRD 5.2.1"
+        },
+        {
+          "id": "hunter_s_prey",
+          "name": "Hunter’s Prey",
+          "summary": "Choose a specialized way to damage your marked prey.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "7": [
+        {
+          "id": "defensive_tactics",
+          "name": "Defensive Tactics",
+          "summary": "Choose a defense suited to the threats you face.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "11": [
+        {
+          "id": "superior_hunter_s_prey",
+          "name": "Superior Hunter’s Prey",
+          "summary": "Apply an additional hunter tactic to marked prey.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "15": [
+        {
+          "id": "superior_hunter_s_defense",
+          "name": "Superior Hunter’s Defense",
+          "summary": "Choose a defensive countermeasure against your quarry.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ]
+    }
+  },
+  "rogue_thief": {
+    "id": "rogue_thief",
+    "class": "rogue",
+    "name": "Thief",
+    "description": "A resourceful burglar and explorer who exploits every tool and opening.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": [
+        {
+          "id": "fast_hands",
+          "name": "Fast Hands",
+          "summary": "Use Sleight of Hand, tools, or an object as a bonus action.",
+          "rules_source": "SRD 5.2.1"
+        },
+        {
+          "id": "second_story_work",
+          "name": "Second-Story Work",
+          "summary": "Gain climbing agility and use Dexterity when determining jump distance.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "9": [
+        {
+          "id": "supreme_sneak",
+          "name": "Supreme Sneak",
+          "summary": "Gain a Cunning Strike option that can preserve hiding after an attack when you end behind cover.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "13": [
+        {
+          "id": "use_magic_device",
+          "name": "Use Magic Device",
+          "summary": "Use more magic items with added reliability and resilience.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "17": [
+        {
+          "id": "thief_s_reflexes",
+          "name": "Thief’s Reflexes",
+          "summary": "Take an additional turn early in the first combat round.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ]
+    }
+  },
+  "sorcerer_draconic_sorcery": {
+    "id": "sorcerer_draconic_sorcery",
+    "class": "sorcerer",
+    "name": "Draconic Sorcery",
+    "description": "Channel innate magic inherited from a dragon’s power.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": {
+        "name": "Draconic Resilience",
+        "summary": "Gain extra vitality and a natural defense.",
+        "rules_source": "SRD 5.2.1",
+        "id": "draconic_resilience"
+      },
+      "6": {
+        "name": "Elemental Affinity",
+        "summary": "Bolster spells that deal your ancestry’s damage type.",
+        "rules_source": "SRD 5.2.1",
+        "id": "elemental_affinity"
+      },
+      "14": {
+        "name": "Dragon Wings",
+        "summary": "Manifest draconic wings and gain flight.",
+        "rules_source": "SRD 5.2.1",
+        "id": "dragon_wings"
+      },
+      "18": {
+        "name": "Dragon Companion",
+        "summary": "Summon a dragon spirit ally.",
+        "rules_source": "SRD 5.2.1",
+        "id": "dragon_companion"
+      }
+    }
+  },
+  "warlock_fiend_patron": {
+    "id": "warlock_fiend_patron",
+    "class": "warlock",
+    "name": "Fiend Patron",
+    "description": "Make a pact with a fiend for destructive magic and resilience.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": {
+        "name": "Dark One’s Blessing",
+        "summary": "Gain temporary vitality when you defeat a foe.",
+        "rules_source": "SRD 5.2.1",
+        "id": "dark_one_s_blessing"
+      },
+      "6": {
+        "name": "Dark One’s Own Luck",
+        "summary": "Call on your patron to improve a check.",
+        "rules_source": "SRD 5.2.1",
+        "id": "dark_one_s_own_luck"
+      },
+      "10": {
+        "name": "Fiendish Resilience",
+        "summary": "Choose a damage resistance after a rest.",
+        "rules_source": "SRD 5.2.1",
+        "id": "fiendish_resilience"
+      },
+      "14": {
+        "name": "Hurl Through Hell",
+        "summary": "Send a creature briefly through a fiendish realm.",
+        "rules_source": "SRD 5.2.1",
+        "id": "hurl_through_hell"
+      }
+    }
+  },
+  "wizard_evoker": {
+    "id": "wizard_evoker",
+    "class": "wizard",
+    "name": "Evoker",
+    "description": "Specialize in precise, forceful elemental magic.",
+    "rules_source": "SRD 5.2.1",
+    "selectable": true,
+    "features": {
+      "3": [
+        {
+          "id": "evocation_savant",
+          "name": "Evocation Savant",
+          "summary": "Copy evocation spells into your spellbook more efficiently.",
+          "rules_source": "SRD 5.2.1"
+        },
+        {
+          "id": "sculpt_spells",
+          "name": "Sculpt Spells",
+          "summary": "Protect selected creatures from your evocation effects.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "6": [
+        {
+          "id": "potent_cantrip",
+          "name": "Potent Cantrip",
+          "summary": "A successful save still leaves a cantrip’s minor effect.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "10": [
+        {
+          "id": "empowered_evocation",
+          "name": "Empowered Evocation",
+          "summary": "Add your spellcasting ability modifier to an evocation spell’s damage.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ],
+      "14": [
+        {
+          "id": "overchannel",
+          "name": "Overchannel",
+          "summary": "Maximize the damage of a low-level evocation spell.",
+          "rules_source": "SRD 5.2.1"
+        }
+      ]
     }
   }
 }

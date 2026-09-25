@@ -1,21 +1,115 @@
 {
   "class_pool": [
-    "barbarian", "bard", "cleric", "druid", "fighter", "monk",
-    "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard"
+    "barbarian",
+    "bard",
+    "cleric",
+    "druid",
+    "fighter",
+    "monk",
+    "paladin",
+    "ranger",
+    "rogue",
+    "sorcerer",
+    "warlock",
+    "wizard"
   ],
   "ability_priorities": {
-    "barbarian": ["strength", "constitution", "dexterity", "wisdom", "charisma", "intellect"],
-    "bard": ["charisma", "dexterity", "constitution", "wisdom", "intellect", "strength"],
-    "cleric": ["wisdom", "constitution", "strength", "charisma", "dexterity", "intellect"],
-    "druid": ["wisdom", "constitution", "dexterity", "intellect", "charisma", "strength"],
-    "fighter": ["strength", "constitution", "dexterity", "wisdom", "charisma", "intellect"],
-    "monk": ["dexterity", "wisdom", "constitution", "strength", "charisma", "intellect"],
-    "paladin": ["strength", "charisma", "constitution", "wisdom", "dexterity", "intellect"],
-    "ranger": ["dexterity", "wisdom", "constitution", "strength", "intellect", "charisma"],
-    "rogue": ["dexterity", "constitution", "intellect", "wisdom", "charisma", "strength"],
-    "sorcerer": ["charisma", "constitution", "dexterity", "wisdom", "intellect", "strength"],
-    "warlock": ["charisma", "constitution", "dexterity", "wisdom", "intellect", "strength"],
-    "wizard": ["intellect", "constitution", "dexterity", "wisdom", "charisma", "strength"]
+    "barbarian": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "charisma",
+      "intellect"
+    ],
+    "bard": [
+      "charisma",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intellect",
+      "strength"
+    ],
+    "cleric": [
+      "wisdom",
+      "constitution",
+      "strength",
+      "charisma",
+      "dexterity",
+      "intellect"
+    ],
+    "druid": [
+      "wisdom",
+      "constitution",
+      "dexterity",
+      "intellect",
+      "charisma",
+      "strength"
+    ],
+    "fighter": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "charisma",
+      "intellect"
+    ],
+    "monk": [
+      "dexterity",
+      "wisdom",
+      "constitution",
+      "strength",
+      "charisma",
+      "intellect"
+    ],
+    "paladin": [
+      "strength",
+      "charisma",
+      "constitution",
+      "wisdom",
+      "dexterity",
+      "intellect"
+    ],
+    "ranger": [
+      "dexterity",
+      "wisdom",
+      "constitution",
+      "strength",
+      "intellect",
+      "charisma"
+    ],
+    "rogue": [
+      "dexterity",
+      "constitution",
+      "intellect",
+      "wisdom",
+      "charisma",
+      "strength"
+    ],
+    "sorcerer": [
+      "charisma",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intellect",
+      "strength"
+    ],
+    "warlock": [
+      "charisma",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intellect",
+      "strength"
+    ],
+    "wizard": [
+      "intellect",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "charisma",
+      "strength"
+    ]
   },
   "elite": {
     "primary_ability_bonus": 2,
@@ -27,7 +121,13 @@
     "perception_dc_bonus": 3
   },
   "gear": {
-    "rarity_tiers": ["common", "uncommon", "rare", "epic", "legendary"],
+    "rarity_tiers": [
+      "common",
+      "uncommon",
+      "rare",
+      "epic",
+      "legendary"
+    ],
     "rarity_weights": {
       "common": 70,
       "uncommon": 22,
@@ -42,5 +142,9 @@
       "epic": 3,
       "legendary": 4
     }
+  },
+  "stealth": {
+    "hide_dc": 15,
+    "exploration_speed_multiplier": 0.5
   }
 }

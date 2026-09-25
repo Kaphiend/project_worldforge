@@ -5,9 +5,49 @@
     "arena": "roadside_clearing",
     "player_spawns": [[160, 250], [210, 340], [280, 250], [330, 340], [400, 250], [450, 340], [520, 250], [570, 340]],
     "enemies": [
-      {"npc": "clearing_raider", "x": 650, "y": 280}
+      {"npc": "clearing_raider", "id": "clearing_raider_a", "x": 650, "y": 280},
+      {"npc": "clearing_raider", "id": "clearing_raider_b", "x": 1190, "y": 760}
     ],
+    "mob_pool": ["clearing_raider"],
+    "respawn_point": [160, 250],
     "objective": "Defeat the roadside raider.",
     "victory": "The road is clear. Your first encounter is complete."
+  },
+  "forest_path": {
+    "name": "Forest Path",
+    "description": "A wooded trail branches away from the roadside clearing.",
+    "arena": "forest_path",
+    "player_spawns": [[80, 120], [150, 120], [220, 120], [290, 120],
+                      [80, 190], [150, 190], [220, 190], [290, 190]],
+    "enemies": [
+      {"npc": "clearing_raider", "id": "forest_raider_a", "x": 850, "y": 400},
+      {"npc": "clearing_raider", "id": "forest_raider_b", "x": 1470, "y": 920}
+    ],
+    "mob_pool": ["clearing_raider"],
+    "respawn_point": [80, 120],
+    "objective": "Explore the forest path.",
+    "victory": "The path is clear."
+  },
+  "market_square": {
+    "name": "Market Square",
+    "description": "A broad town market with a supply vendor.",
+    "arena": "market_square",
+    "player_spawns": [[100, 560], [165, 560], [230, 560], [295, 560],
+                      [100, 625], [165, 625], [230, 625], [295, 625]],
+    "enemies": [],
+    "mob_pool": [],
+    "respawn_point": [100, 560],
+    "objective": "Visit the market vendor."
+  },
+  "town_inn": {
+    "name": "Town Inn",
+    "description": "A quiet inn where the party can purchase a night's rest.",
+    "arena": "town_inn",
+    "player_spawns": [[180, 780], [245, 780], [310, 780], [375, 780],
+                      [180, 845], [245, 845], [310, 845], [375, 845]],
+    "enemies": [],
+    "mob_pool": [],
+    "respawn_point": [910, 510],
+    "objective": "Check in at the inn bed."
   }
 }
