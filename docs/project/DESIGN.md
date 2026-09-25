@@ -19,9 +19,11 @@ Game code is grouped under `worldforge/` by app, actors, combat, core systems,
 content, networking, and UI. `worldforge/app/game.py` preserves the `run_game`
 entry point. The frame loop coordinates input and drawing; host-owned world
 updates, input helpers, the HUD, action resolution, requests, encounter setup,
-world geometry, and character rendering live in separate modules. Project
-instructions and modding references are collected under `docs/`; JSON content
-and art remain under `data/` and `asset_pack/`.
+world geometry, and character rendering live in separate modules. Party
+membership and connection lifecycle live in `party.py`; mob creation and
+victory cleanup live in `encounters.py`. Project instructions and modding
+references are collected under `docs/`; JSON content and art remain under
+`data/` and `asset_pack/`.
 
 ## Current playable slice
 
@@ -33,7 +35,7 @@ and art remain under `data/` and `asset_pack/`.
 - `[x]` Move around a gray-box map with collision, map boundaries, and a camera that follows the local actor until the map edge.
 - `[x]` Combat begins automatically when a conscious player comes within 20 feet of a conscious enemy with clear line of sight. Initiative is rolled in place; actors keep their world positions. Turns provide movement, an action, and a bonus action. Movement can be split around other turn actions.
 - `[x]` Select a target and trigger the primary attack with `1`, force a ranged-weapon attack with `R`, or explicitly throw a throwable main-hand item with `T`. Ranged attacks can have disadvantage by range; melee attacks outside reach cannot hit. Clear line of sight is required.
-- `[x]` Cast the implemented spells and abilities, use supported consumables, and display supported conditions such as burning.
+- `[~]` The spell and ability execution paths support data-defined effects. SRD-guided starter spells cover attacks, saves, healing, rooting, an AC ward, and a weapon blessing. Starter melee actions now exercise resistance, advantage, healing, action recovery, extra attacks, and class resource pools; broader class coverage remains open.
 - `[x]` Perception automatically reveals an NPC's title in stages based on its information DCs; elite titles can add a further stage. This check does not require line of sight.
 - `[x]` Track downed players. They may wait for another player to revive them or release their spirit to the inn for a 10% unspent-XP loss. Being revived costs 2% XP. Revive healing is rolled as `2d4`.
 - `[~]` Inventory and equipment support item instances, equipment slots, weapon sets, dual wielding, equipment changes, consumable use, quick slots, and shared corpse loot. The character sheet shows abilities, skills, saves, proficiencies, resources, XP, class features, and gear. Inventory remains unlimited; broader acquisition and economy rules are open.
@@ -127,7 +129,7 @@ gold drops remain future work.
 - Character levels 4, 8, 12, 16, and 20 each grant two spendable attribute
   points. Each point raises one ability score by one; scores may be stored above
   30, but calculations cap at 30.
-- Each spell and ability has a data-authored `xp_purchase_cost`; currently the
+- Each trainer-purchasable spell and ability has a data-authored `xp_purchase_cost`; currently the
   tier-N default demo entries cost N × 10 XP. The primary class pays the base
   price; later classes pay 2x, 3x, and so on. Unlocking an additional class
   costs 500 XP for the second class, then triples for each later unlock.
@@ -148,7 +150,7 @@ gold drops remain future work.
 - `[x]` Q/E bind to consumables from Inventory and use one item per press. Stackable consumables share an inventory row, decrement on use, and remain bound until the stack is empty.
 - `[x]` Expand the play window to 1024x768 and the demo arena to 1600x1100 so the camera can scroll around a world larger than the viewport. Place action bars lower-left and combat log lower-right.
 - `[x]` Spellbook has separate Prepared Spells, Spellbook, and Class Abilities pages. Players can toggle known spells as prepared and assign prepared spells or class abilities to the shared action bars.
-- `[ ]` Add key remapping to the in-game Settings UI. Make rebinding approachable: select an action, press the desired key, clearly resolve conflicts, and provide a one-click restore-defaults option. Keep the defaults documented for players and modders.
+- `[x]` Open a fixed-size key remapper from the Escape menu. Click an action, press an unused key, and restore defaults from one button; bindings persist in the user's settings file.
 - `[x]` Invalid actions such as out-of-range attacks, blocked line of sight, spent action budgets, invalid targets, and insufficient resources are reported in the combat log; the affected target briefly flashes. Further tuning can follow playtesting.
 - `[~]` The test encounter has a repeatable spawn, combat, victory, XP, and loot loop. A clearer first-time start and a deliberate return/retry flow remain open.
 - `[x]` Add a second gray-box area connected by data-defined exits to prove that maps and encounters can be added through data.
@@ -175,21 +177,21 @@ gold drops remain future work.
 - `[x]` One map trainer has tabs for all classes. Spell/ability ownership is per character and retained after deleveling; current XP eligibility and the class purchase chain control access.
 - `[x]` Implement one authoritative XP award path with duplicate-award protection.
 - `[x]` Implement permanent applied character levels, XP-based trainer purchase eligibility, and a player-facing trainer level-up flow.
-- `[~]` Class and subclass features, skill proficiencies, spells, cantrips, and abilities are acquired with XP from the trainer. Fighter's level-5 Second Windup is a purchased feature that grants a follow-up weapon attack. Other progression effects remain descriptive until implemented.
+- `[~]` Class and subclass features, skill proficiencies, spells, cantrips, and abilities are normally acquired with XP from the trainer. New characters receive configured starter spells and melee actions; Fighter's level-5 Second Windup remains a purchased feature that grants a follow-up weapon attack. Other progression effects remain descriptive until implemented.
 - `[x]` Add the single trainer interaction and class-tab purchase interface. Attribute-point milestones replace the previous feat placeholders.
 - `[~]` The character sheet shows level and XP totals. A progression history and earned/spent ledger view remain open.
 
 ### 4. Combat and abilities
 
-- `[x]` The gray-box loop supports initiative, turns, movement/action/bonus-action budgets, attacks, basic spells, target selection, and a simple enemy response.
+- `[~]` The gray-box loop supports initiative, turns, movement/action/bonus-action budgets, attacks, data-defined spell and ability resolution, target selection, and a simple enemy response. New characters receive class-configured starter spells and melee actions on their first hotbar; broader spell and ability coverage remains open.
 - `[x]` Attack resolution keeps room for future modifiers; ties to defense hit. Weapon damage uses weapon dice and the applicable ability modifier.
 - `[x]` Weapon `2h` capability, weapon sets, ranged weapons, explicit thrown attacks, and the staff's off-hand-sensitive damage rule are represented in the current item/rule data.
 - `[x]` Conditions include initial examples, including burning damage over time and attack disadvantage from off-balance.
 - `[~]` Several spell and ability effects are data-driven through supported effect primitives. Adding unsupported targeting or effect behavior still requires code changes.
 - `[~]` Basic duration, refresh, expiry, and recurring damage are implemented. Stacking and source attribution rules remain incomplete.
-- `[ ]` Add more player and NPC actions to exercise the combat framework.
+- `[~]` Add more player and NPC actions to exercise the combat framework. Spell starter actions now exercise attacks, saves, healing, conditions, and timed effects; class-specific martial actions remain open.
 - `[x]` Abilities default to one use per combat (`uses_per_combat` can tune this); combat state resets the counter for a new fight.
-- `[x]` Spells use one shared, class-curve-driven spell-point pool; casts spend configurable points and rests refill it. Spell effect scaling by character level and broader known-spell progression remain open.
+- `[x]` Spells use one shared, class-curve-driven spell-point pool; casts spend configurable points and rests refill it. Cantrip damage scaling by character level and broader spell coverage remain open.
 - `[x]` Represent configurable class resources as pools separate from spell points; class curves define maxima and abilities can spend them. Specific feature content and progression still need implementation.
 - `[~]` Sneak reduces exploration speed and contests mob passive Perception. Hide uses the SRD 5.2.1 cover/line-of-sight gate and DC 15 Dexterity (Stealth) check. Flee and active Search remain open; arena obstacles currently stand in for full cover.
 - `[ ]` Improve target selection and combat feedback based on playtesting.

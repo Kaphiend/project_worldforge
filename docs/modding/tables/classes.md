@@ -36,15 +36,29 @@ one can invalidate existing saves and references.
   these pools with their `resource_cost` field. Add class data only when the
   rules and recovery cadence are defined; this project does not assume
   fifth-edition values for special pools.
+- `starting_spells`, `starting_abilities`: optional lists of IDs granted to a
+  new character of this class. Starter spells are learned/prepared, and starter
+  abilities are learned; both are placed on the first hotbar at creation.
+- `starting_features`: optional feature IDs added to a new character's owned
+  feature list. Use only for features the class gets at its starting level.
 - `progression`: map of class levels to arrays of feature entries. Entries
   usually have `id`, `name`, `summary`, and prerequisite data. Class features
-  are purchased from the trainer with XP; class level alone grants none.
-  `xp_purchase_cost` sets the price and defaults to `10`. Built-in selectable
-  skill lists and subclass choices follow SRD 5.2.1; skills and features still
-  require XP purchases. Former Worldforge subclasses remain nonselectable for
-  old saves. Hide, Cunning Action's bonus-action Hide, Sneak Attack, and
-  `extra_weapon_attack` currently have combat behavior; most other effects are
-  descriptive until their resolver is implemented.
+  are normally purchased from the trainer with XP; only explicit
+  `starting_features` are granted automatically.
+  `xp_purchase_cost` sets the price and defaults to `10`. Starter spells and
+  abilities listed separately above do not require trainer purchases. Built-in selectable
+  skill lists and subclass choices follow SRD 5.2.1; purchased skills and
+  features still require XP. Former Worldforge subclasses remain nonselectable
+  for old saves. Hide, Sneak Attack, Rage, Reckless Attack, Second Wind, Action
+  Surge, Monk Flurry/Patient Defense, Cunning Action: Dash, and
+  `extra_weapon_attack` currently have combat behavior; most other feature
+  effects are descriptive until their resolver is implemented. Rogue combat
+  supports Sneak Attack scaling, Cunning Action, Steady Aim, Cunning Strike
+  Trip/Poison/Withdraw, Expertise, Evasion, Reliable Talent, Slippery Mind,
+  Elusive, opportunity attacks, Expertise selection, and automatic Uncanny
+  Dodge. Weapon Mastery supports Vex, Sap, Slow, and Topple; Stroke of Luck,
+  remaining mastery/Cunning Strike riders, and player-choice reaction UI
+  remain queued in `docs/project/COMBAT_CONTENT_BACKLOG.md`.
 - `progression_policy`: currently descriptive purchase/unlock metadata; it does
   not add a shop or XP UI by itself.
 

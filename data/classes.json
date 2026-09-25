@@ -137,7 +137,7 @@
       "12": [
         {
           "id": "barbarian_12",
-          "name": "Warrior’s Frame",
+          "name": "Warrior\u2019s Frame",
           "summary": "Increase the physical limits your training can reach.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 12
@@ -147,7 +147,7 @@
         {
           "id": "barbarian_13",
           "name": "Driving Blows",
-          "summary": "Push through a foe’s defenses with deliberate force.",
+          "summary": "Push through a foe\u2019s defenses with deliberate force.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 13
         }
@@ -173,7 +173,7 @@
       "16": [
         {
           "id": "barbarian_16",
-          "name": "Titan’s Endurance",
+          "name": "Titan\u2019s Endurance",
           "summary": "Withstand punishment that would overwhelm most people.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 16
@@ -224,7 +224,40 @@
     },
     "summary": "A fierce front-line warrior who turns toughness and fury into force.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_abilities": [
+      "barbarian_rage",
+      "barbarian_reckless_attack"
+    ],
+    "class_resources": {
+      "rage_uses": {
+        "name": "Rages",
+        "max_by_level": [
+          0,
+          2,
+          2,
+          3,
+          3,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          5,
+          5,
+          6,
+          6,
+          6,
+          6
+        ],
+        "recovery": "rest"
+      }
+    }
   },
   "bard": {
     "hit_die": 8,
@@ -467,7 +500,11 @@
     ],
     "summary": "A versatile performer who supports allies and shapes magic through art.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "vicious_mockery",
+      "healing_word"
+    ]
   },
   "cleric": {
     "hit_die": 8,
@@ -716,7 +753,11 @@
     ],
     "summary": "A divine spellcaster who protects allies and confronts threats with faith.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "sacred_flame",
+      "healing_word"
+    ]
   },
   "druid": {
     "hit_die": 8,
@@ -919,7 +960,7 @@
       "19": [
         {
           "id": "druid_19",
-          "name": "World’s Pulse",
+          "name": "World\u2019s Pulse",
           "summary": "Sense major disturbances across a broad natural area.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 19
@@ -967,7 +1008,11 @@
     ],
     "summary": "A nature-focused spellcaster who heals, controls the field, and adapts.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "produce_flame",
+      "entangle"
+    ]
   },
   "fighter": {
     "hit_die": 10,
@@ -1018,6 +1063,28 @@
           "summary": "Train with a broader set of weapon patterns.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 1
+        },
+        {
+          "id": "fighter_fighting_style",
+          "name": "Fighting Style",
+          "summary": "Choose a fighting style, including Two-Weapon Fighting.",
+          "effect": {
+            "kind": "fighting_style_choice",
+            "count": 1
+          },
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
+        },
+        {
+          "id": "fighter_weapon_mastery",
+          "name": "Weapon Mastery",
+          "summary": "Choose mastery properties for three weapons you are proficient with. Nick, Push, Graze, Cleave, Sap, Slow, Topple, and Vex resolve.",
+          "effect": {
+            "kind": "weapon_mastery_choice",
+            "count": 3
+          },
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
         }
       ],
       "2": [
@@ -1042,7 +1109,7 @@
         {
           "id": "fighter_04",
           "name": "Battle Read",
-          "summary": "Recognize a foe’s likely next move from posture and reach.",
+          "summary": "Recognize a foe\u2019s likely next move from posture and reach.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 4
         }
@@ -1155,7 +1222,7 @@
       "16": [
         {
           "id": "fighter_16",
-          "name": "Master’s Reach",
+          "name": "Master\u2019s Reach",
           "summary": "Attack effectively from a more controlled position.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 16
@@ -1182,7 +1249,7 @@
       "19": [
         {
           "id": "fighter_19",
-          "name": "Veteran’s Choice",
+          "name": "Veteran\u2019s Choice",
           "summary": "Refine one trained combat technique to its highest form.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 19
@@ -1206,7 +1273,67 @@
     },
     "summary": "A disciplined weapon specialist built for reliable attacks and defense.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_abilities": [
+      "fighter_second_wind",
+      "fighter_action_surge"
+    ],
+    "class_resources": {
+      "second_wind_uses": {
+        "name": "Second Wind uses",
+        "max_by_level": [
+          0,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          4,
+          4,
+          4,
+          4
+        ],
+        "recovery": "rest"
+      },
+      "action_surge_uses": {
+        "name": "Action Surge uses",
+        "max_by_level": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2,
+          2
+        ],
+        "recovery": "rest"
+      }
+    }
   },
   "monk": {
     "hit_die": 8,
@@ -1262,7 +1389,7 @@
         {
           "id": "monk_03",
           "name": "Open Palm",
-          "summary": "Disrupt a target’s stance with an unarmed strike.",
+          "summary": "Disrupt a target\u2019s stance with an unarmed strike.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 3
         }
@@ -1334,7 +1461,7 @@
         {
           "id": "monk_11",
           "name": "Weightless Turn",
-          "summary": "Pass through an enemy’s reach without surrendering balance.",
+          "summary": "Pass through an enemy\u2019s reach without surrendering balance.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 11
         }
@@ -1397,7 +1524,7 @@
         {
           "id": "monk_18",
           "name": "Far-Reaching Palm",
-          "summary": "Project a short burst of force beyond arm’s reach.",
+          "summary": "Project a short burst of force beyond arm\u2019s reach.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 18
         }
@@ -1429,7 +1556,40 @@
     },
     "summary": "A mobile martial artist who fights with speed, focus, and discipline.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_abilities": [
+      "monk_flurry_of_blows",
+      "monk_patient_defense"
+    ],
+    "class_resources": {
+      "focus_points": {
+        "name": "Focus Points",
+        "max_by_level": [
+          0,
+          0,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "recovery": "rest"
+      }
+    }
   },
   "paladin": {
     "hit_die": 10,
@@ -1478,6 +1638,17 @@
           "summary": "Choose a personal principle that guides your conduct.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 1
+        },
+        {
+          "id": "paladin_weapon_mastery",
+          "name": "Weapon Mastery",
+          "summary": "Choose mastery properties for 2 weapons you are proficient with. Nick, Push, Graze, Cleave, Sap, Slow, Topple, and Vex resolve.",
+          "effect": {
+            "kind": "weapon_mastery_choice",
+            "count": 2
+          },
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
         }
       ],
       "2": [
@@ -1485,6 +1656,17 @@
           "id": "paladin_02",
           "name": "Protective Bearing",
           "summary": "Steady an ally nearby through a calm, resolute presence.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        },
+        {
+          "id": "paladin_fighting_style",
+          "name": "Fighting Style",
+          "summary": "Choose a fighting style, including Two-Weapon Fighting.",
+          "effect": {
+            "kind": "fighting_style_choice",
+            "count": 1
+          },
           "purchase": "trainer_xp",
           "prerequisite_class_level": 2
         }
@@ -1511,7 +1693,7 @@
         {
           "id": "paladin_05",
           "name": "Guarding Challenge",
-          "summary": "Draw an enemy’s attention away from a vulnerable ally.",
+          "summary": "Draw an enemy\u2019s attention away from a vulnerable ally.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 5
         }
@@ -1636,7 +1818,7 @@
       "19": [
         {
           "id": "paladin_19",
-          "name": "Vow’s Fulfillment",
+          "name": "Vow\u2019s Fulfillment",
           "summary": "Strengthen one ability tied to your chosen principle.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 19
@@ -1684,7 +1866,11 @@
     ],
     "summary": "A durable champion who combines martial skill with sacred magic.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "divine_favor",
+      "cure_wounds"
+    ]
   },
   "ranger": {
     "hit_die": 10,
@@ -1731,13 +1917,35 @@
           "summary": "Track creatures through signs left on varied terrain.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 1
+        },
+        {
+          "id": "ranger_weapon_mastery",
+          "name": "Weapon Mastery",
+          "summary": "Choose mastery properties for 2 weapons you are proficient with. Nick, Push, Graze, Cleave, Sap, Slow, Topple, and Vex resolve.",
+          "effect": {
+            "kind": "weapon_mastery_choice",
+            "count": 2
+          },
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 1
         }
       ],
       "2": [
         {
           "id": "ranger_02",
-          "name": "Hunter’s Mark",
+          "name": "Hunter\u2019s Mark",
           "summary": "Focus attention on a target to aid pursuit and attacks.",
+          "purchase": "trainer_xp",
+          "prerequisite_class_level": 2
+        },
+        {
+          "id": "ranger_fighting_style",
+          "name": "Fighting Style",
+          "summary": "Choose a fighting style, including Two-Weapon Fighting.",
+          "effect": {
+            "kind": "fighting_style_choice",
+            "count": 1
+          },
           "purchase": "trainer_xp",
           "prerequisite_class_level": 2
         }
@@ -1818,7 +2026,7 @@
         {
           "id": "ranger_11",
           "name": "Long Pursuit",
-          "summary": "Maintain a target’s trail across difficult ground.",
+          "summary": "Maintain a target\u2019s trail across difficult ground.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 11
         }
@@ -1827,7 +2035,7 @@
         {
           "id": "ranger_12",
           "name": "Counter Hunter",
-          "summary": "Recognize and blunt another creature’s tracking tactics.",
+          "summary": "Recognize and blunt another creature\u2019s tracking tactics.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 12
         }
@@ -1853,7 +2061,7 @@
       "15": [
         {
           "id": "ranger_15",
-          "name": "Skirmisher’s Route",
+          "name": "Skirmisher\u2019s Route",
           "summary": "Move through danger after making a successful attack.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 15
@@ -1880,7 +2088,7 @@
       "18": [
         {
           "id": "ranger_18",
-          "name": "Companion’s Guard",
+          "name": "Companion\u2019s Guard",
           "summary": "Your companion helps shield an ally from an attack.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 18
@@ -1937,7 +2145,11 @@
     ],
     "summary": "A scout and hunter who blends weapon attacks, survival, and nature magic.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "entangle",
+      "cure_wounds"
+    ]
   },
   "rogue": {
     "hit_die": 8,
@@ -1971,6 +2183,9 @@
       },
       "main_hand": {
         "template_id": "dagger"
+      },
+      "off_hand": {
+        "template_id": "dagger"
       }
     },
     "subclasses": [
@@ -1999,7 +2214,7 @@
         },
         {
           "id": "rogue_thieves_cant",
-          "name": "Thieves’ Cant",
+          "name": "Thieves\u2019 Cant",
           "summary": "Learn the coded slang used by the underworld.",
           "effect": {
             "kind": "proficiency_choice",
@@ -2010,7 +2225,7 @@
         {
           "id": "rogue_weapon_mastery",
           "name": "Weapon Mastery",
-          "summary": "Choose mastery properties for two weapons you are proficient with. Weapon mastery effects will be implemented with the weapon rules.",
+          "summary": "Choose mastery properties for two weapons you are proficient with. Nick, Push, Graze, Cleave, Sap, Slow, Topple, and Vex resolve.",
           "effect": {
             "kind": "weapon_mastery_choice",
             "count": 2
@@ -2021,7 +2236,7 @@
         {
           "id": "rogue_cunning_action",
           "name": "Cunning Action",
-          "summary": "Take Dash, Disengage, or Hide as a bonus action. Hide is available now; Dash and Disengage are queued for their movement actions.",
+          "summary": "Take Dash, Disengage, or Hide as a bonus action.",
           "effect": {
             "kind": "cunning_action",
             "actions": [
@@ -2046,7 +2261,7 @@
         {
           "id": "rogue_cunning_strike",
           "name": "Cunning Strike",
-          "summary": "Trade Sneak Attack dice to apply a tactical rider; supported riders will be added as combat effects.",
+          "summary": "Trade a Sneak Attack die to Withdraw, Trip, or Poison the target.",
           "effect": {
             "kind": "cunning_strike"
           }
@@ -2156,7 +2371,19 @@
     },
     "summary": "A skilled, agile specialist who creates openings with stealth, precision, and fast decisions.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_abilities": [
+      "rogue_cunning_dash",
+      "rogue_cunning_disengage",
+      "rogue_steady_aim",
+      "rogue_cunning_withdraw",
+      "rogue_cunning_trip",
+      "rogue_cunning_poison"
+    ],
+    "starting_features": [
+      "rogue_sneak_attack",
+      "rogue_cunning_action"
+    ]
   },
   "sorcerer": {
     "hit_die": 6,
@@ -2211,7 +2438,7 @@
         {
           "id": "sorcerer_03",
           "name": "Force Shaping",
-          "summary": "Alter a spell’s reach, target, or outward form.",
+          "summary": "Alter a spell\u2019s reach, target, or outward form.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 3
         }
@@ -2402,7 +2629,11 @@
     ],
     "summary": "A spellcaster whose innate magic offers potent, flexible offense.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "fire_bolt",
+      "magic_missile"
+    ]
   },
   "warlock": {
     "hit_die": 8,
@@ -2558,7 +2789,7 @@
       "14": [
         {
           "id": "warlock_14",
-          "name": "Source’s Counsel",
+          "name": "Source\u2019s Counsel",
           "summary": "Ask your distant source for a narrow piece of insight.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 14
@@ -2651,7 +2882,10 @@
     ],
     "summary": "A pact-bound caster who pairs repeatable magic with supernatural gifts.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "eldritch_blast"
+    ]
   },
   "wizard": {
     "hit_die": 6,
@@ -2805,7 +3039,7 @@
         {
           "id": "wizard_14",
           "name": "Spell Reflection",
-          "summary": "Redirect a portion of a hostile spell’s force.",
+          "summary": "Redirect a portion of a hostile spell\u2019s force.",
           "purchase": "trainer_xp",
           "prerequisite_class_level": 14
         }
@@ -2897,6 +3131,10 @@
     ],
     "summary": "A learned spellcaster with a broad arcane toolkit and careful preparation.",
     "rules_source": "SRD 5.2.1",
-    "subclass_level": 3
+    "subclass_level": 3,
+    "starting_spells": [
+      "fire_bolt",
+      "magic_missile"
+    ]
   }
 }

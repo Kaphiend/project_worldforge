@@ -1,7 +1,8 @@
 """Spell and class ability execution during combat."""
 import math
 
-from worldforge.combat.rules import edge_distance_feet
+from worldforge.actors.factory import item_definition
+from worldforge.combat.rules import edge_distance_feet, speed_feet
 from worldforge.combat.spell_effects import apply_ability_effects, resolve_spell
 from worldforge.content.classes import ABILITIES, SPELLS
 from worldforge.core.progression import spell_point_max
@@ -22,9 +23,6 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
         _reject_action(combat, 'Unknown spell.', actor_id)
         return False
     budget = combat['budgets'][actor_id]
-    if not budget.get('action'):
-        _reject_action(combat, 'Action already used this turn.', actor_id)
-        return False
     caster = actor_entry['data']
     prepared_spells = caster.get("prepared_spells", [])
     actor_classes = {item.get("name") for item in caster.get("classes", []) or []
@@ -46,6 +44,12 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
             actor_id)
         return False
     target_info = spell.get('targeting', {})
+    action_cost = spell.get('casting_time', 'action')
+    if action_cost not in ('action', 'bonus_action'):
+        action_cost = 'action'
+    if not budget.get(action_cost):
+        _reject_action(combat, f"{action_cost.replace('_', ' ').title()} already used this turn.", actor_id)
+        return False
     target_entry = combat['actors'].get(target_id) if target_id else None
     mode = target_info.get('mode')
     if mode not in ('self',) and not target_entry:
@@ -53,6 +57,9 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
         return False
     if target_entry and target_entry["data"].get("withdrawn"):
         _reject_action(combat, "That character has left the fight.", target_id)
+        return False
+    if target_entry and mode == 'one_ally' and target_entry['team'] != actor_entry['team']:
+        _reject_action(combat, 'Choose an ally for this spell.', target_id)
         return False
     if target_entry and _hidden_from(actor_entry, target_entry,
                                      combat.get("arena")):
@@ -66,6 +73,7 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
         radius = int(target_info.get('radius_feet', 0)) * PIXELS_PER_FOOT
         targets = [entry['data'] for entry in combat['actors'].values()
                    if not entry['data'].get("withdrawn")
+                   and (not target_info.get('exclude_caster') or entry is not actor_entry)
                    and math.hypot(entry['x'] + entry['width'] / 2 - point[0],
                                  entry['y'] + entry['height'] / 2 - point[1]) <= radius]
     if mode == 'self':
@@ -79,7 +87,7 @@ def _do_spell(combat, actor_id, spell_id, target_id=None):
         _reject_action(combat, result.get('message', 'Spell failed.'),
                        target_id or actor_id)
         return False
-    budget['action'] = False
+    budget[action_cost] = False
     caster["spell_points"] = spell_points - spell_cost
     remaining_points = caster["spell_points"]
     if spell_cost:
@@ -125,6 +133,29 @@ def _do_ability(combat, actor_id, ability_id, target_id=None):
         _reject_action(combat, 'Ability unavailable to this actor.', target_id or actor_id)
         return False
     actor_data = actor_entry['data']
+    actor_classes = {item.get("name") for item in actor_data.get("classes", []) or []
+                     if item.get("name")}
+    if actor_data.get("char_class"):
+        actor_classes.add(actor_data["char_class"])
+    if not actor_classes.intersection(ability.get("classes", [])):
+        _reject_action(combat, "Your class cannot use this ability.", actor_id)
+        return False
+    required_level = int(ability.get("prerequisite_class_level", 0) or 0)
+    class_levels = {item.get("name"): int(item.get("level", 0) or 0)
+                    for item in actor_data.get("classes", []) or []}
+    if actor_data.get("char_class"):
+        class_levels.setdefault(actor_data["char_class"],
+                                int(actor_data.get("level", 1) or 1))
+    if required_level and max(
+            (class_levels.get(class_id, 0)
+             for class_id in ability.get("classes", [])), default=0) < required_level:
+        _reject_action(combat, f"You need class level {required_level} to use {ability['name']}.", actor_id)
+        return False
+    required_feature = ability.get("requires_feature")
+    if required_feature and required_feature not in set(
+            actor_data.get("class_features", []) or []):
+        _reject_action(combat, f"You must learn {required_feature.replace('_', ' ').title()} first.", actor_id)
+        return False
     if ability_id not in actor_data.get('known_abilities', []):
         _reject_action(combat, 'That ability is not available to this character.', actor_id)
         return False
@@ -154,6 +185,9 @@ def _do_ability(combat, actor_id, ability_id, target_id=None):
     if target_entry and target_entry["data"].get("withdrawn"):
         _reject_action(combat, "That character has left the fight.", target_id)
         return False
+    if target_entry and target_info.get("target_team") == "enemies" and target_entry.get("team") != "enemies":
+        _reject_action(combat, "Choose an enemy target.", target_id)
+        return False
     if target_entry and _hidden_from(actor_entry, target_entry,
                                      combat.get("arena")):
         _reject_action(combat, "You have not found that hidden target.", target_id)
@@ -163,9 +197,29 @@ def _do_ability(combat, actor_id, ability_id, target_id=None):
             _reject_action(combat, 'Target is outside ability range.', target_id)
             return False
     budget = combat['budgets'][actor_id]
+    if ability.get("requires_stationary") and budget.get("movement_used", 0) > 0:
+        _reject_action(combat, "You cannot use this ability after moving this turn.", actor_id)
+        return False
     cost = ability.get('action_cost', 'action')
-    if not budget.get(cost, False):
+    if cost != "free" and not budget.get(cost, False):
         _reject_action(combat, f"{cost.replace('_', ' ').title()} already used this turn.", actor_id)
+        return False
+    if ability.get("requires_action_spent") and budget.get("action", False):
+        _reject_action(combat, "Use your action before this ability.", actor_id)
+        return False
+    if ability.get("requires_not_heavy_armor"):
+        armor = item_definition((actor_data.get("equipment", {}) or {}).get("chest") or {})
+        if armor.get("category") == "heavy":
+            _reject_action(combat, f"{ability['name']} cannot be used in heavy armor.", actor_id)
+            return False
+    if ability.get("unique_active") and any(
+            effect.get("source_id") == ability_id
+            for effect in actor_data.get("active_effects", []) or []):
+        _reject_action(combat, f"{ability['name']} is already active.", actor_id)
+        return False
+    if ability.get("attack_sequence") and target_entry and (
+            target_entry.get("downed") or target_entry["data"].get("downed")):
+        _reject_action(combat, "A downed target cannot be attacked.", target_id)
         return False
     try:
         hp_before = _capture_hp(combat)
@@ -176,12 +230,54 @@ def _do_ability(combat, actor_id, ability_id, target_id=None):
     except (KeyError, ValueError) as exc:
         _reject_action(combat, f'Ability unavailable: {exc}', target_id or actor_id)
         return False
-    budget[cost] = False
+    # Movement bonuses belong in this turn's budget, not the persistent
+    # effect list. Keep Disengage as a turn-scoped marker for the future
+    # opportunity-attack resolver.
+    actor_data["active_effects"] = [
+        effect for effect in actor_data.get("active_effects", []) or []
+        if not (effect.get("source_id") == ability_id
+                and effect.get("kind") == "movement_bonus")]
+    if any(effect.get("kind") == "disengage" for effect in effects):
+        actor_data["disengaged"] = True
+    if ability.get("cunning_strike_option"):
+        actor_data["pending_cunning_strike"] = ability["cunning_strike_option"]
+    if cost != "free":
+        budget[cost] = False
     if uses_limit is not None:
         actor_uses[ability_id] = uses_so_far + 1
     if resource_key:
         actor_data.setdefault("class_resources", {})[resource_key] -= resource_amount
-    _log(combat, f"{actor_data.get('name', 'Actor')} uses {ability['name']}.")
+    details = [f"{effect['amount']} healing" for effect in effects
+               if effect.get("kind") == "healing"]
+    if any(effect.get("kind") == "restore_action" for effect in effects):
+        details.append("action restored")
+    suffix = f" ({'; '.join(details)})" if details else ""
+    _log(combat, f"{actor_data.get('name', 'Actor')} uses {ability['name']}{suffix}.")
+    if ability.get("attack_sequence"):
+        from worldforge.app.attack_actions import _do_attack
+
+        original_action = budget.get("action", False)
+        sequence = ability["attack_sequence"]
+        for _ in range(max(1, int(sequence.get("count", 1)))):
+            target = combat["actors"].get(target_id)
+            if not target or target.get("downed") or target["data"].get("current_hp", 1) <= 0:
+                break
+            budget["action"] = True
+            _do_attack(combat, actor_id, target_id,
+                       attack_mode=sequence.get("mode", "unarmed"))
+            budget["action"] = original_action
+        _animate_hp_changes(combat, hp_before)
+        return True
+    if any(effect.get("kind") == "restore_action" for effect in effects):
+        budget["action"] = True
+    for effect in effects:
+        if effect.get("kind") == "movement_bonus":
+            multiplier = max(1.0, float(effect.get("multiplier", 1) or 1))
+            bonus = int(effect.get("feet", 0) or 0)
+            bonus += int(speed_feet(actor_data) * (multiplier - 1))
+            budget["movement"] = int(budget.get("movement", 0)) + bonus
+        elif effect.get("kind") == "end_movement":
+            budget["movement"] = 0
     _animate_hp_changes(combat, hp_before)
     enemies = [entry for entry in combat["actors"].values()
                if entry["team"] == "enemies"]
@@ -192,4 +288,3 @@ def _do_ability(combat, actor_id, ability_id, target_id=None):
         _log(combat, "All enemies defeated. Combat ended.")
         _award_combat_xp(combat)
     return bool(effects) or not ability.get('effects')
-

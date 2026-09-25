@@ -1,0 +1,398 @@
+{
+  "name": "pally",
+  "id": "23c07f2f",
+  "max_hp": 36,
+  "current_hp": 36,
+  "classes": [
+    {
+      "name": "paladin",
+      "level": 4
+    }
+  ],
+  "level": 4,
+  "class_levels_initialized": true,
+  "xp_total": 2590,
+  "xp_earned_by_level": {
+    "3": 2700
+  },
+  "xp_spent_by_level": {
+    "4": 10,
+    "3": 100
+  },
+  "xp_rest_spent_by_level": {},
+  "class_spell_purchases": {
+    "paladin": [
+      "arcane_spark",
+      "frost_needle",
+      "vowflare",
+      "vowlight_touch"
+    ]
+  },
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [
+    "arcane_spark",
+    "frost_needle",
+    "vowflare",
+    "vowlight_touch"
+  ],
+  "prepared_spells": [
+    "arcane_spark",
+    "frost_needle",
+    "vowflare",
+    "vowlight_touch"
+  ],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": "11ae51dadbdf",
+    "e": "394853dc41be"
+  },
+  "known_abilities": [],
+  "class_features": [
+    "paladin_01",
+    "paladin_02",
+    "paladin_03",
+    "paladin_oath_of_devotion_oath_spells",
+    "paladin_oath_of_devotion_sacred_weapon"
+  ],
+  "class_feature_purchases": {
+    "paladin": [
+      "paladin_01",
+      "paladin_02",
+      "paladin_oath_of_devotion_oath_spells",
+      "paladin_03",
+      "paladin_oath_of_devotion_sacred_weapon"
+    ]
+  },
+  "class_skill_purchases": {
+    "paladin": [
+      "athletics",
+      "medicine"
+    ]
+  },
+  "spell_points": 3,
+  "class_resources": {},
+  "attribute_points_spent": {
+    "strength": 1,
+    "charisma": 1
+  },
+  "gold": 500,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Paladin.png",
+  "abilities": {
+    "strength": 18,
+    "charisma": 17,
+    "constitution": 15,
+    "wisdom": 14,
+    "dexterity": 12,
+    "intellect": 11
+  },
+  "unspent": [
+    17,
+    12,
+    15,
+    12,
+    16,
+    12
+  ],
+  "saves": [
+    "wisdom",
+    "charisma"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "heavy",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial"
+  ],
+  "race": "human",
+  "subrace": "",
+  "subclass": "paladin_oath_of_devotion",
+  "parent_races": [],
+  "char_class": "paladin",
+  "skills": [
+    "athletics",
+    "medicine"
+  ],
+  "controller": "player",
+  "x": 311,
+  "y": 532,
+  "inventory": [
+    {
+      "id": "11ae51dadbdf",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 3,
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "394853dc41be",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 1,
+      "template_id": "revival_scroll"
+    },
+    {
+      "id": "f5c5f2376f8e",
+      "template_id": "leather",
+      "name": "Warding Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "saving_throw_bonus": 1
+      }
+    },
+    {
+      "id": "7c2bdc35a167",
+      "template_id": "dagger",
+      "name": "Accurate Dagger",
+      "slot": "main_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "weapon_attack_bonus": 1
+      }
+    },
+    {
+      "id": "a582aa013f11",
+      "template_id": "dagger",
+      "name": "Forceful Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 3
+      }
+    },
+    {
+      "id": "b616ac5901c1",
+      "template_id": "sword_1h",
+      "name": "Sword",
+      "slot": "main_hand",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "88ec6da10eba",
+      "template_id": "hammer_1h",
+      "name": "Hammer",
+      "slot": "off_hand",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "2b9bce5468ee",
+      "name": "Chain Shirt",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "chain_shirt"
+    }
+  ],
+  "equipment": {
+    "head": {
+      "id": "3d111276fff4",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "7224d1c7b182",
+      "template_id": "leather",
+      "name": "Guarded Warding Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "rare",
+      "item_level": 1,
+      "rolled_attributes": {
+        "armor_class_bonus": 3,
+        "saving_throw_bonus": 2
+      }
+    },
+    "hands": {
+      "id": "455cbcbae7ae",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "439cbcccafe6",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "2076873d7be2",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "bee5eb788ba7",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "ee652b554bfe",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "2d8e7575d456",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "b2b56e0a748e",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "a933101d3c94",
+      "name": "Sword",
+      "slot": "hand",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "sword_1h"
+    },
+    "off_hand": {
+      "id": "a359eca3f6eb",
+      "name": "Dagger",
+      "slot": "hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "dagger"
+    },
+    "ranged": {
+      "id": "a54267966ed3",
+      "name": "Longbow",
+      "slot": "ranged",
+      "tags": [
+        "2h",
+        "heavy",
+        "ammunition"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "longbow"
+    }
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

@@ -1,0 +1,261 @@
+{
+  "name": "monkie",
+  "id": "cc335e54",
+  "max_hp": 26,
+  "current_hp": 26,
+  "classes": [
+    {
+      "name": "monk",
+      "level": 3
+    }
+  ],
+  "level": 3,
+  "class_levels_initialized": true,
+  "xp_total": 1700,
+  "xp_earned_by_level": {
+    "3": 1700
+  },
+  "xp_spent_by_level": {},
+  "xp_rest_spent_by_level": {},
+  "class_spell_purchases": {},
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "prepared_spells": [],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": null,
+    "e": null
+  },
+  "known_abilities": [],
+  "class_features": [],
+  "class_feature_purchases": {},
+  "class_skill_purchases": {},
+  "spell_points": 0,
+  "class_resources": {},
+  "attribute_points_spent": {},
+  "gold": 500,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Monk.png",
+  "abilities": {
+    "dexterity": 17,
+    "wisdom": 16,
+    "constitution": 16,
+    "strength": 14,
+    "charisma": 13,
+    "intellect": 8
+  },
+  "unspent": [
+    10,
+    9,
+    15,
+    16,
+    13,
+    8
+  ],
+  "saves": [
+    "strength",
+    "dexterity"
+  ],
+  "armor_prof": [],
+  "weapon_prof": [
+    "simple",
+    "martial (light)"
+  ],
+  "race": "goliath",
+  "subrace": "hill",
+  "subclass": "monk_warrior_of_the_open_hand",
+  "parent_races": [],
+  "char_class": "monk",
+  "skills": [],
+  "controller": "player",
+  "x": 389,
+  "y": 679,
+  "inventory": [
+    {
+      "id": "5409f6414346",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 3,
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "3d5ce809f7bb",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 1,
+      "template_id": "revival_scroll"
+    }
+  ],
+  "equipment": {
+    "head": {
+      "id": "76b65f79e519",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "bc123d0f16db",
+      "name": "Unarmored",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "unarmored"
+    },
+    "hands": {
+      "id": "01903459598f",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "1c73d0deba96",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "041b9e8b95e2",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "6310bf605002",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "aeed89095eb6",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "47beef536098",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "c16d383c13a0",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "ced6d064f92f",
+      "name": "Dagger",
+      "slot": "hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "dagger"
+    },
+    "off_hand": {
+      "id": "b5050977aaa7",
+      "name": "Spellbook",
+      "slot": "off_hand",
+      "tags": [
+        "focus"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "spellbook"
+    },
+    "ranged": null
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

@@ -12,15 +12,14 @@ from worldforge.app.encounters import (
     _combat_snapshot,
     _combat_trigger,
     _new_combat,
-    _world_mob_from_entry,
+    advance_world_mob_patrol,
+    combat_world_mobs,
+    settle_victory,
 )
+from worldforge.app.party import add_joined_players, remove_disconnected_players
 from worldforge.app.rendering import _player_id
-from worldforge.app.requests import (
-    _add_joined_players,
-    _handle_action_request,
-    _remove_disconnected_players,
-    _settle_victory,
-)
+from worldforge.app.requests import _handle_action_request
+from worldforge.content.campaign import system_enabled
 
 
 def _apply_network_request_result(updated, combat, vendor_state):
@@ -62,6 +61,13 @@ def advance_host_world(actor, player_id, remote_players, combat,
                          if item.get("actor"))
         departed = set(session.get("participants", [])) - connected
         if departed:
+            if session.get("location") == "inn":
+                from worldforge.app.rest_flow import cancel_inn_booking
+                cancel_inn_booking(actor, player_id, remote_players, combat)
+                session = None
+            if session is None:
+                departed = set()
+        if departed:
             session["participants"] = [
                 member for member in session.get("participants", [])
                 if member not in departed]
@@ -69,7 +75,7 @@ def advance_host_world(actor, player_id, remote_players, combat,
                                 if member not in departed]
             for member in departed:
                 combat.get("actors", {}).pop(member, None)
-                for key in ("return_positions", "bed_by_actor", "costs"):
+                for key in ("return_positions", "bed_by_actor", "costs", "paid"):
                     session.get(key, {}).pop(member, None)
         for member_id, entry in combat.get("actors", {}).items():
             if entry.get("team") != "players":
@@ -87,8 +93,8 @@ def advance_host_world(actor, player_id, remote_players, combat,
             entry["data"]["x"], entry["data"]["y"] = position
 
     if combat and combat.get("active"):
-        _remove_disconnected_players(combat, remote_players, player_id)
-        _add_joined_players(combat, remote_players)
+        remove_disconnected_players(combat, remote_players, player_id)
+        add_joined_players(combat, remote_players)
     for request in combat_transport["poll"]():
         updated = _handle_action_request(
             actor, player_id, request["player_id"], request["action"],
@@ -100,6 +106,7 @@ def advance_host_world(actor, player_id, remote_players, combat,
 
     if combat:
         now = pygame.time.get_ticks()
+        advance_world_mob_patrol(combat, now)
         for mob_id, entry in list(combat.get("actors", {}).items()):
             expiry = entry.get("corpse_despawn_at")
             if (entry.get("team") == "enemies" and expiry is not None
@@ -109,14 +116,12 @@ def advance_host_world(actor, player_id, remote_players, combat,
         players_for_spawn.extend(
             _combat_snapshot(_player_id(remote), remote["actor"])
             for remote in remote_players if remote.get("actor"))
-        _settle_victory(combat, players_for_spawn)
+        settle_victory(combat, players_for_spawn)
 
-    if ((not combat or not combat.get("active"))
+    if (system_enabled("combat")
+            and (not combat or not combat.get("active"))
             and not (combat and combat.get("rest_session"))):
-        world_mobs = ([_world_mob_from_entry(entry)
-                       for entry in combat.get("actors", {}).values()
-                       if entry.get("team") == "enemies"]
-                      if combat else None)
+        world_mobs = combat_world_mobs(combat) if combat else None
         scenario_id = ((combat or {}).get("scenario_id")
                        or DEFAULT_SCENARIO)
         aggro_immune_until = (combat or {}).get("aggro_immune_until", 0)
@@ -133,6 +138,10 @@ def advance_host_world(actor, player_id, remote_players, combat,
             combat["world_areas"] = deepcopy(area_state.get("world_areas", {}))
             combat["world_area_items"] = deepcopy(
                 area_state.get("world_area_items", {}))
+            combat["world_area_chests"] = deepcopy(
+                area_state.get("world_area_chests", {}))
+            combat["chests"] = deepcopy(area_state.get(
+                "chests", combat.get("chests", [])))
             combat["ground_items"] = deepcopy(area_state.get("ground_items", []))
             combat["vendor_buyback"] = deepcopy(
                 area_state.get("vendor_buyback", {}))

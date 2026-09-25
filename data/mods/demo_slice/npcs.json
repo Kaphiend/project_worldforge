@@ -1,8 +1,10 @@
 {
   "clearing_raider": {
     "name": "Roadside Raider",
-    "avatar": "asset_pack/Orc.png",
+    "challenge_rating": "1",
+    "avatar": "asset_pack/Goblin.png",
     "controller": "ai",
+    "known_abilities": ["barbarian_rage", "fighter_second_wind"],
     "elite_chance": 0.08,
     "class_pool": [
       "barbarian",
@@ -42,11 +44,11 @@
       "levels": [
         {
           "dc": 10,
-          "title": "Orc"
+          "title": "Goblin"
         },
         {
           "dc": 13,
-          "title": "Orc Raider"
+          "title": "Goblin Raider"
         }
       ]
     },

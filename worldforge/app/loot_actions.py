@@ -53,11 +53,15 @@ def handle_loot_action(actor, local_player_id, actor_id, action,
             return {"_action_error": "There is no corpse available to loot."}
         corpse_id = action.get("target")
         corpse = combat.get("actors", {}).get(corpse_id)
-        if (not corpse or corpse.get("team") != "enemies"
-                or not corpse.get("downed")):
-            return {"_action_error": "That corpse is no longer available."}
+        chest = next((item for item in combat.get("chests", [])
+                      if item.get("id") == corpse_id), None)
+        container = chest or corpse
+        is_chest = chest is not None
+        if (not container or (not is_chest and
+                (corpse.get("team") != "enemies" or not corpse.get("downed")))):
+            return {"_action_error": "That loot container is no longer available."}
         now = pygame.time.get_ticks()
-        expiry = corpse.get("corpse_despawn_at")
+        expiry = None if is_chest else corpse.get("corpse_despawn_at")
         if expiry is not None and now >= expiry:
             return {"_action_error": "That corpse has already been looted and is gone."}
         player_entry = combat.get("actors", {}).get(actor_id)
@@ -76,12 +80,12 @@ def handle_loot_action(actor, local_player_id, actor_id, action,
             loot_x, loot_y = remote.get("x", data.get("x", 0)), remote.get("y", data.get("y", 0))
         loot_position = {"x": loot_x, "y": loot_y,
                          "width": ACTOR_SIZE, "height": ACTOR_SIZE}
-        distance = edge_distance_feet(loot_position, corpse,
+        distance = edge_distance_feet(loot_position, container,
                                       PIXELS_PER_FOOT, ACTOR_SIZE)
         if distance > 5:
-            return {"_action_error": "Move within 5 feet of the corpse to loot it."}
+            return {"_action_error": "Move within 5 feet to loot it."}
 
-        loot = corpse.setdefault("loot", [])
+        loot = container.setdefault("loot", [])
         if action["type"] in {"loot_take", "loot_take_all"}:
             if action["type"] == "loot_take_all":
                 claimed = list(loot)
@@ -120,18 +124,28 @@ def handle_loot_action(actor, local_player_id, actor_id, action,
                 else:
                     inventory.append(deepcopy(item))
             if not loot:
-                # Taking the last individual item ends looting just like Take
-                # All or Done, so the corpse gets the same cleanup timer.
-                corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
+                if is_chest:
+                    chest["opened"] = True
+                else:
+                    # Taking the last item starts the corpse cleanup timer.
+                    corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
             if player_entry:
                 player_entry["data"].update(data)
             for item in claimed:
                 _log(combat, f"{data.get('name', actor_id)} takes {item.get('name', 'an item')} from the shared loot.")
             if action["type"] == "loot_take_all":
-                corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
+                if is_chest:
+                    chest["opened"] = True
+                else:
+                    corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
             return combat
 
-        if corpse.get("corpse_despawn_at") is None:
-            corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
-        _log(combat, f"Looting {corpse.get('data', {}).get('name', 'the corpse')} ends.")
+        if is_chest:
+            chest["opened"] = True
+            name = chest.get("name", "the chest")
+        else:
+            if corpse.get("corpse_despawn_at") is None:
+                corpse["corpse_despawn_at"] = now + CORPSE_DESPAWN_MS
+            name = corpse.get("data", {}).get("name", "the corpse")
+        _log(combat, f"Looting {name} ends.")
         return combat

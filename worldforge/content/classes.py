@@ -14,12 +14,65 @@ MODS_DIR = DATA_DIR / "mods"
 USER_MODS_DIR = user_data_path("mods") if getattr(sys, "frozen", False) else None
 
 
+ENTITY_TABLES = {
+    "abilities.json", "arenas.json", "classes.json", "conditions.json",
+    "equipment.json", "experience.json", "item_attributes.json", "npcs.json", "races.json",
+    "scenarios.json", "spells.json", "subclasses.json",
+}
+
+
+def _validate_table(filename, definitions, source):
+    """Validate table record shapes and report the originating file/path."""
+    if not isinstance(definitions, dict):
+        raise ValueError(f"{source} must contain a JSON object")
+
+    if filename in ENTITY_TABLES:
+        for record_id, record in definitions.items():
+            if not isinstance(record, dict):
+                raise ValueError(
+                    f"{source}: {record_id} must be a JSON object")
+
+    if filename == "subclasses.json":
+        for subclass_id, subclass in definitions.items():
+            features = subclass.get("features", {})
+            if not isinstance(features, dict):
+                raise ValueError(
+                    f"{source}: {subclass_id}.features must be an object keyed by level")
+            for level, tier in features.items():
+                path = f"{subclass_id}.features.{level}"
+                try:
+                    parsed_level = int(level)
+                except (TypeError, ValueError):
+                    raise ValueError(
+                        f"{source}: {path} has a level that must be an integer") from None
+                if parsed_level < 1:
+                    raise ValueError(
+                        f"{source}: {path} level must be greater than zero")
+                entries = tier if isinstance(tier, list) else [tier]
+                if not isinstance(tier, (dict, list)):
+                    raise ValueError(
+                        f"{source}: {path} must be a feature object or a list of feature objects")
+                for index, feature in enumerate(entries):
+                    feature_path = (f"{path}[{index}]" if isinstance(tier, list)
+                                    else path)
+                    if not isinstance(feature, dict):
+                        raise ValueError(
+                            f"{source}: {feature_path} must be a JSON object")
+                    if ("summary" in feature
+                            and not isinstance(feature["summary"], str)):
+                        raise ValueError(
+                            f"{source}: {feature_path}.summary must be a string")
+                    if ("id" in feature
+                            and not isinstance(feature["id"], str)):
+                        raise ValueError(
+                            f"{source}: {feature_path}.id must be a string")
+
+
 def _load_table(filename):
     base_file = DATA_DIR / filename
     with base_file.open(encoding="utf-8") as data_file:
         definitions = json.load(data_file)
-    if not isinstance(definitions, dict):
-        raise ValueError(f"{base_file} must contain a JSON object")
+    _validate_table(filename, definitions, base_file)
 
     mod_roots = [MODS_DIR]
     if USER_MODS_DIR is not None:
@@ -35,8 +88,7 @@ def _load_table(filename):
             continue
         with mod_file.open(encoding="utf-8") as data_file:
             mod_definitions = json.load(data_file)
-        if not isinstance(mod_definitions, dict):
-            raise ValueError(f"{mod_file} must contain a JSON object")
+        _validate_table(filename, mod_definitions, mod_file)
         definitions.update(mod_definitions)
     return definitions
 
@@ -93,3 +145,4 @@ SUBCLASSES = _load_table("subclasses.json")
 PROGRESSION_RULES = _load_table("progression.json")
 ITEM_ATTRIBUTES = _load_table("item_attributes.json")
 MOB_GENERATION_RULES = _load_table("mob_generation.json")
+EXPERIENCE_RULES = _load_table("experience.json")

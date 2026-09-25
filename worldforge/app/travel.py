@@ -2,13 +2,15 @@
 from copy import deepcopy
 
 from worldforge.app.encounters import (DEFAULT_SCENARIO, _combat_snapshot,
-                                       _scenario_world_mobs)
+                                       _scenario_world_mobs, combat_world_mobs)
 from worldforge.app.party import party_members, set_remote_position
 from worldforge.app.rendering import _player_id
 from worldforge.app.world import (ACTOR_SIZE, PIXELS_PER_FOOT, _actor_hitbox,
                                   _arena_bounds, _arena_obstacles)
 from worldforge.combat.rules import edge_distance_feet
 from worldforge.content.classes import ARENAS, SCENARIOS
+from worldforge.content.campaign import ACTIVE_CAMPAIGN
+from worldforge.app.rest_flow import cancel_inn_booking
 
 
 def _persistent_area_enemies(entries):
@@ -52,13 +54,20 @@ def travel_party_through_exit(actor, local_player_id, actor_id, remote_players,
     """Move the connected party through an arena exit into another data area."""
     if not combat or combat.get("active"):
         return {"_action_error": "You cannot travel to another area during combat."}
-    if combat.get("rest_session"):
+    rest_session = combat.get("rest_session")
+    if rest_session and rest_session.get("location") != "inn":
         return {"_action_error": "Finish the current rest before traveling."}
     arena = combat.get("arena", {})
+    source_id = combat.get("scenario_id", DEFAULT_SCENARIO)
     exit_record = next((item for item in arena.get("exits", [])
                         if item.get("id") == exit_id), None)
     if not exit_record:
         return {"_action_error": "That area exit is unavailable."}
+    route = next((item for item in ACTIVE_CAMPAIGN.get("map_connections", [])
+                  if item.get("from") == source_id
+                  and item.get("exit") == exit_record.get("id")), None)
+    if not route:
+        return {"_action_error": "That route is not enabled in the active campaign."}
     member = combat.get("actors", {}).get(actor_id)
     if member and member.get("team") != "players":
         return {"_action_error": "That character is not in the party."}
@@ -80,6 +89,9 @@ def travel_party_through_exit(actor, local_player_id, actor_id, remote_players,
             exit_record.get("interaction_range_feet", 8)):
         return {"_action_error": "Move closer to the exit to travel."}
     destination_id = exit_record.get("destination_scenario")
+    if (route.get("to") != destination_id
+            or route.get("destination_exit") != exit_record.get("destination_exit_id")):
+        return {"_action_error": "That exit does not match the active campaign route."}
     destination = SCENARIOS.get(destination_id)
     if not destination:
         return {"_action_error": "The exit points to an unknown area."}
@@ -89,19 +101,31 @@ def travel_party_through_exit(actor, local_player_id, actor_id, remote_players,
     players = party_members(actor, local_player_id, remote_players, combat)
     if not players:
         return {"_action_error": "There are no connected party members to travel."}
+    if any(
+            data.get("downed")
+            or combat.get("actors", {}).get(player_id, {}).get("downed")
+            for player_id, _, data in players):
+        return {"_action_error": "The party cannot travel while a member is downed. Revive them first."}
+
+    if rest_session:
+        cancel_inn_booking(actor, local_player_id, remote_players, combat)
 
     world_areas = combat.setdefault("world_areas", {})
     world_area_items = combat.setdefault("world_area_items", {})
-    source_id = combat.get("scenario_id", DEFAULT_SCENARIO)
+    world_area_chests = combat.setdefault("world_area_chests", {})
     world_areas[source_id] = _persistent_area_enemies(
-        combat.get("actors", {}).values())
+        combat_world_mobs(combat))
     world_area_items[source_id] = deepcopy(combat.get("ground_items", []))
+    world_area_chests[source_id] = deepcopy(combat.get("chests", []))
     destination_mobs = world_areas.get(destination_id)
     if destination_mobs is None:
         destination_mobs = _scenario_world_mobs(destination_id)
     destination_mobs = _persistent_area_enemies(destination_mobs)
     world_areas[destination_id] = deepcopy(destination_mobs)
     combat["ground_items"] = deepcopy(world_area_items.get(destination_id, []))
+    default_chests = deepcopy(destination_arena.get("chests", []))
+    combat["chests"] = deepcopy(world_area_chests.get(destination_id,
+                                                       default_chests))
 
     base_x, base_y = _area_arrival_spawn(
         destination_arena, source_id, exit_record)
@@ -154,6 +178,7 @@ def travel_party_through_exit(actor, local_player_id, actor_id, remote_players,
                         if entry.get("team") == "players"}
     combat["actors"].update({entry["id"]: deepcopy(entry)
                              for entry in destination_mobs})
+    combat["inactive_world_mobs"] = []
     combat["scenario_id"] = destination_id
     combat["scenario"] = deepcopy(destination)
     combat["arena"] = deepcopy(destination_arena)

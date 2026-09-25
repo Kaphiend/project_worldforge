@@ -5,6 +5,7 @@ import pygame
 
 from worldforge.actors.factory import item_definition, modifier
 from worldforge.combat.rules import (edge_distance_feet, proficiency_bonus,
+                                     resolve_skill_check,
                                      selected_weapon, speed_feet)
 from worldforge.combat.species import species_traits
 
@@ -19,6 +20,8 @@ def _arena_obstacles(arena):
     obstacles.extend(arena.get("trainers", []))
     obstacles.extend(arena.get("vendors", []))
     obstacles.extend(arena.get("camp_beds", []))
+    obstacles.extend(arena.get("chests", []))
+    obstacles.extend(arena.get("personal_chests", []))
     return [pygame.Rect(item["x"], item["y"], item["width"], item["height"])
             for item in obstacles]
 
@@ -36,11 +39,13 @@ def _can_occupy(candidate, current, fixed_obstacles, actor_obstacles):
             return False
     return True
 
-def _move_actor(actor, keys, speed, facing_left, arena, occupied=()):
-    dx = int(bool(keys[pygame.K_RIGHT] or keys[pygame.K_d])) - int(
-        bool(keys[pygame.K_LEFT] or keys[pygame.K_a]))
-    dy = int(bool(keys[pygame.K_DOWN] or keys[pygame.K_s])) - int(
-        bool(keys[pygame.K_UP] or keys[pygame.K_w]))
+def _move_actor(actor, keys, speed, facing_left, arena, occupied=(),
+                movement_keys=None):
+    movement_keys = movement_keys or {}
+    dx = int(bool(keys[pygame.K_RIGHT] or keys[movement_keys.get("right", pygame.K_d)])) - int(
+        bool(keys[pygame.K_LEFT] or keys[movement_keys.get("left", pygame.K_a)]))
+    dy = int(bool(keys[pygame.K_DOWN] or keys[movement_keys.get("down", pygame.K_s)])) - int(
+        bool(keys[pygame.K_UP] or keys[movement_keys.get("up", pygame.K_w)]))
     if not dx and not dy:
         return False, facing_left
     moving_left = dx < 0
@@ -68,13 +73,17 @@ def _move_actor(actor, keys, speed, facing_left, arena, occupied=()):
     return True, facing_left
 
 def _camera_offset(actor, arena, viewport=(1024, 768)):
+    return _camera_offset_position(actor.x, actor.y, arena, viewport)
+
+def _camera_offset_position(x, y, arena, viewport=(1024, 768)):
     bounds = _arena_bounds(arena)
     width, height = viewport
     max_x = max(bounds.left, bounds.right - width)
     max_y = max(bounds.top, bounds.bottom - height)
-    x = actor.x + ACTOR_SIZE / 2 - width / 2
-    y = actor.y + ACTOR_SIZE / 2 - height / 2
-    return round(max(bounds.left, min(max_x, x))), round(max(bounds.top, min(max_y, y)))
+    camera_x = x + ACTOR_SIZE / 2 - width / 2
+    camera_y = y + ACTOR_SIZE / 2 - height / 2
+    return (round(max(bounds.left, min(max_x, camera_x))),
+            round(max(bounds.top, min(max_y, camera_y))))
 
 def _walk_destination(x, y, dx, dy, arena, occupied=()):
     bounds = _arena_bounds(arena)
@@ -146,14 +155,7 @@ def _perception_score(actor_data):
 
 def _stealth_check(actor_data):
     """Roll Dexterity (Stealth) using the actor's trained skill bonus."""
-    import random
-    abilities = actor_data.get("abilities", {}) or {}
-    bonus = modifier(abilities.get("dexterity", 10))
-    if "stealth" in {str(skill).casefold() for skill in
-                      actor_data.get("skills", []) or []}:
-        bonus += proficiency_bonus(actor_data)
-    roll = random.randint(1, 20)
-    return {"natural": roll, "bonus": bonus, "total": roll + bonus}
+    return resolve_skill_check(actor_data, "stealth", "dexterity")
 
 
 def _hidden_from(observer_entry, target_entry, arena):
@@ -226,7 +228,15 @@ def _attack_readiness_text(actor_data, actor_x, actor_y, target_entry, arena):
     return f"Target: {edge_feet} ft | {definition.get('name', 'Weapon')} {mode} | {state}{throw_hint}"
 
 def _movement_allowance(actor_data):
-    bonus = sum(int(effect.get("feet", 0))
-                for effect in actor_data.get("active_effects", [])
-                if effect.get("kind") == "movement_bonus")
-    return speed_feet(actor_data) + bonus
+    base_speed = speed_feet(actor_data)
+    from worldforge.combat.conditions import has_condition
+    if has_condition(actor_data, "prone"):
+        base_speed = int(base_speed / 2)
+    bonus = 0
+    for effect in actor_data.get("active_effects", []) or []:
+        if effect.get("kind") != "movement_bonus":
+            continue
+        bonus += int(effect.get("feet", 0) or 0)
+        multiplier = max(1.0, float(effect.get("multiplier", 1) or 1))
+        bonus += int(base_speed * (multiplier - 1))
+    return base_speed + bonus

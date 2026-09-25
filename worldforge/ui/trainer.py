@@ -10,7 +10,11 @@ from worldforge.content.classes import (ABILITIES, CLASSES, SPELLS, SUBCLASSES,
 from worldforge.core.progression import (adjusted_purchase_cost, class_unlock_cost,
                          class_unlocked_level, qualified_level,
                          unlocked_classes, unspent_xp, levels_to_apply,
-                         class_feature_definition)
+                         class_feature_definition, class_feature_choice_slots)
+from worldforge.combat.rules import (ROGUE_WEAPON_MASTERY,
+                                     FIGHTING_STYLE_OPTIONS,
+                                     weapon_mastery_eligible)
+from worldforge.core.progression import attribute_points_available
 
 
 class TrainerUI:
@@ -19,6 +23,27 @@ class TrainerUI:
         self.class_id = next(iter(CLASSES), "")
         self.scroll = 0
         self.notice = ""
+        self.section = "features"
+        self.section_by_class = {}
+        self._section_rects = {}
+        self._attribute_rects = {}
+
+    @staticmethod
+    def _panel_rect(width, height):
+        panel = pygame.Rect(0, 0, min(1240, max(320, width - 24)),
+                            min(744, max(400, height - 24)))
+        panel.center = (width // 2, height // 2)
+        return panel
+
+    @staticmethod
+    def _class_tab_rect(panel, index, count):
+        step = (panel.width - 48) / max(1, count)
+        return pygame.Rect(round(panel.x + 24 + index * step), panel.y + 58,
+                           max(44, int(step - 6)), 32)
+
+    @staticmethod
+    def _visible_row_count(panel):
+        return max(1, min(10, (panel.height - 280) // 38))
 
     def toggle(self, data=None):
         self.visible = not self.visible
@@ -26,6 +51,7 @@ class TrainerUI:
         if data and data.get("char_class") in CLASSES:
             self.class_id = data["char_class"]
             self.scroll = 0
+        self.section = self.section_by_class.get(self.class_id, "features")
 
     def _items(self, data):
         if self.class_id not in unlocked_classes(data):
@@ -81,6 +107,47 @@ class TrainerUI:
             }
             rows.append((1, definition["name"], "skill", skill_id,
                          definition, owned))
+        expertise_slots = sum(
+            int((feature.get("effect", {}) or {}).get("count", 0) or 0)
+            for tier, features in progression.items() for feature in features or []
+            if feature.get("id") in owned_features
+            and (feature.get("effect", {}) or {}).get("kind") == "expertise_choice")
+        expertise_skills = {str(value).casefold() for value in
+                            data.get("expertise_skills", []) or []}
+        if len(expertise_skills) < expertise_slots:
+            for skill in sorted(known_skills - expertise_skills):
+                definition = {"name": f"Expertise: {skill.title()}",
+                              "description": f"Double your proficiency bonus for {skill.title()} checks."}
+                rows.append((1, definition["name"], "expertise_choice",
+                             skill, definition, False))
+        mastery_slots = class_feature_choice_slots(data, "weapon_mastery_choice")
+        weapon_masteries = data.get("weapon_masteries", {}) or {}
+        if len(weapon_masteries) < mastery_slots:
+            for weapon_id, mastery in ROGUE_WEAPON_MASTERY.items():
+                if (weapon_id in weapon_masteries
+                        or not weapon_mastery_eligible(data, weapon_id)):
+                    continue
+                definition = {"name": f"{weapon_id.replace('_', ' ').title()} · {mastery.title()}",
+                              "description": f"Choose {mastery.title()} mastery for this weapon."}
+                rows.append((1, definition["name"], "mastery_choice",
+                             weapon_id, definition, False))
+        style_slots = class_feature_choice_slots(data, "fighting_style_choice")
+        fighting_styles = set(data.get("fighting_styles", []) or [])
+        if len(fighting_styles) < style_slots:
+            for style_id, definition in FIGHTING_STYLE_OPTIONS.items():
+                if style_id not in fighting_styles:
+                    rows.append((1, definition["name"], "fighting_style_choice",
+                                 style_id, definition, False))
+        section_kinds = {
+            "features": {"feature", "subclass feature"},
+            "spells": {"spell"}, "abilities": {"ability"},
+            "skills": {"skill"},
+            "choices": {"expertise_choice", "mastery_choice",
+                        "fighting_style_choice"},
+        }
+        if self.section != "ability_scores":
+            rows = [row for row in rows
+                    if row[2] in section_kinds.get(self.section, set())]
         return sorted(rows, key=lambda row: (row[0], row[1].lower()))
 
     @staticmethod
@@ -155,29 +222,55 @@ class TrainerUI:
         x, y = event.pos
         surface = pygame.display.get_surface()
         screen_width = surface.get_width() if surface else 800
-        level_up_rect = pygame.Rect(screen_width - 190, 42, 164, 32)
+        screen_height = surface.get_height() if surface else 600
+        panel = self._panel_rect(screen_width, screen_height)
+        level_up_rect = pygame.Rect(panel.right - 190, panel.y + 14, 164, 32)
         if (level_up_rect.collidepoint(x, y) and levels_to_apply(data) > 0
                 and self.class_id in unlocked_classes(data)):
             return {"type": "level_up", "class_id": self.class_id}
         for index, class_id in enumerate(CLASSES):
-            rect = pygame.Rect(24 + index * 80, 86, 76, 32)
+            rect = self._class_tab_rect(panel, index, len(CLASSES))
             if rect.collidepoint(x, y):
                 self.class_id = class_id
                 self.scroll = 0
+                self.section = self.section_by_class.get(class_id, "features")
                 return None
         if self.class_id not in unlocked_classes(data):
-            unlock_rect = pygame.Rect(screen_width - 190, 120, 168, 30)
+            unlock_rect = pygame.Rect(panel.right - 190, panel.y + 96,
+                                      168, 30)
             if unlock_rect.collidepoint(x, y):
                 return {"type": "unlock_class", "class_id": self.class_id}
-        if y >= 142:
-            visible_rows = self._items(data)[self.scroll: self.scroll + 10]
+        for section, rect in self._section_rects.items():
+            if rect.collidepoint(x, y):
+                self.section = section
+                self.section_by_class[self.class_id] = section
+                self.scroll = 0
+                return None
+        if self.section == "ability_scores":
+            for ability, rect in self._attribute_rects.items():
+                if rect.collidepoint(x, y) and attribute_points_available(data) > 0:
+                    return {"type": "increase_ability", "ability": ability}
+            return None
+        visible_count = self._visible_row_count(panel)
+        if y >= panel.y + 222:
+            visible_rows = self._items(data)[self.scroll:self.scroll + visible_count]
             for index, row in enumerate(visible_rows):
-                row_rect = pygame.Rect(22, 165 + index * 38,
-                                       screen_width - 44, 34)
-                buy_rect = pygame.Rect(screen_width - 120, row_rect.y + 2,
+                row_rect = pygame.Rect(panel.x + 12,
+                                       panel.y + 224 + index * 38,
+                                       panel.width - 24, 34)
+                buy_rect = pygame.Rect(panel.right - 120, row_rect.y + 2,
                                        82, 30)
                 if buy_rect.collidepoint(x, y) and not row[5]:
                     _tier, _name, kind, item_id, definition, _owned = row
+                    if kind == "expertise_choice":
+                        return {"type": "choose_expertise", "class_id": self.class_id,
+                                "skill": item_id}
+                    if kind == "mastery_choice":
+                        return {"type": "choose_weapon_mastery",
+                                "class_id": self.class_id, "weapon_id": item_id}
+                    if kind == "fighting_style_choice":
+                        return {"type": "choose_fighting_style",
+                                "class_id": self.class_id, "style_id": item_id}
                     return {"type": "trainer_purchase", "class_id": self.class_id,
                             "kind": kind, "item_id": item_id,
                             "xp_purchase_cost": adjusted_purchase_cost(
@@ -190,19 +283,21 @@ class TrainerUI:
         overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         screen.blit(overlay, (0, 0))
-        panel = pygame.Rect(10, 28, screen.get_width() - 20, screen.get_height() - 56)
+        panel = self._panel_rect(*screen.get_size())
         pygame.draw.rect(screen, (24, 28, 32), panel, border_radius=8)
         pygame.draw.rect(screen, (190, 180, 140), panel, 2, border_radius=8)
         title = pygame.font.Font(None, 30)
-        screen.blit(title.render("Trainer", True, (250, 235, 190)), (26, 42))
+        screen.blit(title.render("Trainer", True, (250, 235, 190)),
+                    (panel.x + 26, panel.y + 14))
         selected_title = self.class_id.title() if self.class_id else "No class"
         selected_tier = class_unlocked_level(data, self.class_id) if self.class_id else 0
         status = (f"Applied level {data.get('level', 1)}"
                   f"   Ready {levels_to_apply(data)}   XP {unspent_xp(data)}")
-        screen.blit(font.render(status, True, (215, 225, 220)), (180, 48))
+        screen.blit(font.render(status, True, (215, 225, 220)),
+                    (panel.x + 180, panel.y + 20))
         hint_font = pygame.font.Font(None, 17)
         pending = levels_to_apply(data)
-        level_up_rect = pygame.Rect(screen.get_width() - 190, 42, 164, 32)
+        level_up_rect = pygame.Rect(panel.right - 190, panel.y + 14, 164, 32)
         can_level = (pending > 0 and self.class_id in unlocked_classes(data))
         pygame.draw.rect(screen, (76, 120, 78) if can_level else (67, 70, 75),
                          level_up_rect, border_radius=4)
@@ -213,7 +308,7 @@ class TrainerUI:
         mouse_pos = pygame.mouse.get_pos()
         acquired_classes = set(unlocked_classes(data))
         for index, class_id in enumerate(CLASSES):
-            rect = pygame.Rect(24 + index * 80, 86, 76, 32)
+            rect = self._class_tab_rect(panel, index, len(CLASSES))
             acquired = class_id in acquired_classes
             base_color = (82, 110, 88) if class_id == self.class_id else (55, 62, 68)
             pygame.draw.rect(screen, base_color if acquired else (43, 45, 48),
@@ -231,7 +326,8 @@ class TrainerUI:
         unlocked = self.class_id in unlocked_classes(data)
         if not unlocked:
             fee = class_unlock_cost(data, self.class_id)
-            unlock_rect = pygame.Rect(screen.get_width() - 190, 120, 168, 30)
+            unlock_rect = pygame.Rect(panel.right - 190, panel.y + 92,
+                                      168, 30)
             can_unlock = fee <= unspent_xp(data)
             pygame.draw.rect(screen, (76, 120, 78) if can_unlock else (72, 72, 72),
                              unlock_rect, border_radius=4)
@@ -240,11 +336,12 @@ class TrainerUI:
                         (unlock_rect.x + 9, unlock_rect.y + 8))
             screen.blit(hint_font.render(
                 "Unlock this class before buying its options.",
-                True, (205, 215, 200)), (26, 128))
+                True, (205, 215, 200)), (panel.x + 26, panel.y + 101))
         else:
             screen.blit(hint_font.render(
-                "Unlocked. Spells, cantrips, skills, features, and abilities cost XP.",
-                True, (205, 215, 200)), (26, 128))
+                self._fit("Unlocked. Spells, cantrips, skills, features, and abilities cost XP.",
+                          hint_font, panel.width - 250),
+                True, (205, 215, 200)), (panel.x + 26, panel.y + 101))
         current_features = set(data.get("class_features", []) or [])
         granted = [feature.get("name", feature.get("id", "Feature"))
                    for features in (CLASSES.get(self.class_id, {}).get(
@@ -259,31 +356,111 @@ class TrainerUI:
                 if feature_id in current_features)
         if granted:
             status_text = self._fit("Purchased features: " + ", ".join(granted), hint_font,
-                                    screen.get_width() - 52)
+                                    panel.width - 250)
             screen.blit(hint_font.render(status_text, True, (255, 220, 145)),
-                        (26, 146))
+                        (panel.x + 26, panel.y + 126))
+        section_names = (("features", "Features"), ("spells", "Spells"),
+                         ("abilities", "Abilities"), ("skills", "Skills"),
+                         ("choices", "Choices"),
+                         ("ability_scores", "Ability Scores"))
+        self._section_rects = {}
+        tab_x = panel.x + 24
+        for section, label in section_names:
+            width = 132 if section == "ability_scores" else 96
+            rect = pygame.Rect(tab_x, panel.y + 158, width, 30)
+            self._section_rects[section] = rect
+            pygame.draw.rect(screen,
+                             (91, 116, 91) if section == self.section else (53, 60, 65),
+                             rect, border_radius=4)
+            screen.blit(hint_font.render(label, True, (245, 245, 240)),
+                        hint_font.render(label, True, (245, 245, 240)).get_rect(center=rect.center))
+            tab_x += width + 8
+        if self.notice:
+            notice_text = self._fit(self.notice, font, panel.width - 52)
+            screen.blit(font.render(notice_text, True, (255, 215, 150)),
+                        (panel.x + 26, panel.y + 192))
+        if self.section == "ability_scores":
+            available = attribute_points_available(data)
+            point_label = self._fit(f"Unspent ability points: {available}",
+                                    font, panel.width - 52)
+            screen.blit(font.render(point_label, True, (255, 220, 145)),
+                        (panel.x + 26, panel.y + 224))
+            ability_names = (("strength", "Strength"), ("dexterity", "Dexterity"),
+                             ("constitution", "Constitution"), ("intellect", "Intellect"),
+                             ("wisdom", "Wisdom"), ("charisma", "Charisma"))
+            abilities = data.get("abilities", {}) or {}
+            self._attribute_rects = {}
+            compact = panel.height < 590
+            columns = 3 if compact else 2
+            card_gap = 10 if compact else 40
+            card_width = ((panel.width - 52 - (columns - 1) * card_gap) // columns)
+            for index, (ability, label) in enumerate(ability_names):
+                col, row = index % columns, index // columns
+                card_height = 50 if compact else 58
+                row_gap = 12 if compact else 18
+                rect = pygame.Rect(panel.x + 26 + col * (card_width + card_gap),
+                                   panel.y + (252 if compact else 263)
+                                   + row * (card_height + row_gap),
+                                   card_width, card_height)
+                self._attribute_rects[ability] = rect
+                can_spend = available > 0
+                pygame.draw.rect(screen, (63, 94, 68) if can_spend else (48, 52, 56),
+                                 rect, border_radius=5)
+                score = int(abilities.get(ability, 10) or 10)
+                card_text = self._fit(f"{label}  {score}", font,
+                                      rect.width - 78)
+                screen.blit(font.render(card_text, True, (245, 245, 240)),
+                            (rect.x + 16, rect.y + 18))
+                screen.blit(hint_font.render("+1", True, (255, 220, 145)),
+                            (rect.right - 50, rect.y + 21))
+            footer = "Spend one available point per click. Scores above 30 do not improve calculations."
+            footer = self._fit(footer, hint_font, panel.width - 52)
+            screen.blit(hint_font.render(footer, True, (205, 210, 210)),
+                        (panel.x + 26, panel.bottom - 26))
+            self._draw_tooltip(screen, hover_title, hover_detail, mouse_pos)
+            return
         rows = self._items(data)
-        self.scroll = min(self.scroll, max(0, len(rows) - 10))
+        visible_count = self._visible_row_count(panel)
+        self.scroll = min(self.scroll, max(0, len(rows) - visible_count))
         frontier = class_unlocked_level(data, self.class_id)
         ceiling = qualified_level(data)
-        for index, row in enumerate(rows[self.scroll:self.scroll + 10]):
+        if not rows:
+            empty_messages = {
+                "features": "No class features are listed here yet.",
+                "spells": "No trainer spells are available for this class.",
+                "abilities": "No trainer abilities are available for this class.",
+                "skills": "No skill selections remain for this class.",
+                "choices": "Purchase a feature that grants a choice to unlock options here.",
+            }
+            message = ("Unlock this class to browse its options."
+                       if not unlocked else
+                       empty_messages.get(self.section, "No options are available."))
+            message = self._fit(message, font, panel.width - 56)
+            screen.blit(font.render(message, True, (210, 215, 215)),
+                        (panel.x + 28, panel.y + 224))
+        for index, row in enumerate(rows[self.scroll:self.scroll + visible_count]):
             tier, name, kind, item_id, definition, is_owned = row
-            y = 165 + index * 38
-            row_rect = pygame.Rect(22, y, screen.get_width() - 44, 34)
-            can_buy = (not is_owned and tier <= frontier and tier <= ceiling
+            y = panel.y + 224 + index * 38
+            row_rect = pygame.Rect(panel.x + 12, y, panel.width - 24, 34)
+            can_buy = (kind in {"expertise_choice", "mastery_choice",
+                                "fighting_style_choice"} and not is_owned) or (
+                       not is_owned and tier <= frontier and tier <= ceiling
                        and adjusted_purchase_cost(data, self.class_id, definition) is not None
                        and unspent_xp(data) >= adjusted_purchase_cost(
                            data, self.class_id, definition))
             color = (51, 67, 58) if can_buy else (43, 47, 51)
             pygame.draw.rect(screen, color, row_rect, border_radius=4)
             suffix = "owned" if is_owned else f"level {tier} {kind}"
-            screen.blit(font.render(f"{name}  ·  {suffix}", True,
-                                    (240, 240, 230)), (32, y + 8))
+            button = pygame.Rect(panel.right - 120, y + 2, 82, 30)
+            label_text = self._fit(f"{name}  ·  {suffix}", font,
+                                   button.x - (panel.x + 22) - 12)
+            screen.blit(font.render(label_text, True, (240, 240, 230)),
+                        (panel.x + 22, y + 8))
             cost = adjusted_purchase_cost(data, self.class_id, definition)
-            button = pygame.Rect(screen.get_width() - 120, y + 2, 82, 30)
             pygame.draw.rect(screen, (76, 120, 78) if can_buy else (72, 72, 72),
                              button, border_radius=4)
-            label = "Owned" if is_owned else (f"{cost} XP" if cost is not None else "No cost")
+            label = ("Owned" if is_owned else "Choose" if kind in {"expertise_choice", "mastery_choice", "fighting_style_choice"}
+                     else f"{cost} XP" if cost is not None else "No cost")
             screen.blit(pygame.font.Font(None, 16).render(label, True, (250, 250, 245)),
                         (button.x + 5, button.y + 9))
             if row_rect.collidepoint(mouse_pos):
@@ -310,8 +487,8 @@ class TrainerUI:
                 hover_detail = "  ".join(details)
         footer = ("Click an available price to learn it. Tiers unlock in order. "
                   f"Level Up assigns a pending level to {selected_title}. Esc closes.")
-        screen.blit(pygame.font.Font(None, 17).render(footer, True, (205, 210, 210)),
-                    (26, panel.bottom - 26))
-        if self.notice:
-            screen.blit(font.render(self.notice, True, (255, 215, 150)), (26, 120))
+        footer_font = pygame.font.Font(None, 17)
+        footer = self._fit(footer, footer_font, panel.width - 52)
+        screen.blit(footer_font.render(footer, True, (205, 210, 210)),
+                    (panel.x + 26, panel.bottom - 26))
         self._draw_tooltip(screen, hover_title, hover_detail, mouse_pos)

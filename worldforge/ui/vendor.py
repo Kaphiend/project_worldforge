@@ -61,7 +61,7 @@ class VendorUI:
     def draw(self, screen, font, vendor, actor_data, buyback):
         if not self.visible or not vendor:
             return
-        width, height = min(640, screen.get_width() - 32), min(540, screen.get_height() - 32)
+        width, height = 640, 540
         self.panel = pygame.Rect(0, 0, width, height)
         self.panel.center = screen.get_rect().center
         veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)

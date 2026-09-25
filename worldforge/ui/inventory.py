@@ -200,8 +200,7 @@ class InventoryScreen:
     def draw(self, screen, actor_data, font, tooltips_enabled=True):
         if not self.visible:
             return
-        self.rect.size = (min(1080, screen.get_width() - 32),
-                          min(620, screen.get_height() - 32))
+        self.rect.size = (1080, 620)
         self.rect.center = (screen.get_width() // 2, screen.get_height() // 2)
         veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         veil.fill((0, 0, 0, 175))

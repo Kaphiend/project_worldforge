@@ -9,6 +9,9 @@ remain in the table with `selectable: false` for saved-character compatibility.
 `features` is a map keyed by level-as-text. A level may contain one feature
 object or a list of feature objects. Give each feature a stable `id`, `name`,
 and short `summary`; features at the same level are separate trainer purchases.
+The loader checks this shape for built-in and mod records at startup and
+reports the source file and field when a feature tier is malformed. A supplied
+`summary` must be text.
 Character creation chooses the subclass at level 3. Features appear as XP
 purchases at the trainer when the character meets their class-level
 prerequisite. Purchased entries are recorded on the character sheet. Their

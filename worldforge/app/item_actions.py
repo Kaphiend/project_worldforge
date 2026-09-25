@@ -8,7 +8,9 @@ from worldforge.app.encounters import DEFAULT_SCENARIO
 from worldforge.app.rendering import _capture_hp, _player_id
 from worldforge.app.world import _line_of_sight
 from worldforge.combat.spell_effects import resolve_spell
+from worldforge.content.campaign import campaign_rule
 from worldforge.content.classes import ARENAS, SCENARIOS, SPELLS
+from worldforge.core.progression import charge_xp_penalty
 
 
 def _do_item(combat, actor_id, item_id, target_id=None):
@@ -94,7 +96,8 @@ def _use_item_outside_combat(owner, item_id, target_id, local_player_id,
     if not result.get("success"):
         return False
     if was_downed and not target_data.get("downed") and target_data.get("current_hp", 0) > 0:
-        penalty = charge_xp_penalty(target_data, 2)
+        penalty = charge_xp_penalty(
+            target_data, campaign_rule("revival_xp_penalty_percent", 2))
         if penalty:
             target_data["last_revival_xp_penalty"] = penalty
     stack_quantity = max(1, int(item.get("quantity", 1)))
@@ -113,4 +116,3 @@ def _use_item_outside_combat(owner, item_id, target_id, local_player_id,
         target.current_hp = target_data.get("current_hp", target.current_hp)
         target.downed = target_data.get("downed", target.downed)
     return True
-

@@ -6,6 +6,7 @@ ACTION_TYPES = {
     "weapon_attack": "attack",
     "unarmed_strike": "unarmed_strike",
     "ranged_weapon_attack": "ranged_attack",
+    "offhand_attack": "offhand_attack",
     "throw_weapon": "throw",
     "hide": "hide",
     "flee": "flee",

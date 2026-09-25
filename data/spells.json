@@ -1,87 +1,7 @@
 {
-  "arcane_spark": {
-    "name": "Arcane Spark",
-    "classes": [
-      "bard",
-      "cleric",
-      "druid",
-      "paladin",
-      "ranger",
-      "sorcerer",
-      "warlock",
-      "wizard"
-    ],
-    "tier": 0,
-    "cantrip": true,
-    "spell_point_cost": 0,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 60,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "spell_attack"
-    },
-    "effects": {
-      "hit": [
-        {
-          "kind": "damage",
-          "formula": "1d8",
-          "damage_type": "force"
-        }
-      ],
-      "miss": []
-    },
-    "description": "A forceful bolt of raw magic strikes a distant foe.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "frost_needle": {
-    "name": "Frost Needle",
-    "classes": [
-      "bard",
-      "cleric",
-      "druid",
-      "paladin",
-      "ranger",
-      "sorcerer",
-      "warlock",
-      "wizard"
-    ],
-    "tier": 0,
-    "cantrip": true,
-    "spell_point_cost": 0,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 60,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "spell_attack"
-    },
-    "effects": {
-      "hit": [
-        {
-          "kind": "damage",
-          "formula": "1d6",
-          "damage_type": "cold"
-        }
-      ],
-      "miss": []
-    },
-    "description": "A narrow shard of ice flies toward a creature you can see.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
   "restorative_revival": {
-    "name": "Restorative Revival",
-    "classes": [
-      "cleric"
-    ],
+    "name": "Revival Scroll Effect",
+    "classes": [],
     "tier": 1,
     "casting_time": "action",
     "targeting": {
@@ -99,479 +19,8 @@
         "can_revive": true
       }
     ],
-    "consumable_equivalent": "revival_scroll",
     "description": "Rolls 2d4 healing and can restore a downed ally.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "cadence_mend": {
-    "name": "Cadence Mend",
-    "classes": [
-      "bard"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_ally",
-      "range_feet": 30,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "healing"
-    },
-    "effects": [
-      {
-        "kind": "healing",
-        "formula": "1d6+2",
-        "can_revive": false
-      }
-    ],
-    "description": "A measured phrase restores a small amount of vitality.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "resonant_burst": {
-    "name": "Resonant Burst",
-    "classes": [
-      "bard"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 30,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "saving_throw",
-      "ability": "constitution"
-    },
-    "effects": {
-      "failed_save": [
-        {
-          "kind": "damage",
-          "formula": "1d6",
-          "damage_type": "sonic"
-        }
-      ],
-      "successful_save": [
-        {
-          "kind": "damage",
-          "formula": "1d6",
-          "damage_type": "sonic",
-          "multiplier": 0.5
-        }
-      ]
-    },
-    "description": "A sharp chord strikes a creature’s balance and hearing.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "lantern_verdict": {
-    "name": "Lantern Verdict",
-    "classes": [
-      "cleric"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 60,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "saving_throw",
-      "ability": "dexterity"
-    },
-    "effects": {
-      "failed_save": [
-        {
-          "kind": "damage",
-          "formula": "1d8",
-          "damage_type": "radiant"
-        }
-      ],
-      "successful_save": []
-    },
-    "description": "A focused shaft of light punishes a target that fails to evade.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "stonebloom_mend": {
-    "name": "Stonebloom Mend",
-    "classes": [
-      "druid"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_ally",
-      "range_feet": 5,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "healing"
-    },
-    "effects": [
-      {
-        "kind": "healing",
-        "formula": "1d8",
-        "can_revive": false
-      }
-    ],
-    "description": "Living growth closes wounds with patient, steady force.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "briar_coil": {
-    "name": "Briar Coil",
-    "classes": [
-      "druid"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 30,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "saving_throw",
-      "ability": "strength"
-    },
-    "effects": {
-      "failed_save": [
-        {
-          "kind": "condition",
-          "condition_id": "bound_in_briar"
-        }
-      ],
-      "successful_save": []
-    },
-    "description": "Sudden roots and thorny runners bind a target that fails to break free.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "vowlight_touch": {
-    "name": "Vowlight Touch",
-    "classes": [
-      "paladin"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_ally",
-      "range_feet": 5,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "healing"
-    },
-    "effects": [
-      {
-        "kind": "healing",
-        "formula": "1d6+1",
-        "can_revive": false
-      }
-    ],
-    "description": "A focused touch restores a wounded ally.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "vowflare": {
-    "name": "Vowflare",
-    "classes": [
-      "paladin"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "self",
-      "range_feet": 0,
-      "requires_line_of_sight": false
-    },
-    "resolution": {
-      "kind": "self_enchantment",
-      "duration_turns": 1
-    },
-    "effects": [
-      {
-        "kind": "next_weapon_hit_bonus",
-        "formula": "1d6",
-        "damage_type": "radiant"
-      }
-    ],
-    "description": "Charge your next weapon hit with a brief flare of sworn resolve.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "quarry_spark": {
-    "name": "Quarry Spark",
-    "classes": [
-      "ranger"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 60,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "spell_attack"
-    },
-    "effects": {
-      "hit": [
-        {
-          "kind": "damage",
-          "formula": "1d8",
-          "damage_type": "piercing"
-        }
-      ],
-      "miss": []
-    },
-    "description": "A guided thorn of force flies toward a quarry.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "trail_mend": {
-    "name": "Trail Mend",
-    "classes": [
-      "ranger"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_ally",
-      "range_feet": 5,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "healing"
-    },
-    "effects": [
-      {
-        "kind": "healing",
-        "formula": "1d4+1",
-        "can_revive": false
-      }
-    ],
-    "description": "A field remedy and quiet charm restore a little vitality.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "cinder_thread": {
-    "name": "Cinder Thread",
-    "classes": [
-      "sorcerer"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 60,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "spell_attack"
-    },
-    "effects": {
-      "hit": [
-        {
-          "kind": "damage",
-          "formula": "1d8",
-          "damage_type": "fire"
-        },
-        {
-          "kind": "condition",
-          "condition_id": "burning"
-        }
-      ],
-      "miss": []
-    },
-    "description": "A narrow filament of flame lashes a target and may leave it burning.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "arc_lash": {
-    "name": "Arc Lash",
-    "classes": [
-      "sorcerer"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 30,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "saving_throw",
-      "ability": "dexterity"
-    },
-    "effects": {
-      "failed_save": [
-        {
-          "kind": "damage",
-          "formula": "2d4",
-          "damage_type": "lightning"
-        }
-      ],
-      "successful_save": [
-        {
-          "kind": "damage",
-          "formula": "2d4",
-          "damage_type": "lightning",
-          "multiplier": 0.5
-        }
-      ]
-    },
-    "description": "A crooked arc jumps toward a creature and nearby conductive surfaces.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "gloam_leech": {
-    "name": "Gloam Leech",
-    "classes": [
-      "warlock"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_target",
-      "range_feet": 60,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "spell_attack"
-    },
-    "effects": {
-      "hit": [
-        {
-          "kind": "damage",
-          "formula": "1d6",
-          "damage_type": "shadow"
-        },
-        {
-          "kind": "heal_caster_from_damage",
-          "formula": "1d4"
-        }
-      ],
-      "miss": []
-    },
-    "description": "A strand of borrowed dusk wounds a foe and returns a little vitality.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "distant_whisper": {
-    "name": "Distant Whisper",
-    "classes": [
-      "warlock"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "one_creature",
-      "range_feet": 120,
-      "requires_line_of_sight": true
-    },
-    "resolution": {
-      "kind": "utility"
-    },
-    "effects": [
-      {
-        "kind": "send_message",
-        "range_feet": 120
-      }
-    ],
-    "description": "Send a short, quiet message to a creature you can see.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "ember_lattice": {
-    "name": "Ember Lattice",
-    "classes": [
-      "wizard"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "small_area",
-      "range_feet": 60,
-      "requires_line_of_sight": true,
-      "radius_feet": 5
-    },
-    "resolution": {
-      "kind": "saving_throw",
-      "ability": "dexterity"
-    },
-    "effects": {
-      "failed_save": [
-        {
-          "kind": "damage",
-          "formula": "2d6",
-          "damage_type": "fire"
-        },
-        {
-          "kind": "condition",
-          "condition_id": "burning"
-        }
-      ],
-      "successful_save": [
-        {
-          "kind": "damage",
-          "formula": "2d6",
-          "damage_type": "fire",
-          "multiplier": 0.5
-        }
-      ]
-    },
-    "description": "A geometric flare bursts in a small area and can set targets alight.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "glassward": {
-    "name": "Glassward",
-    "classes": [
-      "wizard"
-    ],
-    "tier": 1,
-    "casting_time": "action",
-    "targeting": {
-      "mode": "self",
-      "range_feet": 0,
-      "requires_line_of_sight": false
-    },
-    "resolution": {
-      "kind": "self_enchantment",
-      "duration_turns": 1
-    },
-    "effects": [
-      {
-        "kind": "armor_bonus",
-        "amount": 2,
-        "duration_turns": 1
-      }
-    ],
-    "description": "A clear, angular ward briefly turns aside incoming attacks.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
+    "consumable_only": true
   },
   "healing_potion_effect": {
     "name": "Healing Potion",
@@ -595,5 +44,345 @@
     ],
     "description": "Restores a small amount of health. Cannot revive a downed actor.",
     "consumable_only": true
+  },
+  "vicious_mockery": {
+    "name": "Vicious Mockery",
+    "description": "Needle a creature with cutting words. It must succeed on a Wisdom save or take 1d6 psychic damage and become off balance, giving its next attack disadvantage.",
+    "classes": [
+      "bard"
+    ],
+    "casting_time": "action",
+    "cantrip": true,
+    "spell_point_cost": 0,
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 60,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "saving_throw",
+      "ability": "wisdom"
+    },
+    "effects": {
+      "failed_save": [
+        {
+          "kind": "damage",
+          "formula": "1d6",
+          "damage_type": "psychic"
+        },
+        {
+          "kind": "condition",
+          "condition_id": "off_balance"
+        }
+      ],
+      "successful_save": []
+    },
+    "acquisition": "starting_cantrip",
+    "level": 0
+  },
+  "sacred_flame": {
+    "name": "Sacred Flame",
+    "description": "Call a brief flare of radiant light onto a creature. It must succeed on a Dexterity save or take 1d8 radiant damage.",
+    "classes": [
+      "cleric"
+    ],
+    "casting_time": "action",
+    "cantrip": true,
+    "spell_point_cost": 0,
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 60,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "saving_throw",
+      "ability": "dexterity"
+    },
+    "effects": {
+      "failed_save": [
+        {
+          "kind": "damage",
+          "formula": "1d8",
+          "damage_type": "radiant"
+        }
+      ],
+      "successful_save": []
+    },
+    "acquisition": "starting_cantrip",
+    "level": 0
+  },
+  "produce_flame": {
+    "name": "Produce Flame",
+    "description": "Kindle a small flame in your hand and hurl it at a creature. On a hit it deals 1d8 fire damage.",
+    "classes": [
+      "druid"
+    ],
+    "casting_time": "action",
+    "cantrip": true,
+    "spell_point_cost": 0,
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 60,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "spell_attack"
+    },
+    "effects": {
+      "hit": [
+        {
+          "kind": "damage",
+          "formula": "1d8",
+          "damage_type": "fire"
+        }
+      ],
+      "miss": []
+    },
+    "acquisition": "starting_cantrip",
+    "level": 0
+  },
+  "fire_bolt": {
+    "name": "Fire Bolt",
+    "description": "Hurl a mote of fire at a creature. On a hit it deals 1d10 fire damage.",
+    "classes": [
+      "sorcerer",
+      "wizard"
+    ],
+    "casting_time": "action",
+    "cantrip": true,
+    "spell_point_cost": 0,
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 120,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "spell_attack"
+    },
+    "effects": {
+      "hit": [
+        {
+          "kind": "damage",
+          "formula": "1d10",
+          "damage_type": "fire"
+        }
+      ],
+      "miss": []
+    },
+    "acquisition": "starting_cantrip",
+    "level": 0
+  },
+  "eldritch_blast": {
+    "name": "Eldritch Blast",
+    "description": "Project a bolt of crackling force at a creature. On a hit it deals 1d10 force damage.",
+    "classes": [
+      "warlock"
+    ],
+    "casting_time": "action",
+    "cantrip": true,
+    "spell_point_cost": 0,
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 120,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "spell_attack"
+    },
+    "effects": {
+      "hit": [
+        {
+          "kind": "damage",
+          "formula": "1d10",
+          "damage_type": "force"
+        }
+      ],
+      "miss": []
+    },
+    "acquisition": "starting_cantrip",
+    "level": 0
+  },
+  "magic_missile": {
+    "name": "Magic Missile",
+    "description": "Create three darts of force that strike one chosen creature without an attack roll, dealing 3d4 + 3 force damage in total.",
+    "classes": [
+      "sorcerer",
+      "wizard"
+    ],
+    "casting_time": "action",
+    "spell_point_cost": 1,
+    "targeting": {
+      "mode": "one_target",
+      "range_feet": 120,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "automatic"
+    },
+    "effects": [
+      {
+        "kind": "damage",
+        "formula": "3d4+3",
+        "damage_type": "force"
+      }
+    ],
+    "acquisition": "trainer_purchase",
+    "level": 1,
+    "prerequisite_class_level": 1,
+    "xp_purchase_cost": 75
+  },
+  "healing_word": {
+    "name": "Healing Word",
+    "description": "Speak a brief prayer that restores 2d4 hit points plus your spellcasting ability modifier to a creature you can see. It cannot revive a creature at 0 hit points.",
+    "classes": [
+      "bard",
+      "cleric",
+      "druid"
+    ],
+    "casting_time": "bonus_action",
+    "spell_point_cost": 1,
+    "targeting": {
+      "mode": "one_ally",
+      "range_feet": 60,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "healing"
+    },
+    "effects": [
+      {
+        "kind": "healing",
+        "formula": "2d4",
+        "add_spellcasting_modifier": true,
+        "can_revive": false
+      }
+    ],
+    "acquisition": "trainer_purchase",
+    "level": 1,
+    "prerequisite_class_level": 1,
+    "xp_purchase_cost": 75
+  },
+  "cure_wounds": {
+    "name": "Cure Wounds",
+    "description": "Touch a creature to restore 2d8 hit points plus your spellcasting ability modifier. It cannot revive a creature at 0 hit points.",
+    "classes": [
+      "bard",
+      "cleric",
+      "druid",
+      "paladin",
+      "ranger"
+    ],
+    "casting_time": "action",
+    "spell_point_cost": 1,
+    "targeting": {
+      "mode": "one_ally",
+      "range_feet": 5,
+      "requires_line_of_sight": false
+    },
+    "resolution": {
+      "kind": "healing"
+    },
+    "effects": [
+      {
+        "kind": "healing",
+        "formula": "2d8",
+        "add_spellcasting_modifier": true,
+        "can_revive": false
+      }
+    ],
+    "acquisition": "trainer_purchase",
+    "level": 1,
+    "prerequisite_class_level": 1,
+    "xp_purchase_cost": 75
+  },
+  "shield_of_faith": {
+    "name": "Shield of Faith",
+    "description": "Ward one creature you can see with a shimmering barrier that grants +2 AC for 10 combat rounds.",
+    "classes": [
+      "cleric",
+      "paladin"
+    ],
+    "casting_time": "bonus_action",
+    "spell_point_cost": 1,
+    "targeting": {
+      "mode": "one_ally",
+      "range_feet": 60,
+      "requires_line_of_sight": true
+    },
+    "resolution": {
+      "kind": "utility"
+    },
+    "effects": [
+      {
+        "kind": "armor_bonus",
+        "amount": 2,
+        "duration_turns": 10
+      }
+    ],
+    "acquisition": "trainer_purchase",
+    "level": 1,
+    "prerequisite_class_level": 1,
+    "xp_purchase_cost": 75
+  },
+  "entangle": {
+    "name": "Entangle",
+    "description": "Call grasping plants across a 20-foot area within range. Each enemy in the area must succeed on a Strength save or be rooted in place until the end of its next turn.",
+    "classes": [
+      "druid",
+      "ranger"
+    ],
+    "casting_time": "action",
+    "spell_point_cost": 1,
+    "targeting": {
+      "mode": "small_area",
+      "range_feet": 90,
+      "radius_feet": 10,
+      "requires_line_of_sight": true,
+      "exclude_caster": true
+    },
+    "resolution": {
+      "kind": "saving_throw",
+      "ability": "strength"
+    },
+    "effects": {
+      "failed_save": [
+        {
+          "kind": "condition",
+          "condition_id": "bound_in_briar"
+        }
+      ],
+      "successful_save": []
+    },
+    "acquisition": "trainer_purchase",
+    "level": 1,
+    "prerequisite_class_level": 1,
+    "xp_purchase_cost": 75
+  },
+  "divine_favor": {
+    "name": "Divine Favor",
+    "description": "Invoke divine aid for 10 combat rounds. Your weapon hits deal an extra 1d4 radiant damage while the blessing lasts.",
+    "classes": [
+      "paladin"
+    ],
+    "casting_time": "bonus_action",
+    "spell_point_cost": 1,
+    "targeting": {
+      "mode": "self"
+    },
+    "resolution": {
+      "kind": "self_enchantment"
+    },
+    "effects": [
+      {
+        "kind": "weapon_damage_bonus",
+        "formula": "1d4",
+        "damage_type": "radiant",
+        "duration_turns": 10
+      }
+    ],
+    "acquisition": "trainer_purchase",
+    "level": 1,
+    "prerequisite_class_level": 1,
+    "xp_purchase_cost": 75
   }
 }

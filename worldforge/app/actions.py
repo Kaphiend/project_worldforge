@@ -1,4 +1,5 @@
 """Combat action validation, turn flow, and effect resolution."""
+import math
 import pygame
 
 
@@ -11,7 +12,8 @@ from worldforge.app.encounters import DEFAULT_SCENARIO
 from worldforge.app.world import (ACTOR_SIZE, PIXELS_PER_FOOT, _actor_hitbox,
                                   _arena_bounds, _walk_destination)
 from worldforge.app.rendering import _emit_animation
-from worldforge.app.attack_actions import _do_attack, _do_fast_hands, _do_hide
+from worldforge.app.attack_actions import (_do_attack, _do_fast_hands, _do_hide,
+                                           _opportunity_attacks_on_move)
 from worldforge.app.item_actions import _do_item
 from worldforge.app.spell_actions import _do_ability, _do_spell
 from worldforge.app.combat_flow import (
@@ -39,11 +41,14 @@ def _apply_action(combat, actor_id, action):
     elif action_type == "fast_hands":
         _do_fast_hands(combat, actor_id)
     elif action_type == "attack":
-        _do_attack(combat, actor_id, action.get("target"))
+        _do_attack(combat, actor_id, action.get("target"),
+                   cunning_strike=action.get("cunning_strike"))
     elif action_type == "unarmed_strike":
         _do_attack(combat, actor_id, action.get("target"), attack_mode="unarmed")
     elif action_type == "ranged_attack":
         _do_attack(combat, actor_id, action.get("target"), attack_mode="ranged")
+    elif action_type == "offhand_attack":
+        _do_attack(combat, actor_id, action.get("target"), attack_mode="offhand")
     elif action_type == "throw":
         _do_attack(combat, actor_id, action.get("target"), attack_mode="throw")
     elif action_type == 'cast_spell':
@@ -95,6 +100,12 @@ def _apply_action(combat, actor_id, action):
         traveled = math.hypot(dest_x - entry["x"], dest_y - entry["y"])
         feet = traveled / PIXELS_PER_FOOT
         old_x, old_y = entry["x"], entry["y"]
+        if traveled > 0:
+            _opportunity_attacks_on_move(
+                combat, actor_id, (old_x, old_y), (dest_x, dest_y))
+            if entry.get("downed") or entry["data"].get("current_hp", 1) <= 0:
+                _remove_downed_from_order(combat)
+                return
         entry["x"], entry["y"] = dest_x, dest_y
         entry["data"]["x"], entry["data"]["y"] = entry["x"], entry["y"]
         if traveled > 0:
@@ -103,6 +114,7 @@ def _apply_action(combat, actor_id, action):
             _emit_animation(combat, actor_id, "walk",
                             max(180, int(traveled / 5 * 1000 / 60)))
         budget["movement"] = max(0, budget["movement"] - feet)
+        budget["movement_used"] = float(budget.get("movement_used", 0)) + feet
 
 def _run_ai_turns(combat):
     """Run non-player controllers on the authoritative host."""

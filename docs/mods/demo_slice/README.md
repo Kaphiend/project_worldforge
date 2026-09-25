@@ -1,7 +1,8 @@
-# Demo slice mod notes
+# Demo slice campaign notes
 
-The matching data folder is loaded automatically; this document describes
-the smallest complete example of an encounter.
+The `campaign.json` manifest makes this the default playable sample campaign.
+It demonstrates a connected group of scenarios, combat, safe camping, an inn,
+vendors, training, loot, and personal storage.
 
 1. `scenarios.json` defines the encounter ID `first_contact`.
 2. Its `arena` value points to `roadside_clearing` in `arenas.json`.
@@ -12,6 +13,10 @@ the smallest complete example of an encounter.
 6. NPC fields use the normal actor format. Its perception DCs drive the visible
    nameplate. `controller: "ai"` selects the intentionally simple pursuit AI.
 
-Copy all three JSON files into a new mod folder to make a separate encounter.
-Use new IDs and update every reference that points to them. See
-[`../../modding/demo_slice.md`](../../modding/tables/demo_slice.md) for more context.
+Copy the relevant content tables into a mod folder and add a `campaign.json`
+manifest to make a separate campaign. Use unique IDs, then list the scenarios,
+starting scenario, safe camp, map routes, party cap, enabled systems, and rules
+in the manifest. Select it with `WORLDFORGE_CAMPAIGN=<folder>` and run
+`python -m worldforge.content.validate_campaign`. See
+[`../../modding/campaigns.md`](../../modding/campaigns.md) for the manifest
+format and validator coverage.

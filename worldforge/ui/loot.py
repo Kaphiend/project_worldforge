@@ -63,7 +63,7 @@ class LootUI:
         veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         veil.fill((0, 0, 0, 175))
         screen.blit(veil, (0, 0))
-        width, height = min(520, screen.get_width() - 32), min(440, screen.get_height() - 32)
+        width, height = 520, 440
         self.panel_rect = pygame.Rect(0, 0, width, height)
         self.panel_rect.center = (screen.get_width() // 2, screen.get_height() // 2)
         pygame.draw.rect(screen, (31, 35, 42), self.panel_rect, border_radius=8)
@@ -71,7 +71,9 @@ class LootUI:
                          border_radius=8)
         small_font = pygame.font.Font(None, 18)
         item_font = pygame.font.Font(None, 19)
-        title = corpse.get("data", {}).get("name", "Loot")
+        title = (corpse.get("data", {}).get("name")
+                 or corpse.get("name", "Loot"))
+        is_chest = corpse.get("kind") == "chest"
         screen.blit(font.render(f"Loot: {title}  |  Shared loot", True,
                                 (255, 229, 165)),
                     (self.panel_rect.x + 18, self.panel_rect.y + 14))
@@ -120,6 +122,9 @@ class LootUI:
             pygame.draw.rect(screen, (180, 190, 205), rect, 1, border_radius=4)
             text = font.render(label, True, (250, 250, 245))
             screen.blit(text, text.get_rect(center=rect.center))
-        screen.blit(small_font.render("Esc closes; corpse despawns 3 seconds after looting ends.",
+        footer = ("Esc closes; this chest stays open and keeps its remaining contents."
+                  if is_chest else
+                  "Esc closes; corpse despawns 3 seconds after looting ends.")
+        screen.blit(small_font.render(footer,
                                       True, (190, 198, 210)),
                     (self.panel_rect.x + 18, button_y - 19))

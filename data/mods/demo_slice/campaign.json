@@ -1,0 +1,58 @@
+{
+  "id": "demo_slice",
+  "name": "Worldforge Demo Slice",
+  "starting_scenario": "first_contact",
+  "safe_camp_arena": "safe_camp",
+  "scenarios": [
+    "first_contact",
+    "forest_path",
+    "market_square",
+    "town_inn"
+  ],
+  "map_connections": [
+    {"from": "first_contact", "exit": "forest_trail", "to": "forest_path", "destination_exit": "roadside_trail"},
+    {"from": "forest_path", "exit": "roadside_trail", "to": "first_contact", "destination_exit": "forest_trail"},
+    {"from": "first_contact", "exit": "inn_road", "to": "town_inn", "destination_exit": "roadside_road"},
+    {"from": "town_inn", "exit": "roadside_road", "to": "first_contact", "destination_exit": "inn_road"},
+    {"from": "forest_path", "exit": "market_road", "to": "market_square", "destination_exit": "forest_road"},
+    {"from": "market_square", "exit": "forest_road", "to": "forest_path", "destination_exit": "market_road"},
+    {"from": "market_square", "exit": "inn_lane", "to": "town_inn", "destination_exit": "market_lane"},
+    {"from": "town_inn", "exit": "market_lane", "to": "market_square", "destination_exit": "inn_lane"}
+  ],
+  "party_limit": 8,
+  "enabled_systems": {
+    "combat": true,
+    "travel": true,
+    "loot": true,
+    "vendors": true,
+    "training": true,
+    "resting": true,
+    "personal_storage": true
+  },
+  "rules": {
+    "combat_trigger_range_feet": 20,
+    "combat_join_range_feet": 50,
+    "xp_debug_multiplier": 5.0,
+    "death_release_xp_penalty_percent": 10,
+    "revival_xp_penalty_percent": 2,
+    "corpse_despawn_seconds": 3,
+    "interaction_range_feet": 5,
+    "melee_reach_feet": 5,
+    "ranged_attack_disadvantage_distance_feet": 5,
+    "thrown_normal_range_feet": 20,
+    "thrown_long_range_feet": 60,
+    "proficiency_bonus_base": 2,
+    "proficiency_bonus_level_step": 4,
+    "critical_hit_natural_roll": 20,
+    "automatic_miss_natural_roll": 1,
+    "level_xp_thresholds": [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000],
+    "attribute_score_milestones": [4, 8, 12, 16, 19],
+    "attribute_points_per_milestone": 2,
+    "mob_patrol_speed_feet_per_second": 6,
+    "mob_patrol_waypoints_feet": [[0, 0], [11, 0], [11, 11], [0, 11]],
+    "inn_rest_gold_cost": 10,
+    "outdoor_rest_min_distance_feet": 100,
+    "outdoor_rest_rate_min_percent": 1,
+    "outdoor_rest_rate_max_percent": 5
+  }
+}

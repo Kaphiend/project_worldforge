@@ -34,7 +34,8 @@ def _damage(target, amount):
         target["downed"] = True
 
 
-def _apply(effect, caster, target, source_id, *, critical=False):
+def _apply(effect, caster, target, source_id, *, critical=False,
+           casting_class=None, damage_multiplier=1.0):
     kind = effect.get("kind")
     if kind == "damage":
         rolled_amount, rolls = roll_dice(effect["formula"], critical=critical)
@@ -42,6 +43,7 @@ def _apply(effect, caster, target, source_id, *, critical=False):
         resisted = effect.get("damage_type", "untyped") in damage_resistances(target)
         if resisted:
             amount //= 2
+        amount = max(0, floor(amount * max(0.0, damage_multiplier)))
         _damage(target, amount)
         return {"kind": kind, "amount": amount, "rolled_amount": rolled_amount,
                 "rolls": rolls,
@@ -49,6 +51,23 @@ def _apply(effect, caster, target, source_id, *, critical=False):
                 "resisted": resisted}
     if kind == "healing":
         amount, rolls = roll_dice(effect["formula"])
+        if effect.get("add_spellcasting_modifier") and caster is not None:
+            from worldforge.content.classes import CLASSES
+
+            casting_class = casting_class or next(
+                (class_id for class_id in _actor_classes(caster)
+                 if class_id in CLASSES
+                 and CLASSES[class_id].get("spellcasting_ability")), None)
+            if casting_class:
+                spell_mod, _ = _spellcasting_modifier(caster, casting_class)
+                amount = max(0, amount + spell_mod)
+        class_id = effect.get("add_class_level")
+        if class_id and caster is not None:
+            levels = {entry.get("name"): int(entry.get("level", 0) or 0)
+                      for entry in caster.get("classes", []) or []}
+            class_level = levels.get(class_id, caster.get("level", 1)
+                                     if caster.get("char_class") == class_id else 0)
+            amount += max(0, int(class_level))
         restored = resolve_healing_effect(target, effect, amount)
         return {"kind": kind, "amount": restored, "rolls": rolls,
                 "revived": bool(effect.get("can_revive") and restored > 0)}
@@ -61,24 +80,34 @@ def _apply(effect, caster, target, source_id, *, critical=False):
         restored = resolve_healing_effect(
             caster, {"kind": "healing", "can_revive": False}, amount)
         return {"kind": "healing", "amount": restored, "rolls": rolls}
-    if kind in {"next_weapon_hit_bonus", "armor_bonus", "movement_bonus"}:
+    if kind in {"next_weapon_hit_bonus", "weapon_damage_bonus", "armor_bonus",
+                "movement_bonus", "damage_resistance",
+                "attack_disadvantage_against_target", "next_attack_advantage",
+                "reckless_attack"}:
         record = deepcopy(effect)
         record.update(source_id=source_id, remaining_turns=effect.get("duration_turns", 1))
         target.setdefault("active_effects", []).append(record)
+        return {"kind": kind, "active": True}
+    if kind == "disengage":
+        return {"kind": kind, "active": True}
+    if kind == "restore_action":
         return {"kind": kind, "active": True}
     if kind == "send_message":
         return {"kind": kind, "range_feet": effect.get("range_feet", 0)}
     raise ValueError(f"Unsupported data effect primitive: {kind!r}")
 
 
-def apply_spell_effects(spell_id, caster, target, *, outcome=None, critical=False):
+def apply_spell_effects(spell_id, caster, target, *, outcome=None, critical=False,
+                        casting_class=None, damage_multiplier=1.0):
     """Apply a spell's selected outcome; attack/save rolls are resolved separately."""
     definition = SPELLS[spell_id]
     if target is None:
         target = caster
     applied = []
     for effect in _effects_for(definition, outcome):
-        applied.append(_apply(effect, caster, target, spell_id, critical=critical))
+        applied.append(_apply(effect, caster, target, spell_id, critical=critical,
+                              casting_class=casting_class,
+                              damage_multiplier=damage_multiplier))
     return applied
 
 
@@ -116,8 +145,11 @@ def _target_save_modifier(target, ability):
     equipment = target.get("equipment", {}) or {}
     gear_bonus = sum(item_attribute_total(item, "saving_throw_bonus")
                      for item in _unique_equipped_items(equipment))
+    feature_saves = (ability in {"wisdom", "charisma"}
+                     and "rogue_slippery_mind" in set(
+                         target.get("class_features", []) or []))
     return modifier(abilities.get(ability, 10)) + (
-        proficiency_bonus(target) if ability in save_proficiencies else 0
+        proficiency_bonus(target) if ability in save_proficiencies or feature_saves else 0
     ) + gear_bonus
 
 
@@ -200,8 +232,13 @@ def resolve_spell(spell_id, caster, targets=None, *, casting_class=None,
             return {"success": False,
                     "message": f"Unsupported spell resolution kind: {kind}."}
 
+        damage_multiplier = 1.0
+        if (kind == "saving_throw" and ability == "dexterity"
+                and "rogue_evasion" in set(target.get("class_features", []) or [])):
+            damage_multiplier = 0.0 if outcome == "successful_save" else 0.5
         applied = apply_spell_effects(
-            spell_id, caster, target, outcome=outcome, critical=critical)
+            spell_id, caster, target, outcome=outcome, critical=critical,
+            casting_class=casting_class, damage_multiplier=damage_multiplier)
         results.append({"target": target.get("name", "Target"),
                         "outcome": outcome, "roll": roll_data, "effects": applied})
     return {"success": True, "spell": spell_id, "results": results}

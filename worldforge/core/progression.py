@@ -11,15 +11,18 @@ import math
 from worldforge.content.classes import CLASSES, PROGRESSION_RULES
 from worldforge.content.classes import ABILITIES, SPELLS
 from worldforge.core.dice import ability_modifier
+from worldforge.content.campaign import campaign_setting
 
 
 # Cumulative character XP thresholds from the fifth-edition advancement table.
 # Stored locally so progression is deterministic and can later be data-driven.
-XP_THRESHOLDS = (
+DEFAULT_XP_THRESHOLDS = (
     0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
     85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000,
     305000, 355000,
 )
+XP_THRESHOLDS = tuple(int(value) for value in campaign_setting(
+    "level_xp_thresholds", list(DEFAULT_XP_THRESHOLDS)))
 def class_levels(actor_data):
     """Return levels actually assigned to each class for resource curves."""
     levels = {entry.get("name"): max(0, int(entry.get("level", 0) or 0))
@@ -138,8 +141,10 @@ def attribute_points_earned(actor_data):
     """Return permanent attribute points granted by applied character level."""
     level = max(1, int(actor_data.get("level", 1) or 1))
     rules = PROGRESSION_RULES.get("attribute_points", {})
-    per_milestone = max(0, int(rules.get("points_per_milestone", 2)))
-    milestones = rules.get("milestones", [4, 8, 12, 16, 20])
+    per_milestone = max(0, int(campaign_setting(
+        "attribute_points_per_milestone", rules.get("points_per_milestone", 2))))
+    milestones = campaign_setting(
+        "attribute_score_milestones", rules.get("milestones", [4, 8, 12, 16, 20]))
     return sum(per_milestone for milestone in milestones
                if level >= int(milestone))
 
@@ -193,6 +198,11 @@ def class_unlocked_level(actor_data, class_id):
                          for feature in (CLASSES.get(class_id, {}).get(
                              "progression", {}) or {}).get(str(prior_tier), [])
                          if feature.get("id")]
+        starter_spells = set(CLASSES.get(class_id, {}).get("starting_spells", []))
+        granted_starter_spell = any(
+            spell_id in starter_spells
+            and spell_id in (actor_data.get("known_spells", []) or [])
+            for spell_id in tier_spells)
         # SRD class tables do not provide a purchasable feature at every
         # level. Worldforge's custom XP rule requires a purchase when a tier
         # offers one, but empty tiers must remain traversable.
@@ -201,7 +211,8 @@ def class_unlocked_level(actor_data, class_id):
             continue
         advanced = (any(spell_id in spell_purchases for spell_id in tier_spells)
                     or any(ability_id in ability_purchases for ability_id in tier_abilities)
-                    or any(feature_id in feature_purchases for feature_id in tier_features))
+                    or any(feature_id in feature_purchases for feature_id in tier_features)
+                    or granted_starter_spell)
         if not advanced:
             break
         frontier = prior_tier + 1
@@ -229,6 +240,23 @@ def unlocked_classes(actor_data):
             if purchases and class_id in CLASSES and class_id not in entries:
                 entries.append(class_id)
     return entries
+
+
+def class_feature_choice_slots(actor_data, choice_kind):
+    """Count purchased class-feature choices across all unlocked classes."""
+    from worldforge.content.classes import CLASSES
+    owned = set(actor_data.get("class_features", []) or [])
+    purchases = actor_data.get("class_feature_purchases", {}) or {}
+    total = 0
+    for class_id in unlocked_classes(actor_data):
+        owned_for_class = owned | set(purchases.get(class_id, []) or [])
+        for tier_features in (CLASSES.get(class_id, {}).get("progression", {}) or {}).values():
+            for feature in tier_features or []:
+                effect = feature.get("effect", {}) or {}
+                if (feature.get("id") in owned_for_class
+                        and effect.get("kind") == choice_kind):
+                    total += max(0, int(effect.get("count", 0) or 0))
+    return total
 
 
 def class_unlock_cost(actor_data, class_id):

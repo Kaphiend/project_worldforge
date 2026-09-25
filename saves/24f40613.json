@@ -1,0 +1,315 @@
+{
+  "name": "fighter",
+  "id": "24f40613",
+  "max_hp": 31,
+  "current_hp": 31,
+  "classes": [
+    {
+      "name": "fighter",
+      "level": 3
+    }
+  ],
+  "level": 3,
+  "class_levels_initialized": true,
+  "xp_total": 1640,
+  "xp_earned_by_level": {
+    "3": 1700
+  },
+  "xp_spent_by_level": {
+    "3": 60
+  },
+  "xp_rest_spent_by_level": {},
+  "class_spell_purchases": {},
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "prepared_spells": [],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": null,
+    "e": null
+  },
+  "known_abilities": [],
+  "class_features": [
+    "fighter_01",
+    "fighter_02",
+    "fighter_champion_improved_critical",
+    "fighter_03"
+  ],
+  "class_feature_purchases": {
+    "fighter": [
+      "fighter_01",
+      "fighter_02",
+      "fighter_champion_improved_critical",
+      "fighter_03"
+    ]
+  },
+  "class_skill_purchases": {
+    "fighter": [
+      "perception",
+      "intimidation"
+    ]
+  },
+  "spell_points": 0,
+  "class_resources": {
+    "fighter.second_wind_uses": 1,
+    "fighter.action_surge_uses": 1
+  },
+  "attribute_points_spent": {},
+  "gold": 500,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Fighter.png",
+  "abilities": {
+    "strength": 16,
+    "constitution": 13,
+    "dexterity": 13,
+    "wisdom": 11,
+    "charisma": 10,
+    "intellect": 8
+  },
+  "unspent": [
+    11,
+    13,
+    13,
+    11,
+    14,
+    13
+  ],
+  "saves": [
+    "strength",
+    "constitution"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "heavy",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial"
+  ],
+  "race": "halfling",
+  "subrace": "",
+  "subclass": "fighter_champion",
+  "parent_races": [],
+  "char_class": "fighter",
+  "skills": [
+    "intimidation",
+    "perception"
+  ],
+  "controller": "player",
+  "x": 199,
+  "y": 160,
+  "inventory": [
+    {
+      "id": "b347b0d37993",
+      "name": "Spellbook",
+      "slot": "off_hand",
+      "tags": [
+        "focus"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "spellbook"
+    },
+    {
+      "id": "fa4adb4335c8",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 3,
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "c40889e0b1b5",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 1,
+      "template_id": "revival_scroll"
+    }
+  ],
+  "personal_storage": [],
+  "equipment": {
+    "head": {
+      "id": "db850980698b",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "96c074ec9fd4",
+      "name": "Chain Mail",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "chain_mail"
+    },
+    "hands": {
+      "id": "a911f340d724",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "23872d53b083",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "64754d87bbe0",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "313367d80cf7",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "7791d257910e",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "057e6542bf91",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "a7f2e30cc5f3",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "eb8c39f6266f",
+      "name": "Sword (2H)",
+      "slot": "hand",
+      "tags": [
+        "2h",
+        "heavy"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "sword_2h"
+    },
+    "off_hand": {
+      "id": "eb8c39f6266f",
+      "name": "Sword (2H)",
+      "slot": "hand",
+      "tags": [
+        "2h",
+        "heavy"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "sword_2h"
+    },
+    "ranged": {
+      "id": "1a0d5ba43f12",
+      "name": "Longbow",
+      "slot": "ranged",
+      "tags": [
+        "2h",
+        "heavy",
+        "ammunition"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "longbow"
+    }
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

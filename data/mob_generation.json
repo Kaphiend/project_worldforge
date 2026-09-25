@@ -146,5 +146,17 @@
   "stealth": {
     "hide_dc": 15,
     "exploration_speed_multiplier": 0.5
+  },
+  "ai": {
+    "default": {
+      "target_policy": "weakest",
+      "close_when_out_of_range": true,
+      "use_offhand_attacks": true,
+      "heal_below_fraction": 0.4,
+      "ability_priority": [
+        "barbarian_rage",
+        "fighter_second_wind"
+      ]
+    }
   }
 }

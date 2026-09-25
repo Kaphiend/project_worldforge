@@ -123,9 +123,35 @@ def _smooth_remote_position(remote, positions, dt):
         position["y"] += (target_y - position["y"]) * amount
     return position["x"], position["y"]
 
+
+def _smooth_combat_positions(combat, positions, dt, *, reset=False):
+    """Ease displayed combat actors between authoritative turn snapshots."""
+    if reset or not combat or not combat.get("active"):
+        positions.clear()
+        return {}
+    amount = 1 - math.exp(-max(0, dt) / 140)
+    visible = {}
+    for actor_id, entry in combat.get("actors", {}).items():
+        target_x, target_y = float(entry.get("x", 0)), float(entry.get("y", 0))
+        point = positions.get(actor_id)
+        if point is None:
+            point = positions[actor_id] = {"x": target_x, "y": target_y}
+        else:
+            point["x"] += (target_x - point["x"]) * amount
+            point["y"] += (target_y - point["y"]) * amount
+            if abs(target_x - point["x"]) < 0.25:
+                point["x"] = target_x
+            if abs(target_y - point["y"]) < 0.25:
+                point["y"] = target_y
+        visible[actor_id] = (point["x"], point["y"])
+    for actor_id in positions.keys() - visible.keys():
+        positions.pop(actor_id, None)
+    return visible
+
 def _draw_players(screen, actor, local_sprite, remote_players, remote_animations,
                   remote_positions, dt, sprite_frames, frame_duration, arena=None,
-                  camera=(0, 0), local_speech=None, font=None):
+                  camera=(0, 0), local_speech=None, font=None,
+                  local_draw_position=None):
     arena = arena or {}
     camera_x, camera_y = camera
     screen.fill(tuple(arena.get("edge_color", [34, 49, 40])))
@@ -148,7 +174,13 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
                 pygame.draw.ellipse(screen, tuple(decoration["outline"]),
                                     rect, max(1, int(decoration.get(
                                         "outline_width", 3))))
+    service_rects = {(int(item["x"]), int(item["y"]), int(item["width"]),
+                      int(item["height"]))
+                     for group in ("trainers", "vendors")
+                     for item in arena.get(group, [])}
     for obstacle in _arena_obstacles(arena):
+        if (obstacle.x, obstacle.y, obstacle.width, obstacle.height) in service_rects:
+            continue
         visible_obstacle = obstacle.move(-camera_x, -camera_y)
         pygame.draw.rect(screen, (67, 70, 58), visible_obstacle)
         pygame.draw.rect(screen, (117, 112, 86), visible_obstacle, 3)
@@ -161,32 +193,28 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
                              max(12, rect.width // 4), max(10, rect.height - 12))
         pygame.draw.rect(screen, (205, 205, 210), pillow, border_radius=3)
         screen.blit(pygame.font.Font(None, 17).render(
-            bed.get("name", "Inn Bed"), True, (255, 255, 255)),
+            (f"{bed['owner_name']}'s Bed" if bed.get("owner_name")
+             else bed.get("name", "Inn Bed")), True, (255, 255, 255)),
             (rect.x, rect.y - 18))
     for bed in arena.get("camp_beds", []):
         rect = pygame.Rect(bed["x"] - camera_x, bed["y"] - camera_y,
                            bed["width"], bed["height"])
         pygame.draw.rect(screen, (118, 91, 62), rect, border_radius=5)
         pygame.draw.rect(screen, (221, 195, 147), rect, 2, border_radius=5)
+        label = (f"{bed['owner_name']}'s Bedroll" if bed.get("owner_name")
+                 else bed.get("name", "Bedroll"))
         screen.blit(pygame.font.Font(None, 16).render(
-            bed.get("name", "Bedroll"), True, (245, 231, 202)),
+            label, True, (245, 231, 202)),
             (rect.x - 3, rect.y - 16))
-    for trainer in arena.get("trainers", []):
-        rect = pygame.Rect(trainer["x"] - camera_x, trainer["y"] - camera_y,
-                           trainer["width"], trainer["height"])
-        pygame.draw.rect(screen, (102, 78, 52), rect, border_radius=4)
-        pygame.draw.rect(screen, (210, 180, 125), rect, 3, border_radius=4)
-        screen.blit(pygame.font.Font(None, 17).render(
-            trainer.get("name", "Trainer"), True, (255, 245, 220)),
-            (rect.x - 3, rect.y - 18))
-    for vendor in arena.get("vendors", []):
-        rect = pygame.Rect(vendor["x"] - camera_x, vendor["y"] - camera_y,
-                           vendor["width"], vendor["height"])
-        pygame.draw.rect(screen, (83, 105, 72), rect, border_radius=4)
-        pygame.draw.rect(screen, (224, 197, 119), rect, 3, border_radius=4)
-        screen.blit(pygame.font.Font(None, 17).render(
-            vendor.get("name", "Vendor"), True, (255, 245, 220)),
-            (rect.x - 3, rect.y - 18))
+    for chest in arena.get("personal_chests", []):
+        rect = pygame.Rect(chest["x"] - camera_x, chest["y"] - camera_y,
+                           chest["width"], chest["height"])
+        pygame.draw.rect(screen, (105, 68, 39), rect, border_radius=4)
+        pygame.draw.rect(screen, (210, 171, 103), rect, 2, border_radius=4)
+        if chest.get("owner_name"):
+            screen.blit(pygame.font.Font(None, 14).render(
+                f"{chest['owner_name']}'s Chest", True, (245, 226, 190)),
+                (rect.x - 6, rect.y - 14))
     for exit_record in arena.get("exits", []):
         rect = pygame.Rect(exit_record["x"] - camera_x,
                            exit_record["y"] - camera_y,
@@ -196,9 +224,10 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
         screen.blit(pygame.font.Font(None, 17).render(
             exit_record.get("name", "Exit"), True, (225, 248, 250)),
             (rect.x - 3, rect.y - 18))
-    screen.blit(local_sprite, (round(actor.x - camera_x), round(actor.y - camera_y)))
+    local_x, local_y = local_draw_position or (actor.x, actor.y)
+    screen.blit(local_sprite, (round(local_x - camera_x), round(local_y - camera_y)))
     font = font or pygame.font.Font(None, 18)
-    _draw_speech_bubble(screen, font, local_speech, actor.x, actor.y,
+    _draw_speech_bubble(screen, font, local_speech, local_x, local_y,
                         ACTOR_SIZE, camera_x, camera_y)
     drawn_positions = {}
     for remote in remote_players:
@@ -208,7 +237,8 @@ def _draw_players(screen, actor, local_sprite, remote_players, remote_animations
         drawn_positions[player_id] = (screen_x, screen_y)
         animation = remote_animations.setdefault(
             player_id, {"anim": "idle", "index": 0, "time": 0})
-        remote_frames = next(iter(sprite_frames.values()))
+        remote_frames = sprite_frames.get(
+            "asset_pack/Soldier.png", next(iter(sprite_frames.values())))
         avatar = (remote.get("actor") or {}).get("avatar")
         if avatar in sprite_frames:
             remote_frames = sprite_frames[avatar]

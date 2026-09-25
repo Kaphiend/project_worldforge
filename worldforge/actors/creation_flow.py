@@ -8,10 +8,26 @@ from worldforge.actors.factory import (
     class_ability_priorities,
     starting_hp,
     random_fully_geared_actor,
+    initialize_starting_abilities,
+    initialize_starting_spells,
 )
 from worldforge.core.dice import ability_modifier
 from worldforge.core.storage import lock_actor, load_actor, save_actor, unlock_actor
 from worldforge.core.progression import initialize_resources
+
+CLASS_AVATARS = {
+    class_name: f"asset_pack/{class_name.title()}.png"
+    for class_name in (
+        "barbarian", "bard", "cleric", "druid", "fighter", "monk",
+        "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard",
+    )
+}
+
+
+def avatar_for_class(class_name):
+    """Choose class art, with the Soldier sheet as the general fallback."""
+    return CLASS_AVATARS.get(str(class_name or "").casefold(),
+                             "asset_pack/Soldier.png")
 
 
 class CharacterCreationFlow:
@@ -49,10 +65,9 @@ class CharacterCreationFlow:
                 self.actor.char_class, {}).get("subclasses") else "class"),
             "abilities": ("subclass" if self.actor and CLASSES.get(
                     self.actor.char_class, {}).get("subclasses") else "class"),
-            "avatar": "menu",
             "done": "menu",
         }
-        if self.stage in ("avatar", "done") and self.actor:
+        if self.stage == "done" and self.actor:
             unlock_actor(self.actor.id)
         self.stage = previous.get(self.stage, "menu")
         if self.stage == "menu" and self.actor and self.actor.id:
@@ -177,26 +192,22 @@ class CharacterCreationFlow:
         self.actor.known_spells = []
         self.actor.known_abilities = []
         self.actor.prepared_spells = []
+        initialize_starting_spells(self.actor)
+        initialize_starting_abilities(self.actor)
         initialize_resources(vars(self.actor), refill=True)
-        self.stage = 'avatar'
-
-    def choose_avatar(self, avatar):
-        if self.stage != 'avatar' or avatar not in {
-                'asset_pack/Orc.png', 'asset_pack/Soldier.png'}:
-            return False
-        self.actor.avatar = avatar
+        self.actor.avatar = avatar_for_class(self.actor.char_class)
         save_actor(self.actor)
         lock_actor(self.actor.id)
         self.stage = "done"
-        return True
 
-    def create_random_fully_geared(self, avatars=None, class_name=None, name=None):
+    def create_random_fully_geared(self, class_name=None, name=None):
         if class_name not in CLASSES:
             return False
         if not name or not name.strip():
             return False
-        self.actor = random_fully_geared_actor(name=name.strip(), avatars=avatars,
+        self.actor = random_fully_geared_actor(name=name.strip(),
                                                class_name=class_name)
+        self.actor.avatar = avatar_for_class(self.actor.char_class)
         save_actor(self.actor)
         lock_actor(self.actor.id)
         self.stage = 'done'
@@ -204,6 +215,6 @@ class CharacterCreationFlow:
 
     def load_existing(self, actor_id):
         self.actor = load_actor(actor_id)
-        self.actor.avatar = getattr(self.actor, 'avatar', 'asset_pack/Soldier.png')
+        self.actor.avatar = avatar_for_class(self.actor.char_class)
         lock_actor(self.actor.id)
         self.stage = "done"

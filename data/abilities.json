@@ -1,77 +1,245 @@
 {
-  "rising_pressure": {
-    "name": "Rising Pressure",
+  "barbarian_rage": {
+    "name": "Rage",
+    "description": "Enter a battle fury for up to 10 rounds. You resist bludgeoning, piercing, and slashing damage and add rage damage to Strength-based melee weapon hits. Heavy armor prevents this feature.",
     "classes": [
       "barbarian"
     ],
-    "action_cost": "bonus_action",
-    "effects": [
-      {
-        "kind": "next_weapon_hit_bonus",
-        "formula": "1d4",
-        "damage_type": "physical"
-      }
-    ],
-    "description": "Gather force for your next successful weapon hit.",
+    "acquisition": "starting_ability",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "guarded_angle": {
-    "name": "Guarded Angle",
-    "classes": [
-      "fighter"
-    ],
     "action_cost": "bonus_action",
-    "effects": [
-      {
-        "kind": "armor_bonus",
-        "amount": 2,
-        "duration_turns": 1
-      }
-    ],
-    "description": "Set your stance to blunt incoming attacks until your next turn.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "flowing_step": {
-    "name": "Flowing Step",
-    "classes": [
-      "monk"
-    ],
-    "action_cost": "bonus_action",
-    "effects": [
-      {
-        "kind": "movement_bonus",
-        "feet": 10,
-        "duration_turns": 1
-      }
-    ],
-    "description": "Move with a quick, balanced step.",
-    "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
-  },
-  "distracting_feint": {
-    "name": "Distracting Feint",
-    "classes": [
-      "rogue"
-    ],
-    "action_cost": "bonus_action",
+    "uses_per_combat": null,
+    "resource_cost": {
+      "class_id": "barbarian",
+      "resource_id": "rage_uses",
+      "amount": 1
+    },
     "targeting": {
-      "mode": "one_target",
-      "range_feet": 5
+      "mode": "self"
     },
     "effects": [
       {
-        "kind": "condition",
-        "condition_id": "off_balance"
+        "kind": "damage_resistance",
+        "damage_types": [
+          "bludgeoning",
+          "piercing",
+          "slashing"
+        ],
+        "duration_turns": 10
+      },
+      {
+        "kind": "weapon_damage_bonus",
+        "amount_by_class_level": {
+          "1": 2,
+          "9": 3,
+          "16": 4
+        },
+        "strength_based": true,
+        "duration_turns": 10,
+        "class_id": "barbarian"
       }
     ],
-    "description": "Draw a nearby opponents guard aside, opening a brief advantage.",
+    "requires_not_heavy_armor": true,
+    "unique_active": true
+  },
+  "barbarian_reckless_attack": {
+    "name": "Reckless Attack",
+    "description": "Throw caution aside: gain advantage on your Strength-based melee attacks, while attacks against you have advantage until your next turn.",
+    "classes": [
+      "barbarian"
+    ],
+    "acquisition": "starting_ability",
+    "prerequisite_class_level": 2,
+    "action_cost": "free",
+    "uses_per_combat": null,
+    "targeting": {
+      "mode": "self"
+    },
+    "effects": [
+      {
+        "kind": "reckless_attack",
+        "duration_turns": 2
+      }
+    ],
+    "unique_active": true
+  },
+  "fighter_second_wind": {
+    "name": "Second Wind",
+    "description": "As a bonus action, regain 1d10 hit points plus your Fighter level. It cannot revive a downed character.",
+    "classes": [
+      "fighter"
+    ],
+    "acquisition": "starting_ability",
     "prerequisite_class_level": 1,
-    "acquisition": "trainer_purchase",
-    "xp_purchase_cost": 10
+    "action_cost": "bonus_action",
+    "uses_per_combat": null,
+    "resource_cost": {
+      "class_id": "fighter",
+      "resource_id": "second_wind_uses",
+      "amount": 1
+    },
+    "targeting": {
+      "mode": "self"
+    },
+    "effects": [
+      {
+        "kind": "healing",
+        "formula": "1d10",
+        "add_class_level": "fighter",
+        "can_revive": false
+      }
+    ]
+  },
+  "fighter_action_surge": {
+    "name": "Action Surge",
+    "description": "Push beyond your normal limits to regain your action for this turn.",
+    "classes": [
+      "fighter"
+    ],
+    "acquisition": "starting_ability",
+    "prerequisite_class_level": 2,
+    "action_cost": "free",
+    "uses_per_combat": null,
+    "resource_cost": {
+      "class_id": "fighter",
+      "resource_id": "action_surge_uses",
+      "amount": 1
+    },
+    "requires_action_spent": true,
+    "targeting": {
+      "mode": "self"
+    },
+    "effects": [
+      {
+        "kind": "restore_action"
+      }
+    ]
+  },
+  "monk_flurry_of_blows": {
+    "name": "Flurry of Blows",
+    "description": "After taking the Attack action, spend 1 Focus Point and use your bonus action to make two Unarmed Strikes against a nearby foe.",
+    "classes": [
+      "monk"
+    ],
+    "acquisition": "starting_ability",
+    "prerequisite_class_level": 2,
+    "action_cost": "bonus_action",
+    "uses_per_combat": null,
+    "resource_cost": {
+      "class_id": "monk",
+      "resource_id": "focus_points",
+      "amount": 1
+    },
+    "requires_action_spent": true,
+    "attack_sequence": {
+      "mode": "unarmed",
+      "count": 2
+    },
+    "targeting": {
+      "mode": "one_target",
+      "target_team": "enemies",
+      "range_feet": 5
+    },
+    "effects": []
+  },
+  "monk_patient_defense": {
+    "name": "Patient Defense",
+    "description": "Spend 1 Focus Point and use your bonus action to defend yourself; attacks against you have disadvantage until your next turn.",
+    "classes": [
+      "monk"
+    ],
+    "acquisition": "starting_ability",
+    "prerequisite_class_level": 2,
+    "action_cost": "bonus_action",
+    "uses_per_combat": null,
+    "resource_cost": {
+      "class_id": "monk",
+      "resource_id": "focus_points",
+      "amount": 1
+    },
+    "targeting": {
+      "mode": "self"
+    },
+    "effects": [
+      {
+        "kind": "attack_disadvantage_against_target",
+        "duration_turns": 2
+      }
+    ],
+    "unique_active": true
+  },
+  "rogue_cunning_dash": {
+    "name": "Cunning Action: Dash",
+    "description": "Use your bonus action to Dash, gaining movement equal to your walking speed this turn.",
+    "classes": [
+      "rogue"
+    ],
+    "acquisition": "starting_ability",
+    "prerequisite_class_level": 2,
+    "action_cost": "bonus_action",
+    "uses_per_combat": null,
+    "targeting": {
+      "mode": "self"
+    },
+    "effects": [
+      {
+        "kind": "movement_bonus",
+        "duration_turns": 1,
+        "multiplier": 2
+      }
+    ]
+  },
+  "rogue_cunning_disengage": {
+    "name": "Cunning Action: Disengage",
+    "description": "Use your bonus action to avoid opportunity attacks while moving this turn.",
+    "classes": ["rogue"],
+    "acquisition": "starting_ability",
+    "prerequisite_class_level": 2,
+    "action_cost": "bonus_action",
+    "uses_per_combat": null,
+    "targeting": {"mode": "self"},
+    "effects": [{"kind": "disengage", "duration_turns": 1}]
+  },
+  "rogue_steady_aim": {
+    "name": "Steady Aim",
+    "description": "If you have not moved this turn, use your bonus action to gain advantage on your next attack. Your movement becomes zero for the turn.",
+    "classes": ["rogue"],
+    "acquisition": "starting_ability",
+    "prerequisite_class_level": 3,
+    "action_cost": "bonus_action",
+    "uses_per_combat": null,
+    "requires_stationary": true,
+    "targeting": {"mode": "self"},
+    "effects": [
+      {"kind": "next_attack_advantage", "duration_turns": 1},
+      {"kind": "end_movement"}
+    ]
+  },
+  "rogue_cunning_withdraw": {
+    "name": "Cunning Strike: Withdraw",
+    "description": "Queue Withdraw for your next eligible Sneak Attack. Spend one Sneak Attack die to avoid opportunity attacks for the rest of your turn.",
+    "classes": ["rogue"], "acquisition": "starting_ability",
+    "prerequisite_class_level": 5, "requires_feature": "rogue_cunning_strike",
+    "action_cost": "free", "uses_per_combat": null,
+    "cunning_strike_option": "withdraw", "targeting": {"mode": "self"},
+    "effects": []
+  },
+  "rogue_cunning_trip": {
+    "name": "Cunning Strike: Trip",
+    "description": "Queue Trip for your next eligible Sneak Attack. Spend one Sneak Attack die; the target makes a Dexterity save or falls prone.",
+    "classes": ["rogue"], "acquisition": "starting_ability",
+    "prerequisite_class_level": 5, "requires_feature": "rogue_cunning_strike",
+    "action_cost": "free", "uses_per_combat": null,
+    "cunning_strike_option": "trip", "targeting": {"mode": "self"},
+    "effects": []
+  },
+  "rogue_cunning_poison": {
+    "name": "Cunning Strike: Poison",
+    "description": "Queue Poison for your next eligible Sneak Attack. Spend one Sneak Attack die; the target makes a Constitution save or is poisoned.",
+    "classes": ["rogue"], "acquisition": "starting_ability",
+    "prerequisite_class_level": 5, "requires_feature": "rogue_cunning_strike",
+    "action_cost": "free", "uses_per_combat": null,
+    "cunning_strike_option": "poison", "targeting": {"mode": "self"},
+    "effects": []
   }
 }

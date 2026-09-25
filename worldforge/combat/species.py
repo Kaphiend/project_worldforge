@@ -36,4 +36,9 @@ def damage_resistances(actor):
         color = actor.get("subrace")
         if color in ancestry:
             resistances.add(ancestry[color])
+    resistances.update(
+        damage_type
+        for effect in actor.get("active_effects", []) or []
+        if effect.get("kind") == "damage_resistance"
+        for damage_type in effect.get("damage_types", []) or [])
     return resistances

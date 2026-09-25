@@ -1,0 +1,374 @@
+{
+  "name": "rogue",
+  "id": "bcadfedf",
+  "max_hp": 31,
+  "current_hp": 31,
+  "classes": [
+    {
+      "name": "rogue",
+      "level": 4
+    }
+  ],
+  "level": 4,
+  "class_levels_initialized": true,
+  "xp_total": 2580,
+  "xp_earned_by_level": {
+    "3": 2700
+  },
+  "xp_spent_by_level": {
+    "3": 120
+  },
+  "xp_rest_spent_by_level": {},
+  "class_spell_purchases": {},
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "prepared_spells": [],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": null,
+    "e": null
+  },
+  "known_abilities": [],
+  "class_features": [
+    "rogue_cunning_action",
+    "rogue_sneak_attack",
+    "rogue_steady_aim",
+    "rogue_thief_fast_hands",
+    "rogue_thief_second_story_work",
+    "rogue_thieves_cant",
+    "rogue_weapon_mastery",
+    "rogue_expertise_1"
+  ],
+  "expertise_skills": [
+    "stealth",
+    "sleight of hand"
+  ],
+  "weapon_masteries": {
+    "dagger": "nick",
+    "longbow": "slow"
+  },
+  "class_feature_purchases": {
+    "rogue": [
+      "rogue_sneak_attack",
+      "rogue_thieves_cant",
+      "rogue_weapon_mastery",
+      "rogue_cunning_action",
+      "rogue_thief_fast_hands",
+      "rogue_thief_second_story_work",
+      "rogue_steady_aim",
+      "rogue_expertise_1"
+    ]
+  },
+  "class_skill_purchases": {
+    "rogue": [
+      "sleight of hand",
+      "stealth",
+      "insight",
+      "perception"
+    ]
+  },
+  "spell_points": 0,
+  "class_resources": {},
+  "attribute_points_spent": {
+    "dexterity": 2
+  },
+  "gold": 500,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Rogue.png",
+  "abilities": {
+    "dexterity": 16,
+    "constitution": 14,
+    "intellect": 11,
+    "wisdom": 10,
+    "charisma": 9,
+    "strength": 9
+  },
+  "unspent": [
+    13,
+    8,
+    9,
+    11,
+    14,
+    11
+  ],
+  "saves": [
+    "dexterity",
+    "intellect"
+  ],
+  "armor_prof": [
+    "light"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial (finesse or light)"
+  ],
+  "race": "elf",
+  "subrace": "wood_elf",
+  "subclass": "rogue_thief",
+  "parent_races": [],
+  "char_class": "rogue",
+  "skills": [
+    "insight",
+    "perception",
+    "sleight of hand",
+    "stealth"
+  ],
+  "controller": "player",
+  "x": 176,
+  "y": 523,
+  "inventory": [
+    {
+      "id": "411feb8f197a",
+      "name": "Healing Potion",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 3,
+      "template_id": "healing_potion"
+    },
+    {
+      "id": "f4f49ad30695",
+      "name": "Revival Scroll",
+      "slot": "consumable",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "quantity": 1,
+      "template_id": "revival_scroll"
+    },
+    {
+      "id": "7d9423033086",
+      "template_id": "axe_2h",
+      "name": "Forceful Axe (2H)",
+      "slot": "main_hand",
+      "tags": [
+        "2h",
+        "heavy"
+      ],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 3
+      }
+    },
+    {
+      "id": "229673ff6b26",
+      "template_id": "leather",
+      "name": "Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "3858d403738e",
+      "template_id": "axe_1h",
+      "name": "Axe",
+      "slot": "main_hand",
+      "tags": [],
+      "rarity": "common",
+      "item_level": 1,
+      "rolled_attributes": {}
+    },
+    {
+      "id": "06eb6da5eff5",
+      "name": "Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather"
+    },
+    {
+      "id": "4c5e5f60ef5e",
+      "name": "Dagger",
+      "slot": "hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "dagger"
+    }
+  ],
+  "personal_storage": [],
+  "equipment": {
+    "head": {
+      "id": "ac9718926969",
+      "name": "Leather Cap",
+      "slot": "head",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "leather_cap"
+    },
+    "chest": {
+      "id": "7ddd7ec594fa",
+      "template_id": "leather",
+      "name": "Guarded Vital Leather Armor",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "rare",
+      "item_level": 1,
+      "rolled_attributes": {
+        "armor_class_bonus": 3,
+        "maximum_hp_bonus": 2
+      }
+    },
+    "hands": {
+      "id": "48d68858c46c",
+      "name": "Travel Gloves",
+      "slot": "hands",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "travel_gloves"
+    },
+    "feet": {
+      "id": "d844212c3ca6",
+      "name": "Trail Boots",
+      "slot": "feet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "trail_boots"
+    },
+    "belt": {
+      "id": "6bbecce47b4c",
+      "name": "Utility Belt",
+      "slot": "belt",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "utility_belt"
+    },
+    "cape": {
+      "id": "eb6a1b0b4a2f",
+      "name": "Wool Cape",
+      "slot": "cape",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "wool_cape"
+    },
+    "ring1": {
+      "id": "036034bc5d78",
+      "name": "Ring of Guarding",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_guard"
+    },
+    "ring2": {
+      "id": "3b18dae6c58e",
+      "name": "Ring of Focus",
+      "slot": "ring",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "ring_focus"
+    },
+    "amulet": {
+      "id": "0e811f0afd52",
+      "name": "Brass Amulet",
+      "slot": "amulet",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "brass_amulet"
+    },
+    "main_hand": {
+      "id": "fec42f68cd2c",
+      "template_id": "dagger",
+      "name": "Forceful Dagger",
+      "slot": "off_hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": "uncommon",
+      "item_level": 1,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 3
+      }
+    },
+    "off_hand": {
+      "id": "294db90c6688",
+      "name": "Dagger",
+      "slot": "hand",
+      "tags": [
+        "finesse",
+        "light",
+        "thrown"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "dagger"
+    },
+    "ranged": null
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

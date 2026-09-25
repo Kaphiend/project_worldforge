@@ -23,6 +23,94 @@
       "thrown"
     ]
   },
+  "handaxe": {
+    "name": "Handaxe",
+    "category": "weapon",
+    "weapon_class": "simple",
+    "weapon_family": "axe",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d6",
+    "damage_type": "slashing",
+    "ranges": {
+      "melee": 5,
+      "thrown_normal": 20,
+      "thrown_long": 60
+    },
+    "tags": [
+      "light",
+      "thrown"
+    ]
+  },
+  "light_hammer": {
+    "name": "Light Hammer",
+    "category": "weapon",
+    "weapon_class": "simple",
+    "weapon_family": "hammer",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d4",
+    "damage_type": "bludgeoning",
+    "ranges": {
+      "melee": 5,
+      "thrown_normal": 20,
+      "thrown_long": 60
+    },
+    "tags": [
+      "light",
+      "thrown"
+    ]
+  },
+  "shortsword": {
+    "name": "Shortsword",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "sword",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d6",
+    "damage_type": "piercing",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": [
+      "finesse",
+      "light"
+    ]
+  },
+  "scimitar": {
+    "name": "Scimitar",
+    "category": "weapon",
+    "weapon_class": "martial",
+    "weapon_family": "sword",
+    "slot": "hand",
+    "allowed_slots": [
+      "main_hand",
+      "off_hand"
+    ],
+    "hands_required": 1,
+    "damage_dice": "1d6",
+    "damage_type": "slashing",
+    "ranges": {
+      "melee": 5
+    },
+    "tags": [
+      "finesse",
+      "light"
+    ]
+  },
   "sword_1h": {
     "name": "Sword",
     "category": "weapon",
@@ -367,15 +455,6 @@
     "category": "consumable",
     "slot": "consumable",
     "effect_id": "healing_potion_effect",
-    "consumable": true,
-    "stackable": true,
-    "max_stack": 20
-  },
-  "revival_scroll": {
-    "name": "Revival Scroll",
-    "category": "consumable",
-    "slot": "consumable",
-    "effect_id": "restorative_revival",
     "consumable": true,
     "stackable": true,
     "max_stack": 20

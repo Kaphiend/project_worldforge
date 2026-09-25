@@ -15,6 +15,11 @@ For the overall game direction and the checklist of unfinished systems, see
 The built-in files are the default content. Put your own work in
 `data/mods/my_mod/`; do not edit the built-in records just to try an idea.
 The included example mod is `data/mods/demo_slice/`.
+Campaign manifests, selection, and validation are documented in
+[`campaigns.md`](campaigns.md). Run the campaign validator with
+`python -m worldforge.content.validate_campaign` before launching.
+The demo manifest's party size, rest, encounter, and inn values are sample
+defaults and can be adjusted per campaign.
 
 For a Windows, macOS, or Linux PyInstaller build, see
 [`BUILDING.md`](../project/BUILDING.md). Frozen builds keep bundled content read-only,
@@ -40,7 +45,8 @@ rest completes when every connected party member has checked in and can pay.
 Outdoor `Z` travel first checks that every character is more than 100 feet from
 every living enemy and can pay their individual XP cost, then moves the party
 to the `safe_camp` stage. Each character has an assigned bedroll and must
-interact with it using `F`; resting completes after everyone checks in.
+interact with it using `F`; resting completes after everyone checks in. The
+`Return to Map` marker exits camp without spending XP or resting.
 
 Bed interaction range is configured on each arena's `inn_beds` entry. For
 example:
@@ -59,13 +65,10 @@ arena `exits` that name a destination scenario and arrival point. See
 [`tables/arenas.md`](tables/arenas.md) and
 [`tables/scenarios.md`](tables/scenarios.md) for the fields.
 
-Corpse looting uses this same `F` interaction path: within five feet of a
-defeated mob, open its shared loot container. The container holds the mob
-instance's carried inventory and equipped gear. Taking all or closing the
-panel starts its three-second despawn timer. Doors and chests still need
-runtime interactions; when adding one, prefer an explicit interaction type
-and keep proximity, confirmation, and result feedback consistent with the
-inn-bed flow.
+Corpse and map-chest looting use this same `F` interaction path. Personal
+storage chests support actor-owned deposits and withdrawals. Add map routes to
+both arena `exits` and the campaign manifest's `map_connections`; the campaign
+validator checks that their destinations agree.
 
 ## Spell bars and saved assignments
 
@@ -101,11 +104,16 @@ preparations are limited to character level plus the class spellcasting ability
 modifier (minimum one); cantrips do not use a preparation slot. The game checks
 the limit on both the client UI and host action path. Prepared IDs are saved in
 `prepared_spells`; older saves are trimmed to the limit while preserving
-cantrips. Spell records marked `cantrip: true` with `spell_point_cost: 0` use an action
-without spending the shared spell pool. Cantrips and other spells are learned
-at the map trainer using each record’s `xp_purchase_cost`. The demo includes Arcane Spark and Frost Needle as
-level-one caster attacks; tune damage, range, classes, and descriptions in
-`data/spells.json`.
+cantrips. Spell records marked `cantrip: true` with `spell_point_cost: 0` use an
+action without spending the shared spell pool. Trainer acquisition uses each
+record's `xp_purchase_cost`. New characters receive the class's configured
+`starting_spells`; those are learned, prepared, and placed on the first action
+bar. The built-in spell list now contains an SRD-guided subset with supported
+attack, saving-throw, healing, control, ward, and weapon-buff effects. New
+Barbarians, Fighters, Monks, and Rogues also receive their starter abilities;
+existing characters are not changed by these grants. See
+[`abilities.md`](tables/abilities.md) for the current implemented ability set
+and its limits.
 The map trainer charges per-item `xp_purchase_cost`. Current unspent XP sets
 the shared purchase tier and class ownership ledgers enforce sequential tiers.
 Creation hover text comes from each race, subrace, and class `summary`; subclass
@@ -179,6 +187,7 @@ A scenario, arena, or NPC that refers to a misspelled ID will not be found.
 | Put NPCs on a map and set objective text | `scenarios.json` | No |
 | Add or tune character classes | `classes.json` | Mostly; new skills may need a Python change |
 | Tune multiclass unlock and purchase costs | `progression.json` | No |
+| Tune CR-based monster XP rewards | `experience.json`; set `challenge_rating` or `xp_reward` on NPC records | No |
 | Tune mob class priorities, elite scaling, rarity weights, and affix counts | `mob_generation.json` | No |
 | Add or tune rollable gear attributes | `item_attributes.json` | No for supported effects |
 | Add race/subrace choices | `races.json` | Mostly; new race rules may need code |

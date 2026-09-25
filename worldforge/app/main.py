@@ -81,7 +81,7 @@ def main():
                 "host": False, "player_id": session["player_id"],
                 "submit": submit_action, "get": get_combat,
             }
-            party_status = lambda: min(8, 1 + len(get_other_players()))
+            party_status = lambda: min(MAX_PLAYERS, 1 + len(get_other_players()))
             invite_address = None
         else:
             get_other_players, send_state = lambda: [], lambda *args: None

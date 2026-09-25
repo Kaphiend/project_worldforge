@@ -30,12 +30,15 @@
   },
   "market_square": {
     "name": "Market Square",
-    "description": "A broad town market with a supply vendor.",
+    "description": "A broad town market, now contested by roadside raiders.",
     "arena": "market_square",
     "player_spawns": [[100, 560], [165, 560], [230, 560], [295, 560],
                       [100, 625], [165, 625], [230, 625], [295, 625]],
-    "enemies": [],
-    "mob_pool": [],
+    "enemies": [
+      {"npc": "clearing_raider", "id": "market_raider_a", "x": 950, "y": 850},
+      {"npc": "clearing_raider", "id": "market_raider_b", "x": 2050, "y": 1330}
+    ],
+    "mob_pool": ["clearing_raider"],
     "respawn_point": [100, 560],
     "objective": "Visit the market vendor."
   },

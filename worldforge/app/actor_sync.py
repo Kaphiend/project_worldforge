@@ -15,6 +15,8 @@ def _sync_local_actor(actor, combat, actor_id, *, consume_position_sync=False,
     actor.conditions = deepcopy(entry["data"].get("conditions", []))
     actor.active_effects = deepcopy(entry["data"].get("active_effects", []))
     actor.inventory = deepcopy(entry["data"].get("inventory", actor.inventory))
+    actor.personal_storage = deepcopy(entry["data"].get(
+        "personal_storage", getattr(actor, "personal_storage", [])))
     inventory_ids = {item.get("id") for item in actor.inventory}
     quick_items = actor.quick_items if isinstance(actor.quick_items, dict) else {}
     actor.quick_items = {
@@ -56,6 +58,12 @@ def _sync_local_actor(actor, combat, actor_id, *, consume_position_sync=False,
     actor.known_abilities = deepcopy(entry["data"].get("known_abilities", actor.known_abilities))
     actor.class_features = deepcopy(entry["data"].get(
         "class_features", actor.class_features))
+    actor.expertise_skills = deepcopy(entry["data"].get(
+        "expertise_skills", actor.expertise_skills))
+    actor.fighting_styles = deepcopy(entry["data"].get(
+        "fighting_styles", actor.fighting_styles))
+    actor.weapon_masteries = deepcopy(entry["data"].get(
+        "weapon_masteries", actor.weapon_masteries))
     actor.sneaking = bool(entry["data"].get("sneaking", actor.sneaking))
     actor.stealth_check_total = entry["data"].get(
         "stealth_check_total", actor.stealth_check_total)
@@ -69,11 +77,9 @@ def _sync_local_actor(actor, combat, actor_id, *, consume_position_sync=False,
     force_position_sync = (entry["data"].get("_force_position_sync")
                            or combat.get("rest_position_sync"))
     if (force_position or entry["data"].get("withdrawn") or combat.get("active")
-            or combat.get("rest_session") or force_position_sync):
+            or force_position_sync):
         actor.x, actor.y = entry["x"], entry["y"]
     if consume_position_sync:
         entry["data"].pop("_force_position_sync", None)
         if combat.get("rest_position_sync"):
             combat.pop("rest_position_sync", None)
-
-

@@ -3,11 +3,12 @@ import json
 import socket
 import threading
 from copy import deepcopy
+from worldforge.content.campaign import ACTIVE_CAMPAIGN
 
 
 HOST = "0.0.0.0"
 PORT = 5555
-MAX_PLAYERS = 8  # Includes the host.
+MAX_PLAYERS = ACTIVE_CAMPAIGN["party_limit"]  # Includes the host.
 
 
 def local_invite_address():

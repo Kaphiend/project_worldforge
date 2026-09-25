@@ -22,6 +22,14 @@ not be reused as the template ID.
 - `tags`: rules flags interpreted by code. Current examples include `2h`,
   `thrown`, `finesse`, `light`, `heavy`, `ammunition`, `loading`, and
   `focus-capable`. Unknown tags are inert.
+- `light` enables the SRD Light-property extra attack when used as part of the
+  Attack action. The follow-up requires a different equipped Light weapon; the
+  off-hand attack is exposed as a Bonus Action. Weapon Mastery Nick can move it
+  into the Attack action.
+- Supported weapon mastery IDs map each template to one mastery property. A
+  character must own a Weapon Mastery class feature and be proficient with the
+  weapon. The Cleave follow-up currently selects the nearest valid second
+  target automatically.
 
 ## Weapon values
 

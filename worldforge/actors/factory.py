@@ -50,6 +50,9 @@ class Actor:
     quick_items: dict = field(default_factory=lambda: {"q": None, "e": None})
     known_abilities: list = field(default_factory=list)
     class_features: list = field(default_factory=list)
+    expertise_skills: list = field(default_factory=list)
+    fighting_styles: list = field(default_factory=list)
+    weapon_masteries: dict = field(default_factory=dict)
     class_feature_purchases: dict = field(default_factory=dict)
     class_skill_purchases: dict = field(default_factory=dict)
     spell_points: int = None
@@ -79,6 +82,7 @@ class Actor:
     x: int = 400
     y: int = 300
     inventory: list = field(default_factory=list)
+    personal_storage: list = field(default_factory=list)
     equipment: dict = field(default_factory=lambda: {slot: None for slot in EQUIPMENT_SLOTS})
     active_weapon_set: str = 'melee'
     starting_gear_applied: bool = False
@@ -505,10 +509,67 @@ def random_fully_geared_actor(name=None, avatars=None, class_name=None):
     actor.known_spells = []
     actor.prepared_spells = []
     actor.known_abilities = []
+    initialize_starting_spells(actor)
+    initialize_starting_abilities(actor)
     initialize_resources(vars(actor), refill=True)
     if avatars:
         actor.avatar = random.choice(list(avatars))
     return actor
+
+
+def initialize_starting_spells(actor):
+    """Grant the configured starter spell selection to a new actor."""
+    from worldforge.content.classes import SPELLS
+
+    class_id = getattr(actor, "char_class", None)
+    starting = [spell_id for spell_id in
+                CLASSES.get(class_id, {}).get("starting_spells", [])
+                if spell_id in SPELLS]
+    if not starting:
+        return
+    actor.known_spells = list(dict.fromkeys(starting))
+    actor.prepared_spells = list(actor.known_spells)
+    bars = getattr(actor, "spell_hotbars", None)
+    if not isinstance(bars, list) or not bars:
+        actor.spell_hotbars = [["action:weapon_attack"] + [None] * 9,
+                               [None] * 10, [None] * 10, [None] * 10]
+        bars = actor.spell_hotbars
+    first_bar = list(bars[0])
+    for index, spell_id in enumerate(starting, start=1):
+        if index >= len(first_bar):
+            break
+        first_bar[index] = f"spell:{spell_id}"
+    bars[0] = first_bar
+
+
+def initialize_starting_abilities(actor):
+    """Grant configured class actions; each action enforces its level gate."""
+    from worldforge.content.classes import ABILITIES
+
+    class_id = getattr(actor, "char_class", None)
+    starting = [ability_id for ability_id in
+                CLASSES.get(class_id, {}).get("starting_abilities", [])
+                if ability_id in ABILITIES]
+    actor.known_abilities = list(dict.fromkeys(starting))
+    features = CLASSES.get(class_id, {}).get("starting_features", [])
+    actor.class_features = list(dict.fromkeys(
+        (actor.class_features or []) + [feature for feature in features
+                                        if feature]))
+    bars = getattr(actor, "spell_hotbars", None)
+    if not isinstance(bars, list) or not bars:
+        actor.spell_hotbars = [["action:weapon_attack"] + [None] * 9,
+                               [None] * 10, [None] * 10, [None] * 10]
+        bars = actor.spell_hotbars
+    first_bar = list(bars[0])
+    slot = max(1, len(actor.known_spells) + 1)
+    for ability_id in starting:
+        if slot >= len(first_bar):
+            break
+        first_bar[slot] = f"ability:{ability_id}"
+        slot += 1
+    if class_id == "rogue" and slot < len(first_bar):
+        first_bar[slot] = "action:hide"
+    bars[0] = first_bar
 
 
 def add_equipment_item(actor, name=None, slot=None, details=None, template_id=None,

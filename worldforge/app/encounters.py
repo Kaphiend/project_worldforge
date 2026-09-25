@@ -1,21 +1,26 @@
 """Encounter setup, mob lifecycle, and combat snapshot helpers."""
 from copy import deepcopy
+import math
 import random
 import pygame
 
 from worldforge.actors.factory import create_npc_instance
+from worldforge.app.combat_flow import _log
 from worldforge.app.rendering import _player_id
 from worldforge.app.world import (ACTOR_HITBOX_HEIGHT, ACTOR_HITBOX_WIDTH,
                                   ACTOR_SIZE, PIXELS_PER_FOOT, _actor_hitbox,
                                   _arena_bounds, _arena_obstacles,
                                   _line_of_sight, _movement_allowance,
+                                  _walk_destination,
                                   _perception_score)
 from worldforge.combat.rules import edge_distance_feet, initiative_for
 from worldforge.content.classes import (ARENAS, MOB_GENERATION_RULES, NPCS,
                                         SCENARIOS)
+from worldforge.content.campaign import (ACTIVE_CAMPAIGN, campaign_rule,
+                                         campaign_setting)
 from worldforge.core.progression import initialize_resources
 
-DEFAULT_SCENARIO = "first_contact"
+DEFAULT_SCENARIO = ACTIVE_CAMPAIGN["starting_scenario"]
 
 def _actor_data(actor):
     return deepcopy(vars(actor)) if not isinstance(actor, dict) else deepcopy(actor)
@@ -67,6 +72,8 @@ def _scenario_world_mobs(scenario_id):
         npc["id"] = mob_id
         entry = _combat_snapshot(mob_id, npc, "enemies")
         entry["perception_info"] = _mob_perception_info(NPCS[npc_id], npc)
+        entry["patrol_origin"] = [entry["x"], entry["y"]]
+        entry["patrol_waypoint"] = 0
         mobs.append(entry)
     return mobs
 
@@ -81,7 +88,9 @@ def _new_world_state(actor, local_player_id, remote_players,
     state.update(
         scenario_id=scenario_id, scenario=deepcopy(scenario),
         arena=deepcopy(ARENAS.get(scenario.get("arena"), {})),
-        world_areas={}, world_area_items={}, ground_items=[], sync_only=True)
+        world_areas={}, world_area_items={}, world_area_chests={},
+        chests=deepcopy(ARENAS.get(scenario.get("arena"), {}).get("chests", [])),
+        ground_items=[], sync_only=True)
     state["actors"].update({entry["id"]: entry
                              for entry in _scenario_world_mobs(scenario_id)})
     return state
@@ -89,27 +98,18 @@ def _new_world_state(actor, local_player_id, remote_players,
 def _initiative_order(actors):
     rolls = {actor_id: initiative_for(entry["data"])
              for actor_id, entry in actors.items()}
-    while True:
-        ordered = sorted(
-            actors,
-            key=lambda actor_id: (
-                rolls[actor_id]["total"], rolls[actor_id]["dexterity"]
-            ), reverse=True,
-        )
-        tied = []
-        for first, second in zip(ordered, ordered[1:]):
-            a, b = rolls[first], rolls[second]
-            if a["total"] == b["total"] and a["dexterity"] == b["dexterity"]:
-                tied.extend((first, second))
-        if not tied:
-            return [{"id": actor_id, **rolls[actor_id]} for actor_id in ordered]
-        for actor_id in set(tied):
-            reroll = initiative_for(actors[actor_id]["data"])
-            rolls[actor_id] = reroll
+    ordered = sorted(
+        actors,
+        key=lambda actor_id: (
+            rolls[actor_id]["total"], rolls[actor_id]["dexterity"], actor_id
+        ), reverse=True,
+    )
+    return [{"id": actor_id, **rolls[actor_id]} for actor_id in ordered]
 
-COMBAT_TRIGGER_RANGE_FEET = 20
+COMBAT_TRIGGER_RANGE_FEET = campaign_rule("combat_trigger_range_feet", 20)
+COMBAT_JOIN_RANGE_FEET = campaign_rule("combat_join_range_feet", 50)
 
-CORPSE_DESPAWN_MS = 3_000
+CORPSE_DESPAWN_MS = campaign_rule("corpse_despawn_seconds", 3) * 1000
 
 def _world_mob_from_entry(entry):
     """Convert an encounter enemy snapshot into persistent world-mob state."""
@@ -122,6 +122,8 @@ def _world_mob_from_entry(entry):
         "perception_info": deepcopy(entry.get("perception_info", {})),
         "corpse_despawn_at": entry.get("corpse_despawn_at"),
         "loot": deepcopy(entry.get("loot", [])),
+        "patrol_origin": deepcopy(entry.get("patrol_origin")),
+        "patrol_waypoint": entry.get("patrol_waypoint", 0),
     }
 
 def _corpse_loot(entry):
@@ -209,7 +211,76 @@ def _random_mob_entry(arena, existing=(), players=(), mob_pool=None):
     entry = _combat_snapshot(mob_id, npc, "enemies")
     entry["perception_info"] = _mob_perception_info(definition, npc)
     entry["width"] = entry["height"] = ACTOR_SIZE
+    entry["patrol_origin"] = [spot[0], spot[1]]
+    entry["patrol_waypoint"] = 0
     return entry
+
+
+def combat_world_mobs(combat):
+    """Collect engaged and non-engaged enemies into one persistent area list."""
+    if not combat:
+        return []
+    mobs = [_world_mob_from_entry(entry)
+            for entry in combat.get("actors", {}).values()
+            if entry.get("team") == "enemies"]
+    mobs.extend(deepcopy(combat.get("inactive_world_mobs", [])))
+    return mobs
+
+
+def advance_world_mob_patrol(combat, now):
+    """Move idle enemies slowly around small four-point patrol loops."""
+    if not combat or combat.get("active") or combat.get("rest_session"):
+        return
+    previous = combat.get("world_patrol_tick", now)
+    elapsed = max(0, min(100, now - previous)) / 1000
+    combat["world_patrol_tick"] = now
+    if elapsed <= 0:
+        return
+    arena = combat.get("arena", {})
+    enemies = [entry for entry in combat.get("actors", {}).values()
+               if entry.get("team") == "enemies"]
+    enemies.extend(combat.get("inactive_world_mobs", []))
+    occupied = [_actor_hitbox(entry["x"], entry["y"])
+                for entry in combat.get("actors", {}).values()
+                if entry.get("team") == "players" and not entry.get("downed")]
+    for entry in enemies:
+        if entry.get("downed"):
+            continue
+        origin = entry.get("patrol_origin")
+        if not isinstance(origin, (list, tuple)) or len(origin) < 2:
+            origin = [entry["x"], entry["y"]]
+            entry["patrol_origin"] = origin
+        waypoints = (entry.get("patrol_waypoints_feet")
+                     or entry.get("data", {}).get("patrol_waypoints_feet")
+                     or campaign_setting("mob_patrol_waypoints_feet",
+                                          [[0, 0], [11, 0], [11, 11], [0, 11]]))
+        points = tuple((float(point[0]) * PIXELS_PER_FOOT,
+                        float(point[1]) * PIXELS_PER_FOOT)
+                       for point in waypoints
+                       if isinstance(point, (list, tuple)) and len(point) >= 2)
+        if not points:
+            points = ((0, 0),)
+        waypoint = int(entry.get("patrol_waypoint", 0)) % len(points)
+        target_x = origin[0] + points[waypoint][0]
+        target_y = origin[1] + points[waypoint][1]
+        dx, dy = target_x - entry["x"], target_y - entry["y"]
+        distance = math.hypot(dx, dy)
+        speed = float(entry.get("patrol_speed_feet_per_second")
+                       or entry.get("data", {}).get("patrol_speed_feet_per_second")
+                       or campaign_rule("mob_patrol_speed_feet_per_second", 6))
+        step = speed * PIXELS_PER_FOOT * elapsed
+        if distance <= step or distance == 0:
+            entry["patrol_waypoint"] = (waypoint + 1) % len(points)
+            dx, dy = target_x - entry["x"], target_y - entry["y"]
+            distance = math.hypot(dx, dy)
+            step = min(step, distance)
+        if distance:
+            dx, dy = dx * min(1, step / distance), dy * min(1, step / distance)
+            x, y = _walk_destination(
+                entry["x"], entry["y"], dx, dy, arena, occupied)
+            entry["x"], entry["y"] = x, y
+            entry["data"]["x"], entry["data"]["y"] = x, y
+        occupied.append(_actor_hitbox(entry["x"], entry["y"]))
 
 def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCENARIO,
                 world_mobs=None):
@@ -238,9 +309,25 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
                 spawn.get("npc"), spawn.get("x", definition.get("x", 600)),
                 spawn.get("y", definition.get("y", 280)))
             npc["id"] = npc_id
-            enemy_sources.append(_combat_snapshot(npc_id, npc, "enemies"))
+            entry = _combat_snapshot(npc_id, npc, "enemies")
+            entry["patrol_origin"] = [entry["x"], entry["y"]]
+            entry["patrol_waypoint"] = 0
+            enemy_sources.append(entry)
     else:
         enemy_sources = [deepcopy(entry) for entry in world_mobs]
+    player_entries = [entry for entry in actors.values()
+                      if entry.get("team") == "players" and not entry["downed"]]
+    inactive_world_mobs = []
+    nearby_enemy_sources = []
+    for source in enemy_sources:
+        distance = min((edge_distance_feet(player, source, PIXELS_PER_FOOT,
+                                           ACTOR_SIZE)
+                        for player in player_entries), default=float("inf"))
+        if distance <= COMBAT_JOIN_RANGE_FEET:
+            nearby_enemy_sources.append(source)
+        else:
+            inactive_world_mobs.append(_world_mob_from_entry(source))
+    enemy_sources = nearby_enemy_sources
     for source in enemy_sources:
         npc_id = source["id"]
         npc = deepcopy(source["data"])
@@ -263,6 +350,9 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
         entry["width"] = entry["height"] = ACTOR_SIZE
         if source.get("corpse_despawn_at"):
             entry["corpse_despawn_at"] = source["corpse_despawn_at"]
+        if source.get("patrol_origin") is not None:
+            entry["patrol_origin"] = deepcopy(source["patrol_origin"])
+            entry["patrol_waypoint"] = source.get("patrol_waypoint", 0)
         if source.get("downed"):
             entry["loot"] = deepcopy(source.get("loot", []))
         actors[npc_id] = entry
@@ -273,16 +363,19 @@ def _new_combat(actor, local_player_id, remote_players, scenario_id=DEFAULT_SCEN
         "active": True, "round": 1, "order": order, "turn_index": 0,
         "removed_order": {},
         "actors": actors,
+        "inactive_world_mobs": inactive_world_mobs,
         "ability_uses": {},
         "budgets": {
             key: {"movement": _movement_allowance(entry["data"]), "action": True,
-                  "bonus_action": True, "skip_next": False,
-                  "condition_tick_done": False}
+                  "bonus_action": True, "reaction": True, "skip_next": False,
+                  "condition_tick_done": False, "movement_used": 0}
             for key, entry in actors.items()
         },
         "log": [], "scenario_id": scenario_id,
         "scenario": deepcopy(scenario),
         "arena": deepcopy(ARENAS.get(scenario.get("arena"), {})),
+        "chests": deepcopy(ARENAS.get(scenario.get("arena"), {}).get("chests", [])),
+        "world_area_chests": {},
         "result": None,
     }
 
@@ -336,3 +429,36 @@ def _combat_trigger(actor, local_player_id, remote_players,
                     continue
                 return player_id, enemy["id"]
     return None
+
+
+def settle_victory(combat, players):
+    """Leave corpses in-world and immediately add the next random mob."""
+    if (not combat or not combat.get("result")
+            or combat["result"].get("outcome") != "victory"
+            or combat.get("victory_settled")):
+        return
+    combat["victory_settled"] = True
+    combat["active"] = False
+    combat["result"] = None
+    for entry in combat.get("actors", {}).values():
+        if (entry.get("team") == "enemies" and entry.get("downed")
+                and entry.get("corpse_despawn_at") is None):
+            entry["loot"] = _corpse_loot(entry)
+            # Empty corpses have nothing to interact with, so start their
+            # normal despawn countdown as soon as combat settles.
+            entry["corpse_despawn_at"] = (
+                pygame.time.get_ticks() + CORPSE_DESPAWN_MS
+                if not entry["loot"] else None)
+    arena = combat.get("arena", {})
+    existing = combat_world_mobs(combat)
+    mob_pool = SCENARIOS.get(combat.get("scenario_id"), {}).get("mob_pool")
+    fresh = _random_mob_entry(arena, existing, players, mob_pool)
+    if fresh:
+        combat["actors"][fresh["id"]] = fresh
+        _log(combat, f"A new {fresh['data'].get('name', 'mob')} appears elsewhere on the map.")
+    else:
+        _log(combat, "The defeated mob remains here; no clear spawn point was found.")
+    combat["order"] = []
+    combat["budgets"] = {}
+    combat["turn_index"] = 0
+    combat["ability_uses"] = {}

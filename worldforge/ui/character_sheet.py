@@ -136,9 +136,7 @@ class CharacterSheetUI:
     def draw(self, screen, font):
         if not self.visible:
             return
-        width = min(620, screen.get_width() - 24)
-        height = min(590, screen.get_height() - 24)
-        self.panel = pygame.Rect(0, 0, max(1, width), max(1, height))
+        self.panel = pygame.Rect(0, 0, 620, 590)
         self.panel.center = screen.get_rect().center
         veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         veil.fill((0, 0, 0, 175))

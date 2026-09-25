@@ -5,7 +5,8 @@ and its JSON table, then add the matching button and stage rendering here.
 Keep screen coordinates inside the 800-by-600 window.
 """
 import pygame
-from worldforge.content.classes import RACES, CLASSES, SUBCLASSES, skill_options
+from worldforge.content.classes import (RACES, CLASSES, SUBCLASSES,
+                                        skill_options, subclass_feature_items)
 from worldforge.actors.creation_flow import CharacterCreationFlow
 from worldforge.core.storage import delete_actor, list_actors, unlock_actor
 
@@ -13,15 +14,21 @@ from worldforge.core.storage import delete_actor, list_actors, unlock_actor
 BACK_TO_MODE = "__back_to_mode__"
 
 
-def run_creation(available_avatars=None):
+def run_creation():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
     font = pygame.font.SysFont(None, 36)
+    save_font = pygame.font.SysFont(None, 32)
     clock = pygame.time.Clock()
 
     flow = CharacterCreationFlow()
     name_text = ''
     saves = list_actors()
+    save_scroll = 0
+    visible_save_count = 6
+    save_scroll_track = pygame.Rect(642, 144, 12, 230)
+    save_scroll_up = pygame.Rect(625, 100, 46, 36)
+    save_scroll_down = pygame.Rect(625, 382, 46, 36)
 
     confirm_rect = pygame.Rect(300, 500, 200, 50)
     name_box = pygame.Rect(250, 250, 300, 50)
@@ -29,21 +36,28 @@ def run_creation(available_avatars=None):
     random_char_rect = pygame.Rect(250, 430, 300, 50)
     start_rect = pygame.Rect(300, 500, 200, 50)
     back_rect = pygame.Rect(30, 500, 150, 50)
-    avatar_options = [
-        (pygame.Rect(150, 200, 220, 180), 'asset_pack/Orc.png', 'Orc'),
-        (pygame.Rect(430, 200, 220, 180), 'asset_pack/Soldier.png', 'Soldier'),
-    ]
-    avatar_buttons = [option for option in avatar_options
-                      if available_avatars is None or option[1] in available_avatars]
-
+    def max_save_scroll():
+        return max(0, len(saves) - visible_save_count)
 
     def menu_buttons():
         buttons = []
-        for i, (save_id, name) in enumerate(saves):
-            load_rect = pygame.Rect(250, 100 + i * 60, 220, 50)
-            delete_rect = pygame.Rect(480, 100 + i * 60, 70, 50)
+        for row, (save_id, name) in enumerate(
+                saves[save_scroll:save_scroll + visible_save_count]):
+            load_rect = pygame.Rect(220, 100 + row * 54, 310, 44)
+            delete_rect = pygame.Rect(540, 100 + row * 54, 44, 44)
             buttons.append((load_rect, delete_rect, save_id, name))
         return buttons
+
+    def save_scroll_thumb():
+        if not saves:
+            return save_scroll_track.copy()
+        thumb_height = max(28, round(save_scroll_track.height *
+                                     visible_save_count / len(saves)))
+        travel = save_scroll_track.height - thumb_height
+        offset = (round(travel * save_scroll / max_save_scroll())
+                  if max_save_scroll() else 0)
+        return pygame.Rect(save_scroll_track.x, save_scroll_track.y + offset,
+                           save_scroll_track.width, thumb_height)
 
     def make_buttons(names):
         buttons = []
@@ -158,6 +172,7 @@ def run_creation(available_avatars=None):
         choice_tooltip = None
         if flow.stage == 'menu':
             saves = list_actors()
+            save_scroll = min(save_scroll, max_save_scroll())
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -172,6 +187,17 @@ def run_creation(available_avatars=None):
                     return BACK_TO_MODE
                 flow.go_back()
 
+            if flow.stage == 'menu' and event.type == pygame.MOUSEWHEEL:
+                save_scroll = max(0, min(max_save_scroll(), save_scroll - event.y))
+
+            if flow.stage == 'menu' and event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_UP, pygame.K_PAGEUP):
+                    step = visible_save_count if event.key == pygame.K_PAGEUP else 1
+                    save_scroll = max(0, save_scroll - step)
+                elif event.key in (pygame.K_DOWN, pygame.K_PAGEDOWN):
+                    step = visible_save_count if event.key == pygame.K_PAGEDOWN else 1
+                    save_scroll = min(max_save_scroll(), save_scroll + step)
+
             if event.type == pygame.KEYDOWN and flow.stage in ('name', 'quick_name'):
                 if event.key == pygame.K_BACKSPACE:
                     name_text = name_text[:-1]
@@ -181,12 +207,20 @@ def run_creation(available_avatars=None):
                             flow.begin_character(name_text)
                         else:
                             flow.create_random_fully_geared(
-                                avatars=[option[1] for option in avatar_buttons],
                                 class_name=flow.quick_start_class, name=name_text)
                 elif event.unicode.isprintable() and len(name_text) < 20:
                     name_text += event.unicode
 
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # pygame's legacy wheel events are mouse buttons 4 and 5.
+                # Consume them before testing save-button hitboxes, including
+                # when the list has no scroll range.
+                if event.button in (4, 5):
+                    if flow.stage == 'menu':
+                        direction = -1 if event.button == 4 else 1
+                        save_scroll = max(0, min(
+                            max_save_scroll(), save_scroll + direction))
+                    continue
                 if back_rect.collidepoint(event.pos):
                     if flow.stage == 'menu':
                         pygame.quit()
@@ -194,12 +228,23 @@ def run_creation(available_avatars=None):
                     flow.go_back()
                     continue
                 if flow.stage == 'menu':
+                    if save_scroll_up.collidepoint(event.pos):
+                        save_scroll = max(0, save_scroll - 1)
+                        continue
+                    if save_scroll_down.collidepoint(event.pos):
+                        save_scroll = min(max_save_scroll(), save_scroll + 1)
+                        continue
+                    if save_scroll_track.collidepoint(event.pos):
+                        thumb = save_scroll_thumb()
+                        if event.pos[1] < thumb.top:
+                            save_scroll = max(0, save_scroll - visible_save_count)
+                        elif event.pos[1] > thumb.bottom:
+                            save_scroll = min(max_save_scroll(),
+                                              save_scroll + visible_save_count)
+                        continue
                     for load_rect, delete_rect, save_id, name in menu_buttons():
                         if load_rect.collidepoint(event.pos):
                             flow.load_existing(save_id)
-                            if (available_avatars is not None
-                                    and flow.actor.avatar not in available_avatars):
-                                flow.stage = 'avatar'
                         elif delete_rect.collidepoint(event.pos):
                             delete_actor(save_id)
                             saves = list_actors()
@@ -222,7 +267,6 @@ def run_creation(available_avatars=None):
                 elif flow.stage == 'quick_name':
                     if name_text.strip() and confirm_rect.collidepoint(event.pos):
                         flow.create_random_fully_geared(
-                            avatars=[option[1] for option in avatar_buttons],
                             class_name=flow.quick_start_class, name=name_text)
 
                 elif flow.stage == 'race':
@@ -284,25 +328,50 @@ def run_creation(available_avatars=None):
                 elif flow.stage == 'done':
                     if start_rect.collidepoint(event.pos):
                         running = False
-                elif flow.stage == 'avatar':
-                    for rect, avatar, _label in avatar_buttons:
-                        if rect.collidepoint(event.pos):
-                            flow.choose_avatar(avatar)
 
         screen.fill((20, 20, 20))
 
         if flow.stage == 'menu':
             screen.blit(font.render("Choose or create a character", True,
                                     (255, 255, 255)), (220, 35))
+            if not saves:
+                empty_text = pygame.font.SysFont(None, 24).render(
+                    "No saved characters yet", True, (185, 190, 200))
+                screen.blit(empty_text, (220, 120))
             for load_rect, delete_rect, save_id, name in menu_buttons():
                 pygame.draw.rect(screen, (60, 60, 60), load_rect)
-                text = font.render(fit_label(name.title(), font,
+                text = save_font.render(fit_label(name.title(), save_font,
                                             load_rect.width - 20),
                                    True, (255, 255, 255))
-                screen.blit(text, (load_rect.x + 10, load_rect.y + 10))
+                screen.blit(text, (load_rect.x + 10,
+                                   load_rect.centery - text.get_height() // 2))
                 pygame.draw.rect(screen, (140, 60, 60), delete_rect)
-                del_text = font.render("X", True, (255, 255, 255))
-                screen.blit(del_text, (delete_rect.x + 25, delete_rect.y + 10))
+                del_text = pygame.font.SysFont(None, 28).render(
+                    "X", True, (255, 255, 255))
+                screen.blit(del_text, del_text.get_rect(center=delete_rect.center))
+            if len(saves) > visible_save_count:
+                pygame.draw.rect(screen, (52, 57, 66), save_scroll_track,
+                                 border_radius=5)
+                pygame.draw.rect(screen, (150, 165, 185), save_scroll_thumb(),
+                                 border_radius=5)
+                for rect, label in ((save_scroll_up, "▲"),
+                                    (save_scroll_down, "▼")):
+                    pygame.draw.rect(screen, (65, 72, 84), rect,
+                                     border_radius=4)
+                    pygame.draw.rect(screen, (145, 155, 170), rect, 1,
+                                     border_radius=4)
+                    screen.blit(pygame.font.SysFont(None, 23).render(
+                        label, True, (235, 238, 242)),
+                        (rect.x + 15, rect.y + 8))
+                first = save_scroll + 1
+                last = min(len(saves), save_scroll + visible_save_count)
+                page_text = f"Showing {first}–{last} of {len(saves)} saves"
+            else:
+                page_text = f"{len(saves)} saved character(s)"
+            page_font = pygame.font.SysFont(None, 20)
+            page_text = fit_label(page_text, page_font, 180)
+            screen.blit(page_font.render(page_text, True, (175, 185, 198)),
+                        (610, 430))
             pygame.draw.rect(screen, (100, 100, 180), new_char_rect)
             new_text = font.render(fit_label("New Character", font,
                                              new_char_rect.width - 20),
@@ -452,7 +521,8 @@ def run_creation(available_avatars=None):
                                                        (220, 220, 220)),
                                 (rect.x + 14, rect.y + 46 + line_index * 20))
                 if rect.collidepoint(pygame.mouse.get_pos()):
-                    feature = next(iter(subclass.get('features', {}).values()), {})
+                    feature = next((feature for _, _, feature in
+                                    subclass_feature_items(subclass_id)), {})
                     body = subclass.get('description', '')
                     if feature.get('summary'):
                         body += ' ' + feature['summary']
@@ -537,15 +607,6 @@ def run_creation(available_avatars=None):
             pygame.draw.rect(screen, (100, 180, 100), start_rect)
             start_text = font.render("Start", True, (255, 255, 255))
             screen.blit(start_text, (start_rect.x + 65, start_rect.y + 10))
-
-        elif flow.stage == 'avatar':
-            screen.blit(font.render('Choose this character’s avatar', True,
-                                    (255, 255, 255)), (210, 100))
-            for rect, _avatar, label in avatar_buttons:
-                pygame.draw.rect(screen, (65, 75, 95), rect)
-                pygame.draw.rect(screen, (180, 190, 210), rect, 2)
-                screen.blit(font.render(label, True, (255, 255, 255)),
-                            (rect.x + 65, rect.y + 135))
 
         pygame.draw.rect(screen, (75, 82, 96), back_rect, border_radius=5)
         pygame.draw.rect(screen, (180, 190, 205), back_rect, 2, border_radius=5)

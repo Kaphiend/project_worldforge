@@ -73,10 +73,14 @@ def load_actor(actor_id):
     data.setdefault('class_feature_purchases', {})
     data.setdefault('class_skill_purchases', {})
     data.setdefault('class_features', [])
+    data.setdefault('expertise_skills', [])
+    data.setdefault('fighting_styles', [])
+    data.setdefault('weapon_masteries', {})
     data.setdefault('xp_rest_spent_by_level', {})
     data.setdefault('attribute_points_spent', {})
     data.setdefault('withdrawn', False)
     data.setdefault('downed', data.get('current_hp', 1) <= 0)
+    data.setdefault('personal_storage', [])
     data.setdefault('conditions', [])
     data.setdefault('active_effects', [])
     if 'known_spells' not in data:
@@ -144,11 +148,15 @@ def load_actor(actor_id):
     bought_skills = {str(skill).casefold()
                      for skills in data['class_skill_purchases'].values()
                      for skill in skills}
-    data['skills'] = sorted(bought_skills)
+    # Preserve skills stored by older saves before purchase ledgers existed.
+    data['skills'] = sorted(
+        bought_skills | {str(skill).casefold() for skill in data.get('skills', [])})
     bought_features = {feature_id
                        for features in data['class_feature_purchases'].values()
                        for feature_id in features}
-    data['class_features'] = sorted(bought_features)
+    # Older saves recorded owned features directly, without a purchase ledger.
+    data['class_features'] = sorted(
+        bought_features | set(data.get('class_features', [])))
     if not data['class_ability_purchases']:
         for ability_id in data.get('known_abilities', []):
             ability = ABILITIES.get(ability_id, {})

@@ -7,13 +7,18 @@ once for each participating actor.
 """
 from math import ceil
 
+from worldforge.actors.factory import effective_max_hp
 from worldforge.core.progression import (initialize_resources, qualified_level,
                          sync_progression_levels, unspent_xp)
+from worldforge.content.campaign import campaign_rule
 
-INN_REST_GOLD_COST = 10
-OUTDOOR_REST_MIN_DISTANCE_FEET = 100
-OUTDOOR_REST_MIN_RATE_PERCENT = 1
-OUTDOOR_REST_MAX_RATE_PERCENT = 5
+INN_REST_GOLD_COST = campaign_rule("inn_rest_gold_cost", 10)
+OUTDOOR_REST_MIN_DISTANCE_FEET = campaign_rule(
+    "outdoor_rest_min_distance_feet", 100)
+OUTDOOR_REST_MIN_RATE_PERCENT = campaign_rule(
+    "outdoor_rest_rate_min_percent", 1)
+OUTDOOR_REST_MAX_RATE_PERCENT = campaign_rule(
+    "outdoor_rest_rate_max_percent", 5)
 
 
 def outdoor_rest_cost(actor_data):
@@ -31,12 +36,14 @@ def outdoor_rest_cost(actor_data):
 def resolve_rest(actor_data, location, *, distance_to_nearest_enemy_feet=None):
     """Apply one rest's costs and resource recovery, returning a summary.
 
-    ``location`` must be ``"outdoor"`` or ``"inn"``. This layer intentionally
-    leaves health and condition recovery unchanged until those rules are set.
+    ``location`` must be ``"outdoor"`` or ``"inn"``. A successful rest fully
+    restores HP and clears conditions as well as replenishing resources.
     """
     if location == "outdoor":
         if distance_to_nearest_enemy_feet is None or distance_to_nearest_enemy_feet <= OUTDOOR_REST_MIN_DISTANCE_FEET:
-            return {"success": False, "reason": "An outdoor camp must be more than 100 feet from every enemy."}
+            return {"success": False, "reason": (
+                f"An outdoor camp must be more than "
+                f"{OUTDOOR_REST_MIN_DISTANCE_FEET} feet from every enemy.")}
         cost, rate = outdoor_rest_cost(actor_data)
         if cost is None:
             return {"success": False, "reason": "No unspent XP remains. Rest at an inn."}
@@ -47,18 +54,39 @@ def resolve_rest(actor_data, location, *, distance_to_nearest_enemy_feet=None):
         actor_data["outdoor_rest_streak"] = max(0, int(actor_data.get("outdoor_rest_streak", 0) or 0)) + 1
         sync_progression_levels(actor_data)
         initialize_resources(actor_data, refill=True)
+        _restore_health_and_conditions(actor_data)
         return {"success": True, "location": location, "xp_cost": cost,
                 "rate_percent": rate, "unspent_xp": unspent_xp(actor_data),
                 "level_earned": qualified_level(actor_data)}
     if location == "inn":
         gold = max(0, int(actor_data.get("gold", 0) or 0))
         if gold < INN_REST_GOLD_COST:
-            return {"success": False, "reason": "An inn rest costs 10 gold."}
+            return {"success": False, "reason": (
+                f"An inn rest costs {INN_REST_GOLD_COST} gold.")}
         actor_data["gold"] = gold - INN_REST_GOLD_COST
         actor_data["outdoor_rest_streak"] = 0
         sync_progression_levels(actor_data)
         initialize_resources(actor_data, refill=True)
+        _restore_health_and_conditions(actor_data)
         return {"success": True, "location": location,
                 "gold_cost": INN_REST_GOLD_COST,
                 "level_earned": qualified_level(actor_data)}
     return {"success": False, "reason": "Unknown rest location."}
+
+
+def resolve_paid_inn_rest(actor_data):
+    """Complete recovery after an inn night's fee was paid during booking."""
+    actor_data["outdoor_rest_streak"] = 0
+    sync_progression_levels(actor_data)
+    initialize_resources(actor_data, refill=True)
+    _restore_health_and_conditions(actor_data)
+    return {"success": True, "location": "inn", "gold_cost": 0,
+            "level_earned": qualified_level(actor_data)}
+
+
+def _restore_health_and_conditions(actor_data):
+    if actor_data.get("downed"):
+        actor_data["current_hp"] = 0
+    else:
+        actor_data["current_hp"] = effective_max_hp(actor_data)
+    actor_data["conditions"] = []

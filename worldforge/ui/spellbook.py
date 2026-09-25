@@ -30,6 +30,12 @@ SYSTEM_ACTIONS = {
         "action_cost": "action",
         "targeting": {"mode": "one_target"},
     },
+    "offhand_attack": {
+        "name": "Light Weapon Off-hand Attack",
+        "description": "After attacking with a Light weapon, make one attack with a different equipped Light weapon as a Bonus Action. Do not add a positive ability modifier to this damage unless you have the Two-Weapon Fighting style; a negative modifier applies.",
+        "action_cost": "bonus_action",
+        "targeting": {"mode": "one_target"},
+    },
     "throw_weapon": {
         "name": "Throw Main-hand Weapon",
         "description": "Throw your equipped main-hand weapon. Weapons without the thrown property use a 20/60 ft range.",
@@ -210,8 +216,16 @@ class SpellbookUI:
         self.visible = not self.visible
         self.selected_action = None
 
-    def cycle_bar(self):
-        self.active_bar = (self.active_bar + 1) % BAR_COUNT
+    def cycle_bar(self, actor_data=None, *, filled_only=False):
+        bars = normalize_action_hotbars(
+            actor_data.get("spell_hotbars") if actor_data else None)
+        eligible = ([index for index, bar in enumerate(bars) if any(bar)]
+                    if filled_only else list(range(BAR_COUNT)))
+        if not eligible:
+            self.active_bar = 0
+            return
+        later = [index for index in eligible if index > self.active_bar]
+        self.active_bar = later[0] if later else eligible[0]
 
     def handle_event(self, event, actor_data):
         if event.type == pygame.MOUSEWHEEL and self.visible:
@@ -264,7 +278,7 @@ class SpellbookUI:
             return [(f"spell:{item_id}", SPELLS[item_id])
                     for item_id in ids if item_id in SPELLS]
         if self.page == "actions":
-            action_ids = ["weapon_attack", "ranged_weapon_attack",
+            action_ids = ["weapon_attack", "ranged_weapon_attack", "offhand_attack",
                           "throw_weapon", "hide", "flee", "sneak"]
             return [(f"action:{action_id}", _actor_action_definition(
                 actor_data, f"action:{action_id}"))
@@ -331,8 +345,7 @@ class SpellbookUI:
     def draw_book(self, screen, font, actor_data):
         if not self.visible:
             return
-        width = min(660, max(1, screen.get_width() - 20))
-        height = min(620, max(1, screen.get_height() - 60))
+        width, height = 660, 620
         left, top = (screen.get_width() - width) // 2, (screen.get_height() - height) // 2
         panel = pygame.Surface((width, height), pygame.SRCALPHA)
         panel.fill((14, 18, 25, 245))

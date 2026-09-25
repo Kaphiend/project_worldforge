@@ -10,6 +10,7 @@ from worldforge.app.combat_flow import _active_actor_id
 from worldforge.app.encounters import DEFAULT_SCENARIO
 from worldforge.app.world import ACTOR_HITBOX_HEIGHT, ACTOR_HITBOX_WIDTH, ACTOR_SIZE, _attack_readiness_text, _perceived_title
 from worldforge.app.rendering import _advance_character_animation, _fit_ui_text, _player_id, _wrap_ui_lines
+from worldforge.content.campaign import ACTIVE_CAMPAIGN, campaign_rule
 
 def _draw_combat_ui(screen, font, combat, actor_id, observer_data, log_scroll=0):
     if not combat:
@@ -74,6 +75,7 @@ def draw_game_frame(context):
     combat = context["combat"]
     combat_log_scroll = context["combat_log_scroll"]
     controls_visible = context["controls_visible"]
+    combat_positions = context.get("combat_positions", {})
     current_arena = context["current_arena"]
     drawn_positions = context["drawn_positions"]
     dt = context["dt"]
@@ -93,7 +95,6 @@ def draw_game_frame(context):
     party_status = context["party_status"]
     player_id = context["player_id"]
     projectile_runtime = context["projectile_runtime"]
-    quit_prompt = context["quit_prompt"]
     remote_players = context["remote_players"]
     save_notice_until = context["save_notice_until"]
     screen = context["screen"]
@@ -102,6 +103,7 @@ def draw_game_frame(context):
     sprite_frames = context["sprite_frames"]
     trainer_ui = context["trainer_ui"]
     vendor_ui = context.get("vendor_ui")
+    storage_ui = context.get("storage_ui")
     vendor_buyback = context.get("vendor_buyback", []) or []
 
     screen_spell_data = (combat.get("actors", {}).get(player_id, {}).get("data", {})
@@ -121,15 +123,25 @@ def draw_game_frame(context):
             bed = next((item for item in current_arena.get("camp_beds", [])
                         if item.get("id") == bed_id), {})
             cost = rest_session.get("costs", {}).get(player_id, 0)
-            text = (f"Safe camp · {bed.get('name', 'assigned bed')} · "
-                    f"your cost {cost} XP · {ready_count}/{party_count} checked in · F to rest")
+            bed_label = (f"{bed['owner_name']}'s bedroll"
+                         if bed.get("owner_name") else
+                         bed.get("name", "assigned bed"))
+            text = (f"Safe camp · {bed_label} · "
+                    f"your cost {cost} XP · {ready_count}/{party_count} checked in · "
+                    "use your bed to rest, or F at Return to Map to leave")
         else:
-            text = (f"Inn check-in · {ready_count}/{party_count} guests ready · "
-                    "each guest pays 10 gold at the bed")
+            paid_count = len(rest_session.get("paid", {}))
+            bed_id = rest_session.get("bed_by_actor", {}).get(player_id)
+            bed = next((item for item in current_arena.get("inn_beds", [])
+                        if item.get("id") == bed_id), {})
+            assignment = (f"{bed.get('name')} assigned · " if bed else "")
+            text = (f"Inn check-in · {assignment}{paid_count}/{party_count} paid · "
+                    f"{ready_count}/{party_count} checked in · pay the innkeeper, then use your bed")
         hud_rows.append((text, (255, 220, 150), hud_font))
     if multiplayer:
         count = party_status() if party_status else 1 + len(remote_players)
-        hud_rows.append((f"Party: {count}/8", (195, 220, 195), hud_font))
+        hud_rows.append((f"Party: {count}/{ACTIVE_CAMPAIGN['party_limit']}",
+                         (195, 220, 195), hud_font))
         if is_host and invite_address:
             lan_address, internet_address = invite_address
             hud_rows.append((f"LAN invite: {lan_address}",
@@ -246,7 +258,9 @@ def draw_game_frame(context):
     for enemy in enemy_entries:
         if enemy.get("team") != "enemies":
             continue
-        rect = pygame.Rect(enemy["x"] - camera[0], enemy["y"] - camera[1],
+        enemy_x, enemy_y = combat_positions.get(
+            enemy.get("id"), (enemy["x"], enemy["y"]))
+        rect = pygame.Rect(enemy_x - camera[0], enemy_y - camera[1],
                            enemy.get("width", 40), enemy.get("height", 40))
         avatar = enemy.get("data", {}).get("avatar")
         if avatar and avatar not in sprite_frames:
@@ -254,7 +268,7 @@ def draw_game_frame(context):
                 sprite_frames[avatar] = load_spritesheet(avatar)
             except (FileNotFoundError, pygame.error):
                 pass
-        enemy_frames = sprite_frames.get(avatar, sprite_frames["asset_pack/Orc.png"])
+        enemy_frames = sprite_frames.get(avatar, sprite_frames["asset_pack/Goblin.png"])
         enemy_animation = enemy_animations.setdefault(
             enemy["id"], {"anim": "idle", "index": 0, "time": 0})
         requested = "dead" if enemy["downed"] else "idle"
@@ -276,6 +290,52 @@ def draw_game_frame(context):
             title_x = max(8, min(screen.get_width() - title_surface.get_width() - 8,
                                  rect.x - 10))
             screen.blit(title_surface, (title_x, max(4, rect.y - 18)))
+    for innkeeper in current_arena.get("innkeepers", []):
+        frames = sprite_frames.get(innkeeper.get("avatar"), sprite_frames.get(
+            "asset_pack/Cleric.png", {}))
+        if isinstance(frames, dict) and frames.get("idle"):
+            size = (int(innkeeper.get("width", 100)),
+                    int(innkeeper.get("height", 100)))
+            state = enemy_animations.setdefault(
+                f"innkeeper:{innkeeper.get('id')}",
+                {"anim": "idle", "index": 0, "time": 0})
+            frame = _advance_character_animation(
+                state, "idle", None, dt, frames, frame_duration)
+            image = pygame.transform.scale(frame, size)
+            x, y = int(innkeeper.get("x", 0) - camera[0]), int(innkeeper.get("y", 0) - camera[1])
+            screen.blit(image, (x, y))
+            screen.blit(pygame.font.Font(None, 18).render(
+                innkeeper.get("name", "Innkeeper"), True, (255, 245, 220)),
+                (x - 2, y - 18))
+    for group in ("trainers", "vendors"):
+        for npc in current_arena.get(group, []):
+            frames = sprite_frames.get(npc.get("avatar"), {})
+            if not frames.get("idle"):
+                continue
+            size = (int(npc.get("width", 100)), int(npc.get("height", 100)))
+            state = enemy_animations.setdefault(
+                f"service_npc:{npc.get('id')}",
+                {"anim": "idle", "index": 0, "time": 0})
+            frame = _advance_character_animation(
+                state, "idle", None, dt, frames, frame_duration)
+            image = pygame.transform.scale(frame, size)
+            x, y = int(npc.get("x", 0) - camera[0]), int(npc.get("y", 0) - camera[1])
+            screen.blit(image, (x, y))
+            screen.blit(pygame.font.Font(None, 18).render(
+                npc.get("name", "NPC"), True, (255, 245, 220)),
+                (x - 2, y - 18))
+    for chest in (combat or {}).get("chests", current_arena.get("chests", [])):
+        width, height = int(chest.get("width", 54)), int(chest.get("height", 38))
+        rect = pygame.Rect(chest.get("x", 0) - camera[0],
+                           chest.get("y", 0) - camera[1], width, height)
+        body_color = (91, 68, 42) if not chest.get("opened") else (65, 59, 49)
+        pygame.draw.rect(screen, body_color, rect, border_radius=3)
+        pygame.draw.rect(screen, (218, 177, 91), rect, 2, border_radius=3)
+        pygame.draw.line(screen, (218, 177, 91),
+                         (rect.left + 2, rect.centery),
+                         (rect.right - 2, rect.centery), 2)
+        pygame.draw.rect(screen, (218, 177, 91),
+                         pygame.Rect(rect.centerx - 3, rect.centery - 3, 6, 7))
     if combat and not combat.get("rest_session"):
         for ground_item in combat.get("ground_items", []):
             x, y = ground_item.get("x", 0), ground_item.get("y", 0)
@@ -351,24 +411,44 @@ def draw_game_frame(context):
                                     "data": NPCS.get(spawn.get("npc"), {})}
                     break
         if target_entry:
-            target_center = (int(target_entry["x"] + target_entry.get("width", ACTOR_SIZE) / 2 - camera[0]),
-                             int(target_entry["y"] + target_entry.get("height", ACTOR_SIZE) / 2 - camera[1]))
+            target_x, target_y = combat_positions.get(
+                selected_target, (target_entry["x"], target_entry["y"]))
+            target_width = target_entry.get("width", ACTOR_SIZE)
+            target_height = target_entry.get("height", ACTOR_SIZE)
+            target_rect = pygame.Rect(round(target_x - camera[0]),
+                                      round(target_y - camera[1]),
+                                      target_width, target_height)
+            target_center = target_rect.center
             target_name = target_entry.get("data", {}).get("name")
         else:
             remote = next((p for p in remote_players if p.get("id") == selected_target), None)
-            target_center = (int(remote.get("x", 0) + 50), int(remote.get("y", 0) + 50)) if remote else None
+            remote_position = (drawn_positions.get(selected_target)
+                               if remote else None)
+            target_center = ((int(remote_position[0] + ACTOR_SIZE / 2),
+                              int(remote_position[1] + ACTOR_SIZE / 2))
+                             if remote_position else
+                             (int(remote.get("x", 0) + ACTOR_SIZE / 2 - camera[0]),
+                              int(remote.get("y", 0) + ACTOR_SIZE / 2 - camera[1]))
+                             if remote else None)
+            target_rect = (pygame.Rect(
+                round(remote_position[0]), round(remote_position[1]),
+                ACTOR_SIZE, ACTOR_SIZE) if remote_position else
+                pygame.Rect(int(remote.get("x", 0) - camera[0]),
+                            int(remote.get("y", 0) - camera[1]),
+                            ACTOR_SIZE, ACTOR_SIZE) if remote else None)
             if remote:
                 target_name = (remote.get("actor") or {}).get("name") or remote.get("name")
         if selected_target == player_id:
             target_name = actor.name
         target_name = target_name or str(selected_target)
         if target_center:
-            flash_alpha = 255 if (pygame.time.get_ticks() // 220) % 2 == 0 else 90
-            flash = pygame.Surface((68, 68), pygame.SRCALPHA)
-            pygame.draw.circle(flash, (255, 255, 255, flash_alpha),
-                               (34, 34), 28, 3)
-            screen.blit(flash, (target_center[0] - 34,
-                                target_center[1] - 34))
+            pulse = (math.sin(pygame.time.get_ticks() * math.tau / 1700) + 1) / 2
+            flash_alpha = round(20 + pulse * 28)
+            flash = pygame.Surface(target_rect.size, pygame.SRCALPHA)
+            flash.fill((255, 183, 52, flash_alpha))
+            pygame.draw.rect(flash, (255, 230, 154, 90 + round(pulse * 90)),
+                             flash.get_rect(), 3, border_radius=12)
+            screen.blit(flash, target_rect.topleft)
         target_panel = pygame.Rect(16, screen.get_height() - 106, 300, 34)
         pygame.draw.rect(screen, (15, 18, 24, 225), target_panel,
                          border_radius=5)
@@ -423,9 +503,21 @@ def draw_game_frame(context):
             prompt_text = (f"Travel through {interact_prompt['name']}? "
                            "The connected party travels together.")
             confirm_text = "Y / Enter: travel     N / Esc: cancel"
+        elif interact_prompt.get("type") == "camp_exit":
+            prompt_text = "Leave the safe camp and return to the map without resting?"
+            confirm_text = "Y / Enter: leave camp     N / Esc: cancel"
+        elif interact_prompt.get("type") == "innkeeper":
+            price = campaign_rule("inn_rest_gold_cost", 10)
+            prompt_text = (f"Rent a bed for the night for {price} gold. "
+                           "Your party can check in together.")
+            confirm_text = "Y / Enter: rent a bed     N / Esc: cancel"
+        elif interact_prompt.get("type") == "inn_bed":
+            prompt_text = f"Check in at {interact_prompt['name']} after paying the innkeeper."
+            confirm_text = "Y / Enter: check in     N / Esc: cancel"
         else:
+            price = campaign_rule("inn_rest_gold_cost", 10)
             prompt_text = (f"Stay at {interact_prompt['name']}? Each party member "
-                           "must check in and pay 10 gold for the night.")
+                           f"must check in and pay {price} gold for the night.")
             confirm_text = "Y / Enter: check in and pay     N / Esc: cancel"
         dialog_lines = _wrap_ui_lines(
             dialog_font, prompt_text, dialog.get_width() - 36)
@@ -443,9 +535,12 @@ def draw_game_frame(context):
     spellbook_ui.draw(screen, font, vars(actor))
     trainer_ui.draw(screen, vars(actor), font)
     if loot_ui.visible:
-        loot_corpse = ((combat or {}).get("actors", {}).get(loot_ui.corpse_id))
-        if loot_corpse:
-            loot_ui.draw(screen, loot_corpse, font)
+        loot_container = ((combat or {}).get("actors", {}).get(
+            loot_ui.corpse_id) or next((item for item in
+                (combat or {}).get("chests", [])
+                if item.get("id") == loot_ui.corpse_id), None))
+        if loot_container:
+            loot_ui.draw(screen, loot_container, font)
         else:
             loot_ui.close()
     if vendor_ui and vendor_ui.visible:
@@ -454,6 +549,13 @@ def draw_game_frame(context):
         vendor_data = ((combat or {}).get("actors", {}).get(player_id, {})
                        .get("data", vars(actor)))
         vendor_ui.draw(screen, font, vendor, vendor_data, vendor_buyback)
+    if storage_ui and storage_ui.visible:
+        title = "Personal Chest"
+        chest = next((item for item in current_arena.get("personal_chests", [])
+                      if item.get("id") == storage_ui.chest_id), None)
+        if chest:
+            title = chest.get("name", title)
+        storage_ui.draw(screen, inventory_data, title)
     if actor.downed:
         death_box = pygame.Surface((520, 160), pygame.SRCALPHA)
         death_box.fill((18, 8, 10, 238))
@@ -484,7 +586,7 @@ def draw_game_frame(context):
             ("Tab ends your turn and restores movement next turn.", None),
             ("Z: travel to a safe camp beyond 100 ft from enemies; each party member pays XP and checks in at their bed.", None),
             ("F: use a nearby trainer, vendor, bed, corpse, dropped item, or area exit.", None),
-            ("F2: toggle tooltips    -: spells and abilities    `: switch bars", None),
+            ("F2: toggle tooltips    -: spells and abilities    `: cycle hotbars", None),
             ("Enter: chat    /act <emote>: show an emote and add it to combat log", None),
             ("Click a character to target it. Right-click a character or mob to inspect its debug data.", None),
             ("1-0: use assigned action; empty 1 uses primary weapon. R: ranged    T: throw", None),
@@ -494,7 +596,7 @@ def draw_game_frame(context):
             ("Q / E: use bound consumables. In Inventory, select an item and click Q or E to bind it.", None),
             ("I: inventory    Tab: end your turn    F5: save character", None),
             ("F11: toggle fullscreen and windowed mode", None),
-            ("M: return to menu    Esc: quit game    F1: close this panel", None),
+            ("M: return to menu    Esc: pause menu    F1: close this panel", None),
             ("When downed, wait for a revival or press R to return to the inn for a 10% XP loss.", None),
             ("Hover action-bar or spellbook entries for details when tooltips are on:", None),
         ]
@@ -557,23 +659,3 @@ def draw_game_frame(context):
                 screen.blit(font.render(line, True, color),
                             (tooltip_x + 12,
                              tooltip_y + 8 + index * tooltip_line_height))
-    if quit_prompt:
-        panel_width, panel_height = 310, 112
-        panel_x = (screen.get_width() - panel_width) // 2
-        panel_y = screen.get_height() - panel_height - 32
-        quit_panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
-        quit_panel.fill((15, 18, 24, 242))
-        pygame.draw.rect(quit_panel, (225, 230, 238),
-                         quit_panel.get_rect(), 2, border_radius=6)
-        screen.blit(quit_panel, (panel_x, panel_y))
-        question = font.render("Quit the game?", True, (255, 245, 220))
-        screen.blit(question, question.get_rect(
-            center=(screen.get_width() // 2, panel_y + 30)))
-        yes_rect = pygame.Rect(panel_x + 28, panel_y + 64, 112, 32)
-        no_rect = pygame.Rect(panel_x + 170, panel_y + 64, 112, 32)
-        for rect, label in ((yes_rect, "Yes, quit"), (no_rect, "No, stay")):
-            pygame.draw.rect(screen, (76, 87, 102), rect, border_radius=4)
-            pygame.draw.rect(screen, (180, 190, 205), rect, 1,
-                             border_radius=4)
-            text = font.render(label, True, (255, 255, 255))
-            screen.blit(text, text.get_rect(center=rect.center))

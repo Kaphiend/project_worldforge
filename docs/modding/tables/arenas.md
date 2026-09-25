@@ -21,10 +21,12 @@ Each top-level key is an arena ID referenced by `scenarios.json`.
   height, and `interaction_range_feet`. Beds block movement, are safe spawn
   exclusions. Each party member presses `F` nearby and confirms a 10-gold
   overnight stay; the rest begins after all connected members check in.
-- `camp_beds`: beds in the `safe_camp` rest stage. Each has `id`, `name`,
+- `camp_beds`: beds in the arena selected by the active campaign's
+  `safe_camp_arena`. Each has `id`, `name`,
   x/y/width/height, `spawn_x`, `spawn_y`, and `interaction_range_feet`. Every
   party member is assigned a bedroll and must press `F` nearby before the
-  party rests. The camp arena needs at least eight bedrolls for a full party.
+  party rests. The campaign validator checks that this arena has enough
+  bedrolls for its configured party limit.
 - `trainers`: optional interaction rectangles with `id`, `name`, x/y/width/
   height, and `interaction_range_feet`. They block movement and open the
   data-driven class purchase screen with `F`. `xp_purchase_cost` is authored

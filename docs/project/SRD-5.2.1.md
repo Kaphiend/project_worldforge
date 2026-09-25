@@ -5,9 +5,11 @@ baseline for class skill lists, subclass identities, species, and supported
 combat rules. The game keeps its own XP-purchase progression, attribute-point
 advancement, resource model, and original summaries. Feats are not used.
 
-The SRD's class features and subclass features are listed as trainer purchases.
-Only mechanics with a matching runtime effect are playable; other feature
-records are content drafts and do not imply that the effect is implemented.
+SRD-inspired class features are generally represented as trainer options, with
+explicit `starting_abilities` and `starting_features` granted when a new actor
+is created. Only mechanics with a matching runtime effect are playable; other
+feature records are content drafts and do not imply that the effect is
+implemented.
 Species and lineage trait identifiers are also descriptive unless a runtime
 resolver handles them. Ability-score bonuses are not assigned by species.
 

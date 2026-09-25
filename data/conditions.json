@@ -22,5 +22,21 @@
     "reapplication": "refresh_duration",
     "primitives": [{"kind": "attack_disadvantage", "uses": 1}],
     "removal": ["duration_expired", "used"]
+  },
+  "prone": {
+    "name": "Prone",
+    "description": "The creature is knocked to the ground.",
+    "duration": {"turns": 1, "tick": "end_of_affected_turn"},
+    "reapplication": "refresh_duration",
+    "primitives": [],
+    "removal": ["duration_expired", "stands"]
+  },
+  "poisoned": {
+    "name": "Poisoned",
+    "description": "The creature has disadvantage on attack rolls.",
+    "duration": {"turns": 1, "tick": "end_of_affected_turn"},
+    "reapplication": "refresh_duration",
+    "primitives": [],
+    "removal": ["duration_expired", "cured"]
   }
 }

@@ -1,0 +1,235 @@
+{
+  "name": "Grix",
+  "id": "7508befd",
+  "max_hp": 36,
+  "current_hp": 40,
+  "classes": [
+    {
+      "name": "fighter",
+      "level": 4
+    }
+  ],
+  "level": 4,
+  "class_levels_initialized": true,
+  "xp_total": 3583,
+  "xp_earned_by_level": {
+    "3": 3700
+  },
+  "xp_spent_by_level": {
+    "3": 60,
+    "4": 20
+  },
+  "xp_rest_spent_by_level": {
+    "4": 37
+  },
+  "class_spell_purchases": {},
+  "class_ability_purchases": {
+    "fighter": [
+      "guarded_angle"
+    ]
+  },
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [],
+  "prepared_spells": [],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": "b93ed93d39af",
+    "e": null
+  },
+  "known_abilities": [
+    "guarded_angle"
+  ],
+  "class_features": [
+    "fighter_01",
+    "fighter_02",
+    "fighter_03",
+    "fighter_04",
+    "fighter_champion_improved_critical"
+  ],
+  "expertise_skills": [],
+  "fighting_styles": [],
+  "weapon_masteries": {},
+  "class_feature_purchases": {
+    "fighter": [
+      "fighter_01",
+      "fighter_02",
+      "fighter_champion_improved_critical",
+      "fighter_03",
+      "fighter_04"
+    ]
+  },
+  "class_skill_purchases": {
+    "fighter": [
+      "perception",
+      "intimidation"
+    ]
+  },
+  "spell_points": 0,
+  "class_resources": {
+    "fighter.second_wind_uses": 2,
+    "fighter.action_surge_uses": 1
+  },
+  "attribute_points_spent": {
+    "strength": 1,
+    "constitution": 1
+  },
+  "gold": 20,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Fighter.png",
+  "abilities": {
+    "strength": 17,
+    "dexterity": 14,
+    "constitution": 15,
+    "intellect": 8,
+    "wisdom": 11,
+    "charisma": 11
+  },
+  "unspent": [],
+  "saves": [
+    "strength",
+    "constitution"
+  ],
+  "armor_prof": [
+    "light",
+    "medium",
+    "heavy",
+    "shields"
+  ],
+  "weapon_prof": [
+    "simple",
+    "martial"
+  ],
+  "race": "tiefling",
+  "subrace": "infernal",
+  "subclass": "fighter_champion",
+  "parent_races": [],
+  "char_class": "fighter",
+  "skills": [
+    "intimidation",
+    "perception"
+  ],
+  "controller": "player",
+  "x": 200,
+  "y": 165,
+  "inventory": [
+    {
+      "id": "b93ed93d39af",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 11
+    }
+  ],
+  "personal_storage": [
+    {
+      "id": "613c604b2da7",
+      "template_id": "revival_scroll",
+      "name": "Revival Scroll",
+      "quantity": 1
+    }
+  ],
+  "equipment": {
+    "head": null,
+    "chest": {
+      "id": "c990a4081dc9",
+      "template_id": "scale_mail",
+      "name": "Warding Vital Scale Mail",
+      "slot": "chest",
+      "tags": [],
+      "rarity": "rare",
+      "item_level": 3,
+      "rolled_attributes": {
+        "saving_throw_bonus": 2,
+        "maximum_hp_bonus": 4
+      }
+    },
+    "hands": null,
+    "feet": null,
+    "belt": null,
+    "cape": null,
+    "ring1": null,
+    "ring2": null,
+    "amulet": null,
+    "main_hand": {
+      "id": "bcdca0670267",
+      "template_id": "sword_1h",
+      "name": "Forceful Accurate Sword",
+      "slot": "off_hand",
+      "tags": [],
+      "rarity": "epic",
+      "item_level": 3,
+      "rolled_attributes": {
+        "weapon_damage_bonus": 1,
+        "weapon_attack_bonus": 1
+      }
+    },
+    "off_hand": {
+      "id": "cec3610b623c",
+      "name": "Shield",
+      "slot": "hand",
+      "tags": [
+        "shield"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "shield"
+    },
+    "ranged": null
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}

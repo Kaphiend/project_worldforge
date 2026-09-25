@@ -7,17 +7,22 @@ from worldforge.app.rendering import _player_id
 from worldforge.content.classes import (ABILITIES, ARENAS, CLASSES, SCENARIOS,
                                         SPELLS, SUBCLASSES, skill_options,
                                         subclass_feature_items)
+from worldforge.content.campaign import campaign_rule
+from worldforge.combat.rules import (ROGUE_WEAPON_MASTERY,
+                                     FIGHTING_STYLE_OPTIONS,
+                                     weapon_mastery_eligible)
 from worldforge.core.progression import (adjusted_purchase_cost, apply_level_up,
     charge_xp_penalty, class_feature_definition, class_unlock_cost,
     class_unlocked_level, initialize_resources, qualified_level,
     set_spell_prepared, spend_attribute_point, spend_xp, sync_progression_levels,
-    unspent_xp, unlocked_classes)
+    unspent_xp, unlocked_classes, class_feature_choice_slots)
 
 
 def handle_progression_action(actor, local_player_id, actor_id, action,
                               remote_players, combat):
     action_type = action.get("type")
-    if action_type not in {"increase_ability", "prepare_spell",
+    if action_type not in {"increase_ability", "prepare_spell", "choose_expertise",
+                           "choose_weapon_mastery", "choose_fighting_style",
                            "trainer_purchase", "unlock_class", "level_up",
                            "release_spirit"}:
         return None
@@ -33,6 +38,89 @@ def handle_progression_action(actor, local_player_id, actor_id, action,
         success, message = spend_attribute_point(data, action.get("ability"))
         if not success:
             return {"_action_error": message}
+        if entry:
+            entry["data"].update(data)
+            return combat
+        return _progression_sync_state(actor, local_player_id, remote_players)
+    if action_type == "choose_expertise":
+        entry = (combat or {}).get("actors", {}).get(actor_id)
+        owner = (entry.get("data") if entry else
+                 (actor if actor_id == local_player_id else next(
+                     (remote.get("actor") for remote in remote_players
+                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
+        if owner is None:
+            return {"_action_error": "Character is unavailable."}
+        data = owner if isinstance(owner, dict) else vars(owner)
+        class_id, skill = action.get("class_id"), str(action.get("skill", "")).casefold()
+        if class_id not in unlocked_classes(data) or skill not in {
+                str(value).casefold() for value in data.get("skills", []) or []}:
+            return {"_action_error": "Choose a trained skill from an unlocked class."}
+        owned = set(data.get("class_features", []) or [])
+        owned.update(data.get("class_feature_purchases", {}).get(class_id, []))
+        slots = sum(int((feature.get("effect", {}) or {}).get("count", 0) or 0)
+                    for tier, features in (CLASSES.get(class_id, {}).get(
+                        "progression", {}) or {}).items() for feature in features or []
+                    if feature.get("id") in owned
+                    and (feature.get("effect", {}) or {}).get("kind") == "expertise_choice")
+        choices = data.setdefault("expertise_skills", [])
+        if skill in choices:
+            return {"_action_notice": "You already have Expertise in that skill."}
+        if len(choices) >= slots:
+            return {"_action_error": "You have no unassigned Expertise choices."}
+        choices.append(skill)
+        if entry:
+            entry["data"].update(data)
+            return combat
+        return _progression_sync_state(actor, local_player_id, remote_players)
+    if action_type == "choose_weapon_mastery":
+        entry = (combat or {}).get("actors", {}).get(actor_id)
+        owner = (entry.get("data") if entry else
+                 (actor if actor_id == local_player_id else next(
+                     (remote.get("actor") for remote in remote_players
+                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
+        if owner is None:
+            return {"_action_error": "Character is unavailable."}
+        data = owner if isinstance(owner, dict) else vars(owner)
+        class_id, weapon_id = action.get("class_id"), action.get("weapon_id")
+        owned = set(data.get("class_features", []) or [])
+        owned.update(data.get("class_feature_purchases", {}).get(class_id, []))
+        slots = class_feature_choice_slots(data, "weapon_mastery_choice")
+        masteries = data.setdefault("weapon_masteries", {})
+        if (class_id not in unlocked_classes(data)
+                or weapon_id not in ROGUE_WEAPON_MASTERY
+                or not weapon_mastery_eligible(data, weapon_id)):
+            return {"_action_error": "That weapon mastery choice is unavailable."}
+        if weapon_id in masteries:
+            return {"_action_notice": "That weapon already has a mastery choice."}
+        if len(masteries) >= slots:
+            return {"_action_error": "You have no unassigned Weapon Mastery choices."}
+        masteries[weapon_id] = ROGUE_WEAPON_MASTERY[weapon_id]
+        if entry:
+            entry["data"].update(data)
+            return combat
+        return _progression_sync_state(actor, local_player_id, remote_players)
+    if action_type == "choose_fighting_style":
+        entry = (combat or {}).get("actors", {}).get(actor_id)
+        owner = (entry.get("data") if entry else
+                 (actor if actor_id == local_player_id else next(
+                     (remote.get("actor") for remote in remote_players
+                      if _player_id(remote) == actor_id and remote.get("actor")), None)))
+        if owner is None:
+            return {"_action_error": "Character is unavailable."}
+        data = owner if isinstance(owner, dict) else vars(owner)
+        class_id, style_id = action.get("class_id"), action.get("style_id")
+        owned = set(data.get("class_features", []) or [])
+        owned.update(data.get("class_feature_purchases", {}).get(class_id, []))
+        slots = class_feature_choice_slots(data, "fighting_style_choice")
+        styles = data.setdefault("fighting_styles", [])
+        if (class_id not in unlocked_classes(data)
+                or style_id not in FIGHTING_STYLE_OPTIONS):
+            return {"_action_error": "That fighting style choice is unavailable."}
+        if style_id in styles:
+            return {"_action_notice": "You already know that fighting style."}
+        if len(styles) >= slots:
+            return {"_action_error": "You have no unassigned Fighting Style choices."}
+        styles.append(style_id)
         if entry:
             entry["data"].update(data)
             return combat
@@ -184,7 +272,8 @@ def handle_progression_action(actor, local_player_id, actor_id, action,
                 actor, local_player_id, remote_players)
         if not data.get("downed"):
             return {"_action_error": "You are not downed."}
-        penalty = charge_xp_penalty(data, 10)
+        penalty = charge_xp_penalty(
+            data, campaign_rule("death_release_xp_penalty_percent", 10))
         data["downed"] = False
         data["current_hp"] = max(1, int(data.get("current_hp", 0) or 0))
         data["withdrawn"] = True

@@ -1,0 +1,204 @@
+{
+  "name": "Wizzy",
+  "id": "1c311c87",
+  "max_hp": 26,
+  "current_hp": 26,
+  "classes": [
+    {
+      "name": "wizard",
+      "level": 4
+    }
+  ],
+  "level": 4,
+  "class_levels_initialized": true,
+  "xp_total": 3590,
+  "xp_earned_by_level": {
+    "3": 2700,
+    "4": 1000
+  },
+  "xp_spent_by_level": {
+    "4": 110
+  },
+  "xp_rest_spent_by_level": {},
+  "class_spell_purchases": {
+    "wizard": [
+      "arcane_spark",
+      "ember_lattice",
+      "frost_needle",
+      "glassward"
+    ]
+  },
+  "class_ability_purchases": {},
+  "withdrawn": false,
+  "downed": false,
+  "sneaking": false,
+  "stealth_check_total": null,
+  "hidden": null,
+  "conditions": [],
+  "active_effects": [],
+  "known_spells": [
+    "arcane_spark",
+    "ember_lattice",
+    "frost_needle",
+    "glassward"
+  ],
+  "prepared_spells": [],
+  "spell_hotbars": [
+    [
+      "action:weapon_attack",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "quick_items": {
+    "q": null,
+    "e": null
+  },
+  "known_abilities": [],
+  "class_features": [
+    "wizard_01",
+    "wizard_02",
+    "wizard_03",
+    "wizard_evoker_evocation_savant",
+    "wizard_evoker_sculpt_spells"
+  ],
+  "class_feature_purchases": {
+    "wizard": [
+      "wizard_01",
+      "wizard_02",
+      "wizard_03",
+      "wizard_evoker_evocation_savant",
+      "wizard_evoker_sculpt_spells"
+    ]
+  },
+  "class_skill_purchases": {
+    "wizard": [
+      "insight",
+      "investigation"
+    ]
+  },
+  "spell_points": 3,
+  "class_resources": {},
+  "attribute_points_spent": {
+    "intellect": 2
+  },
+  "gold": 90,
+  "outdoor_rest_streak": 0,
+  "avatar": "asset_pack/Wizard.png",
+  "abilities": {
+    "strength": 10,
+    "dexterity": 14,
+    "constitution": 15,
+    "intellect": 19,
+    "wisdom": 14,
+    "charisma": 10
+  },
+  "unspent": [],
+  "saves": [
+    "intellect",
+    "wisdom"
+  ],
+  "armor_prof": [],
+  "weapon_prof": [
+    "simple"
+  ],
+  "race": "elf",
+  "subrace": "drow",
+  "subclass": "wizard_evoker",
+  "parent_races": [],
+  "char_class": "wizard",
+  "skills": [
+    "insight",
+    "investigation"
+  ],
+  "controller": "player",
+  "x": 60,
+  "y": 380,
+  "inventory": [
+    {
+      "id": "b2cfb954ed32",
+      "template_id": "healing_potion",
+      "name": "Healing Potion",
+      "quantity": 8
+    }
+  ],
+  "personal_storage": [],
+  "equipment": {
+    "head": null,
+    "chest": {
+      "id": "a724faa0d880",
+      "name": "Unarmored",
+      "slot": "chest",
+      "tags": [],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "unarmored"
+    },
+    "hands": null,
+    "feet": null,
+    "belt": null,
+    "cape": null,
+    "ring1": null,
+    "ring2": null,
+    "amulet": null,
+    "main_hand": {
+      "id": "fb9f077892c9",
+      "name": "Staff",
+      "slot": "hand",
+      "tags": [
+        "versatile",
+        "focus-capable"
+      ],
+      "rarity": null,
+      "rolled_attributes": {},
+      "template_id": "staff"
+    },
+    "off_hand": null,
+    "ranged": null
+  },
+  "active_weapon_set": "melee",
+  "starting_gear_applied": true
+}
